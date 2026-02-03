@@ -1,5 +1,45 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import {
+  ApplicationConfig,
+  importProvidersFrom,
+  provideBrowserGlobalErrorListeners,
+  provideZoneChangeDetection,
+} from '@angular/core';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
+import {
+  LucideAngularModule,
+  User,
+  Mail,
+  Lock,
+  Eye,
+  Search,
+  Check,
+  CheckCircle,
+  XCircle,
+  EyeOff,
+  LogOut,
+  Home,
+  Plus,
+  Minus,
+  ShoppingCart,
+  Star,
+  StarOff,
+  StarHalf,
+  Moon,
+  Menu,
+  Pencil,
+  Trash2,
+  Save,
+  X,
+  ChevronLeft,
+  Image,
+  Upload,
+  GripVertical,
+  ChevronUp,
+  ChevronDown,
+  Edit2,
+  Sun,
+  MoreVertical,
+} from 'lucide-angular';
 
 import { routes } from './app.routes';
 
@@ -7,6 +47,43 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes)
-  ]
+    provideRouter(routes, withComponentInputBinding()),
+    importProvidersFrom(
+      LucideAngularModule.pick({
+        User,
+        Mail,
+        Lock,
+        Check,
+        Eye,
+        Search,
+        CheckCircle,
+        XCircle,
+        EyeOff,
+        LogOut,
+        Home,
+        Plus,
+        Minus,
+        ShoppingCart,
+        Star,
+        StarOff,
+        StarHalf,
+        Moon,
+        Menu,
+        Pencil,
+        Trash2,
+        Save,
+        X,
+        ChevronLeft,
+        Image,
+        Upload,
+        GripVertical,
+        ChevronUp,
+        ChevronDown,
+        Edit2,
+        Sun,
+        MoreVertical,
+        
+      }),
+    ),
+  ],
 };
