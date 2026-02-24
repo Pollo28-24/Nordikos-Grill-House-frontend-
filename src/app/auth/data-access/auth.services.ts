@@ -1,6 +1,6 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { SupabaseService } from '../../shared/data-access/supabase.service';
-import { SignInWithPasswordCredentials } from '@supabase/supabase-js';
+import { SignInWithPasswordCredentials, User } from '@supabase/supabase-js';
 
 export interface EmailSignUp {
   email: string;
@@ -14,6 +14,24 @@ export interface EmailSignUp {
 export class AuthService {
   private supabase = inject(SupabaseService).supabaseClient;
 
+  // Signal for reactive auth state
+  readonly user = signal<User | null>(null);
+
+  constructor() {
+    this.init();
+  }
+
+  private async init() {
+    // 1. Get initial session
+    const { data: { session } } = await this.supabase.auth.getSession();
+    this.user.set(session?.user ?? null);
+
+    // 2. Listen for auth changes
+    this.supabase.auth.onAuthStateChange((_event, session) => {
+      this.user.set(session?.user ?? null);
+    });
+  }
+
   // ===== SESSION =====
   getSession() {
     return this.supabase.auth.getSession();
@@ -24,8 +42,18 @@ export class AuthService {
     return this.getSession();
   }
 
-  getUser() {
-    return this.supabase.auth.getUser();
+  async getUser() {
+    const { data: { session }, error: sessionError } = await this.getSession();
+    if (sessionError) {
+      console.error('Error getting session:', sessionError);
+      return { data: { user: null }, error: sessionError };
+    }
+    if (session && session.user) {
+      console.log('AuthService.getUser() resolved user from session:', session.user);
+      return { data: { user: session.user }, error: null };
+    }
+    console.log('AuthService.getUser() no active session or user in session.');
+    return { data: { user: null }, error: null };
   }
 
   // ===== SIGN UP =====

@@ -13,11 +13,24 @@ export const routes: Routes = [
   },
   {
     path: 'products',
-    loadComponent: () => import('./pages/products/products').then((m) => m.Products),
+    loadComponent: () => import('./pages/manageProducts/products/products').then((m) => m.Products),
     canActivate: [privateGuard],
   },
- 
- 
+  {
+    path: 'categories',
+    loadComponent: () => import('./pages/manageCategories/manageCategories').then((m) => m.ManageCategories),
+    canActivate: [privateGuard],
+  },
+  { 
+    path: 'manage-products/edit/:id',
+    loadComponent: () => import('./pages/manageProducts/editProducts/editProducts').then((m) => m.EditProducts),
+    canActivate: [privateGuard],
+  },
+  {
+    path: 'manage-products/createProducts',
+    loadComponent: () => import('./pages/manageProducts/createProducts/createProducts').then((m) => m.CreateProducts),
+    canActivate: [privateGuard],
+  },	
   {
     path: '',
     redirectTo: 'home',

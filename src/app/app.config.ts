@@ -2,9 +2,11 @@ import {
   ApplicationConfig,
   importProvidersFrom,
   provideBrowserGlobalErrorListeners,
-  provideZoneChangeDetection,
+  provideZonelessChangeDetection,
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import {
   LucideAngularModule,
   User,
@@ -13,8 +15,6 @@ import {
   Eye,
   Search,
   Check,
-  CheckCircle,
-  XCircle,
   EyeOff,
   LogOut,
   Home,
@@ -36,28 +36,36 @@ import {
   GripVertical,
   ChevronUp,
   ChevronDown,
-  Edit2,
   Sun,
+  Settings,
+  FileText,
   MoreVertical,
+  Info,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  PlusCircle,
+  FolderOpen,
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes, withComponentInputBinding()),
-    importProvidersFrom(
-      LucideAngularModule.pick({
+providers: [
+  provideBrowserGlobalErrorListeners(),
+  provideZonelessChangeDetection(),
+  provideHttpClient(withFetch()),
+  provideClientHydration(withEventReplay()),
+  provideRouter(routes, withComponentInputBinding()),
+  importProvidersFrom(
+    LucideAngularModule.pick({
         User,
         Mail,
         Lock,
         Check,
         Eye,
         Search,
-        CheckCircle,
-        XCircle,
         EyeOff,
         LogOut,
         Home,
@@ -79,9 +87,21 @@ export const appConfig: ApplicationConfig = {
         GripVertical,
         ChevronUp,
         ChevronDown,
-        Edit2,
-        Sun,
+        FileText,
+        Settings,
         MoreVertical,
+        Sun,
+        Info,
+        AlertTriangle,
+        CheckCircle,
+        XCircle,
+        Loader2,
+        PlusCircle,
+        FolderOpen,
+
+        
+        
+        
         
       }),
     ),

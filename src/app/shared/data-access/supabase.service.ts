@@ -11,4 +11,7 @@ export class SupabaseService {
       environment.supabaseUrl, 
       environment.supabaseKey);
   }
+    get client() {
+    return this.supabaseClient;
+  }
 }
