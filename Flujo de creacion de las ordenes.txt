@@ -1,0 +1,911 @@
+============================================================
+MODELO RELACIONAL COMPLETO – SISTEMA DE ÓRDENES (POS)
+============================================================
+
+TABLA PRINCIPAL: ORDERS
+
+Tabla: orders
+Descripción: Representa una orden completa realizada por un cliente.
+
+Columnas:
+
+id (bigint) PRIMARY KEY
+
+cliente_id (bigint) FOREIGN KEY → clientes.id
+
+fecha_creacion (timestamp without time zone) NOT NULL
+
+fecha_cierre (timestamp without time zone) NULL
+
+total (numeric) NOT NULL DEFAULT 0
+
+propina (numeric) NOT NULL DEFAULT 0
+
+estado_pedido (varchar) NOT NULL DEFAULT 'pendiente'
+
+estado_pago (varchar) NOT NULL DEFAULT 'pendiente'
+
+metodo_pago_id (bigint) FOREIGN KEY → metodos_pago.id
+
+tipo_servicio_id (bigint) FOREIGN KEY → tipos_servicio.id
+
+turno_id (bigint) FOREIGN KEY → turnos.id
+
+Relaciones:
+
+1 cliente puede tener muchas órdenes (1:N)
+
+1 método de pago puede estar en muchas órdenes (1:N)
+
+1 tipo de servicio puede estar en muchas órdenes (1:N)
+
+1 turno puede contener muchas órdenes (1:N)
+
+1 orden tiene muchos order_items (1:N)
+
+DETALLE DE ORDEN
+
+Tabla: order_items
+Descripción: Representa cada producto agregado a una orden.
+
+Columnas:
+
+id (bigint) PRIMARY KEY
+
+order_id (bigint) FOREIGN KEY → orders.id ON DELETE CASCADE
+
+producto_id (bigint) FOREIGN KEY → productos.id
+
+nombre_producto (varchar) NOT NULL
+
+cantidad (integer) NOT NULL
+
+precio_unitario (numeric) NOT NULL
+
+total (numeric) NOT NULL
+
+Relaciones:
+
+1 orden → muchos order_items
+
+1 producto → puede aparecer en muchos order_items
+
+Tabla: order_item_modificadores
+Descripción: Modificadores adicionales aplicados a un item (ej: extra queso).
+
+Columnas:
+
+id (bigint) PRIMARY KEY
+
+order_item_id (bigint) FOREIGN KEY → order_items.id ON DELETE CASCADE
+
+nombre_modificador (varchar) NOT NULL
+
+cantidad (integer) NOT NULL
+
+precio_unitario (numeric) NOT NULL
+
+Relaciones:
+
+1 order_item → muchos modificadores (1:N)
+
+CLIENTES
+
+Tabla: clientes
+
+Columnas:
+
+id (bigint) PRIMARY KEY
+
+nombre (varchar)
+
+telefono (varchar)
+
+email (varchar)
+
+direccion (text)
+
+created_at (timestamp)
+
+Relación:
+
+1 cliente → muchas órdenes
+
+MÉTODOS DE PAGO
+
+Tabla: metodos_pago
+
+Columnas:
+
+id (bigint) PRIMARY KEY
+
+nombre (varchar)
+
+tipo (varchar)
+
+created_at (timestamp)
+
+updated_at (timestamp)
+
+Relación:
+
+1 método de pago → muchas órdenes
+
+TIPOS DE SERVICIO
+
+Tabla: tipos_servicio
+
+Columnas:
+
+id (bigint) PRIMARY KEY
+
+nombre (varchar)
+
+Relación:
+
+1 tipo de servicio → muchas órdenes
+
+TURNOS
+
+Tabla: turnos
+
+Columnas:
+
+id (bigint) PRIMARY KEY
+
+nombre (varchar)
+
+hora_inicio (time)
+
+hora_fin (time)
+
+Relación:
+
+1 turno → muchas órdenes
+
+PRODUCTOS
+
+Tabla: productos
+
+Columnas:
+
+id (bigint) PRIMARY KEY
+
+categoria_id (bigint) FOREIGN KEY → categorias.id
+
+nombre (varchar)
+
+descripcion (text)
+
+precio (numeric)
+
+price_type (varchar)
+
+sku (varchar)
+
+costo (numeric)
+
+descuento (numeric)
+
+embalaje (varchar)
+
+disponible (boolean)
+
+visible (boolean)
+
+created_at (timestamp)
+
+updated_at (timestamp)
+
+Relación:
+
+1 producto → muchos order_items
+
+1 producto → muchas variantes
+
+1 producto → muchas fotos
+
+Tabla: producto_variantes
+
+Columnas:
+
+id (bigint) PRIMARY KEY
+
+producto_id (bigint) FOREIGN KEY → productos.id ON DELETE CASCADE
+
+nombre (varchar)
+
+precio (numeric)
+
+costo (numeric)
+
+descuento (numeric)
+
+sku (varchar)
+
+embalaje (varchar)
+
+disponible (boolean)
+
+created_at (timestamp)
+
+updated_at (timestamp)
+
+Relación:
+
+1 producto → muchas variantes (1:N)
+
+Tabla: producto_fotos
+
+Columnas:
+
+id (bigint) PRIMARY KEY
+
+producto_id (bigint) FOREIGN KEY → productos.id ON DELETE CASCADE
+
+url (text)
+
+COLA DE OPERACIONES (OFFLINE / SINCRONIZACIÓN)
+
+Tabla: operation_queue
+
+Descripción: Maneja sincronización offline, reintentos y operaciones pendientes.
+
+Columnas:
+
+id (integer) PRIMARY KEY
+
+uuid (text)
+
+type (text)
+
+payload (text)
+
+status (text) DEFAULT 'pending'
+
+retry_count (integer) DEFAULT 0
+
+last_error (text)
+
+locked_at (text)
+
+related_entity (text)
+
+created_at (integer)
+
+Uso recomendado:
+
+Guardar operaciones cuando el sistema está offline
+
+Reintentar cuando vuelva conexión
+
+Manejar sincronización con servidor
+
+CARDINALIDAD GENERAL DEL SISTEMA
+
+clientes (1) -------- (N) orders
+orders (1) ---------- (N) order_items
+order_items (1) ----- (N) order_item_modificadores
+productos (1) ------- (N) order_items
+productos (1) ------- (N) producto_variantes
+productos (1) ------- (N) producto_fotos
+metodos_pago (1) ---- (N) orders
+tipos_servicio (1) -- (N) orders
+turnos (1) ---------- (N) orders
+
+FLUJO CORRECTO DE CREACIÓN DE ORDEN
+
+Validar disponibilidad de producto o variante.
+
+Validar método de pago y tipo de servicio.
+
+INSERT en orders con total = 0.
+
+Por cada item:
+
+Determinar precio_unitario
+
+Calcular total_item = cantidad * precio_unitario
+
+INSERT en order_items
+
+INSERT modificadores si existen
+
+SUMAR todos los order_items.total.
+
+UPDATE orders.total.
+
+Cambiar estado_pedido a 'confirmado'.
+
+Si es POS offline:
+
+INSERT en operation_queue.
+
+RECOMENDACIONES DE INTEGRIDAD
+
+Usar ON DELETE CASCADE en:
+
+order_items → orders
+
+order_item_modificadores → order_items
+
+producto_variantes → productos
+
+producto_fotos → productos
+
+Indexar:
+
+orders.cliente_id
+
+orders.fecha_creacion
+
+order_items.order_id
+
+order_items.producto_id
+
+producto_variantes.producto_id
+
+Usar ENUM o CHECK para:
+
+estado_pedido
+
+estado_pago
+
+status en operation_queue
+
+FIN DEL DOCUMENTO
+
+
+
+--------------------------------------------------------------------------------------------
+============================================================
+ESPECIFICACIÓN TÉCNICA
+MODELO DE DATOS – SISTEMA DE ÓRDENES (POS)
+============================================================
+1. INTRODUCCIÓN
+
+Este documento describe el modelo de datos relacional del módulo de gestión de órdenes para un sistema POS (Point of Sale).
+
+Incluye:
+
+Definición formal de tablas
+
+Claves primarias y foráneas
+
+Reglas de integridad referencial
+
+Cardinalidades
+
+Flujo transaccional de creación de orden
+
+Consideraciones para operación offline
+
+2. MODELO DE DATOS
+2.1. Entidad: ORDERS
+Descripción
+
+Representa una orden comercial generada por un cliente.
+
+Definición Técnica
+
+Tabla: public.orders
+
+Campo	Tipo	Nulo	Descripción
+id	bigint	NO	Identificador único (PK)
+cliente_id	bigint	SI	FK hacia clientes.id
+fecha_creacion	timestamp	NO	Fecha de creación
+fecha_cierre	timestamp	SI	Fecha de cierre
+total	numeric	NO	Total final de la orden
+propina	numeric	NO	Propina aplicada
+estado_pedido	varchar	NO	Estado operativo del pedido
+estado_pago	varchar	NO	Estado del pago
+metodo_pago_id	bigint	SI	FK hacia metodos_pago.id
+tipo_servicio_id	bigint	SI	FK hacia tipos_servicio.id
+turno_id	bigint	SI	FK hacia turnos.id
+Claves
+
+PRIMARY KEY (id)
+
+FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+FOREIGN KEY (metodo_pago_id) REFERENCES metodos_pago(id)
+FOREIGN KEY (tipo_servicio_id) REFERENCES tipos_servicio(id)
+FOREIGN KEY (turno_id) REFERENCES turnos(id)
+
+2.2. Entidad: ORDER_ITEMS
+Descripción
+
+Representa el detalle de productos incluidos en una orden.
+
+Tabla: public.order_items
+
+Campo	Tipo	Nulo	Descripción
+id	bigint	NO	PK
+order_id	bigint	NO	FK hacia orders.id
+producto_id	bigint	NO	FK hacia productos.id
+nombre_producto	varchar	NO	Snapshot del nombre
+cantidad	integer	NO	Cantidad solicitada
+precio_unitario	numeric	NO	Precio al momento de la venta
+total	numeric	NO	cantidad × precio_unitario
+Claves
+
+PRIMARY KEY (id)
+
+FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+FOREIGN KEY (producto_id) REFERENCES productos(id)
+
+2.3. Entidad: ORDER_ITEM_MODIFICADORES
+Descripción
+
+Representa modificadores aplicados a un producto dentro de la orden.
+
+Tabla: public.order_item_modificadores
+
+Campo	Tipo	Nulo	Descripción
+id	bigint	NO	PK
+order_item_id	bigint	NO	FK hacia order_items.id
+nombre_modificador	varchar	NO	Nombre del modificador
+cantidad	integer	NO	Cantidad aplicada
+precio_unitario	numeric	NO	Precio individual
+Claves
+
+PRIMARY KEY (id)
+
+FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE CASCADE
+
+2.4. Entidad: CLIENTES
+
+Tabla: public.clientes
+
+Campo	Tipo	Nulo
+id	bigint	NO
+nombre	varchar	SI
+telefono	varchar	SI
+email	varchar	SI
+direccion	text	SI
+created_at	timestamp	SI
+
+PRIMARY KEY (id)
+
+Relación:
+Un cliente puede tener múltiples órdenes (1:N).
+
+2.5. Entidad: METODOS_PAGO
+
+Tabla: public.metodos_pago
+
+Campo	Tipo
+id	bigint
+nombre	varchar
+tipo	varchar
+created_at	timestamp
+updated_at	timestamp
+
+PRIMARY KEY (id)
+
+2.6. Entidad: TIPOS_SERVICIO
+
+Tabla: public.tipos_servicio
+
+Campo	Tipo
+id	bigint
+nombre	varchar
+
+PRIMARY KEY (id)
+
+2.7. Entidad: TURNOS
+
+Tabla: public.turnos
+
+Campo	Tipo
+id	bigint
+nombre	varchar
+hora_inicio	time
+hora_fin	time
+
+PRIMARY KEY (id)
+
+2.8. Entidad: PRODUCTOS
+
+Tabla: public.productos
+
+Campo	Tipo
+id	bigint
+categoria_id	bigint
+nombre	varchar
+descripcion	text
+precio	numeric
+price_type	varchar
+sku	varchar
+costo	numeric
+descuento	numeric
+embalaje	varchar
+disponible	boolean
+visible	boolean
+created_at	timestamp
+updated_at	timestamp
+
+PRIMARY KEY (id)
+
+FOREIGN KEY (categoria_id) REFERENCES categorias(id)
+
+2.9. Entidad: PRODUCTO_VARIANTES
+
+Tabla: public.producto_variantes
+
+Campo	Tipo
+id	bigint
+producto_id	bigint
+nombre	varchar
+precio	numeric
+costo	numeric
+descuento	numeric
+sku	varchar
+embalaje	varchar
+disponible	boolean
+created_at	timestamp
+updated_at	timestamp
+
+PRIMARY KEY (id)
+
+FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
+
+2.10. Entidad: PRODUCTO_FOTOS
+
+Tabla: public.producto_fotos
+
+Campo	Tipo
+id	bigint
+producto_id	bigint
+url	text
+
+PRIMARY KEY (id)
+
+FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
+
+2.11. Entidad Técnica: OPERATION_QUEUE
+Descripción
+
+Tabla utilizada para sincronización offline y procesamiento asíncrono.
+
+Tabla: public.operation_queue
+
+Campo	Tipo
+id	integer
+uuid	text
+type	text
+payload	text
+status	text
+retry_count	integer
+last_error	text
+locked_at	text
+related_entity	text
+created_at	integer
+
+PRIMARY KEY (id)
+
+Uso:
+
+Manejo de operaciones pendientes
+
+Reintentos
+
+Sincronización cuando el sistema vuelve online
+
+3. CARDINALIDAD GLOBAL
+
+clientes (1) — (N) orders
+orders (1) — (N) order_items
+order_items (1) — (N) order_item_modificadores
+productos (1) — (N) order_items
+productos (1) — (N) producto_variantes
+productos (1) — (N) producto_fotos
+metodos_pago (1) — (N) orders
+tipos_servicio (1) — (N) orders
+turnos (1) — (N) orders
+
+4. FLUJO TRANSACCIONAL DE CREACIÓN DE ORDEN
+
+Validar disponibilidad del producto o variante.
+
+Validar método de pago y tipo de servicio.
+
+INSERT en orders con total provisional = 0.
+
+INSERT de cada item en order_items.
+
+INSERT de modificadores si existen.
+
+SUMA de totales de items.
+
+UPDATE orders.total.
+
+Cambio de estado_pedido a "confirmado".
+
+Registro opcional en operation_queue.
+
+Todas las operaciones deben ejecutarse dentro de una transacción (BEGIN / COMMIT).
+
+5. RECOMENDACIONES DE INTEGRIDAD Y PERFORMANCE
+
+Implementar ON DELETE CASCADE en tablas dependientes.
+
+Indexar:
+
+orders.cliente_id
+
+orders.fecha_creacion
+
+order_items.order_id
+
+producto_variantes.producto_id
+
+Utilizar CHECK o ENUM para:
+
+estado_pedido
+
+estado_pago
+
+status (operation_queue)
+
+Registrar timestamps en UTC.
+
+FIN DEL DOCUMENTO
+ESPECIFICACIÓN TÉCNICA – MODELO DE ÓRDENES
+
+
+
+============================================================
+6. FLUJO TRANSACCIONAL DE CREACIÓN DE ORDEN
+============================================================
+6.1. Descripción General
+
+El proceso de creación de una orden debe ejecutarse dentro de una transacción atómica para garantizar:
+
+Consistencia de datos
+
+Integridad referencial
+
+No generación de órdenes incompletas
+
+Manejo adecuado de errores (ROLLBACK)
+
+Todas las operaciones deben ejecutarse en el servidor.
+
+6.2. Validaciones Previas (Servidor)
+
+Antes de iniciar la transacción se deben validar las siguientes reglas de negocio:
+
+Verificar disponibilidad del producto o variante:
+
+Campo disponible = true
+
+Validar stock si el sistema lo maneja
+
+Validar método de pago:
+
+Debe existir en metodos_pago
+
+Debe estar activo si se maneja estado
+
+Validar tipo de servicio:
+
+Debe existir en tipos_servicio
+
+Validar turno activo si aplica.
+
+Si alguna validación falla:
+
+No iniciar transacción
+
+Retornar error controlado
+
+6.3. Secuencia Operacional
+Paso 1: Iniciar Transacción
+BEGIN;
+Paso 2: Crear Orden (Estado Inicial)
+
+Se inserta la orden con total provisional igual a 0.
+
+INSERT INTO public.orders (
+  cliente_id,
+  fecha_creacion,
+  fecha_cierre,
+  total,
+  propina,
+  estado_pedido,
+  estado_pago,
+  metodo_pago_id,
+  tipo_servicio_id,
+  turno_id
+)
+VALUES (
+  :cliente_id,
+  NOW(),
+  NULL,
+  0::numeric,
+  COALESCE(:propina, 0)::numeric,
+  COALESCE(:estado_pedido, 'pendiente')::varchar,
+  COALESCE(:estado_pago, 'pendiente')::varchar,
+  :metodo_pago_id,
+  :tipo_servicio_id,
+  :turno_id
+)
+RETURNING id AS order_id;
+
+Resultado:
+
+Se obtiene order_id generado automáticamente.
+
+Paso 3: Procesamiento de Ítems del Carrito
+
+Para cada ítem recibido en el carrito:
+
+3.1 Determinar Precio Unitario
+
+Regla:
+
+Si existe variante → usar producto_variantes.precio
+
+Si no → usar productos.precio
+
+Consulta sugerida:
+
+SELECT precio
+FROM public.producto_variantes
+WHERE id = :variante_id
+  AND disponible = true;
+
+O:
+
+SELECT precio
+FROM public.productos
+WHERE id = :producto_id
+  AND disponible = true;
+3.2 Insertar Ítem en order_items
+INSERT INTO public.order_items (
+  order_id,
+  producto_id,
+  nombre_producto,
+  cantidad,
+  precio_unitario,
+  total
+)
+VALUES (
+  :order_id,
+  :producto_id,
+  :nombre_producto,
+  :cantidad,
+  :precio_unitario::numeric,
+  (:cantidad * :precio_unitario)::numeric
+)
+RETURNING id AS order_item_id;
+
+Resultado:
+
+Se obtiene order_item_id
+
+3.3 Insertar Modificadores (Opcional)
+
+Si el producto contiene modificadores:
+
+INSERT INTO public.order_item_modificadores (
+  order_item_id,
+  nombre_modificador,
+  cantidad,
+  precio_unitario
+)
+VALUES (
+  :order_item_id,
+  :nombre_mod,
+  :mod_cantidad,
+  :mod_precio_unitario
+);
+
+Este paso puede repetirse múltiples veces por item.
+
+Paso 4: Calcular Total de la Orden
+
+Se suman los totales de los items:
+
+SELECT COALESCE(SUM(total), 0)::numeric AS items_total
+FROM public.order_items
+WHERE order_id = :order_id;
+Paso 5: Actualizar Orden con Total Final
+UPDATE public.orders
+SET total = :items_total + COALESCE(:propina, 0)::numeric,
+    estado_pedido = COALESCE(:nuevo_estado_pedido, estado_pedido),
+    fecha_cierre = CASE 
+        WHEN :cerrar_ahora = true 
+        THEN NOW() 
+        ELSE fecha_cierre 
+    END
+WHERE id = :order_id;
+
+Reglas:
+
+El total final incluye propina.
+
+Puede incluir impuestos/envío según reglas del negocio.
+
+Puede cerrarse inmediatamente o quedar abierta.
+
+Paso 6: Encolar Operación (Opcional – Offline / Async)
+
+Si el sistema maneja sincronización o procesamiento adicional:
+
+INSERT INTO public.operation_queue (
+  uuid,
+  type,
+  payload,
+  status,
+  created_at
+)
+VALUES (
+  gen_random_uuid()::text,
+  'process_order',
+  :payload_json::text,
+  'pending',
+  extract(epoch FROM now())::int
+);
+
+Uso típico:
+
+Notificaciones
+
+Facturación electrónica
+
+Sincronización con servidor central
+
+Paso 7: Confirmar Transacción
+COMMIT;
+
+En caso de error:
+
+ROLLBACK;
+6.4. Propiedades Técnicas del Flujo
+
+✔ Atomicidad
+✔ Consistencia
+✔ Integridad referencial
+✔ Reproducible
+✔ Compatible con arquitectura offline-first
+
+6.5. Buenas Prácticas Recomendadas
+
+Ejecutar siempre dentro de una transacción.
+
+Usar parámetros preparados (evitar SQL injection).
+
+No calcular totales en frontend como fuente de verdad.
+
+Usar índices en:
+
+order_items.order_id
+
+orders.fecha_creacion
+
+Validar estado del producto antes del insert.
+
+Registrar auditoría si el sistema lo requiere.
+
+6.6. Diagrama Simplificado del Flujo
+
+VALIDACIONES
+↓
+BEGIN
+↓
+INSERT orders
+↓
+INSERT order_items
+↓
+INSERT modificadores
+↓
+SUMAR total
+↓
+UPDATE orders
+↓
+OPERATION_QUEUE (opcional)
+↓
+COMMIT
+
+FIN SECCIÓN – FLUJO TRANSACCIONAL

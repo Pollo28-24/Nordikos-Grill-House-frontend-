@@ -27,10 +27,20 @@ export const routes: Routes = [
     canActivate: [privateGuard],
   },
   {
+    path: 'orders',
+    loadComponent: () => import('./pages/orders/orders-by-service/orders-by-service').then(m => m.OrdersByService),
+    canActivate: [privateGuard],
+  },
+  {
     path: 'manage-products/createProducts',
     loadComponent: () => import('./pages/manageProducts/createProducts/createProducts').then((m) => m.CreateProducts),
     canActivate: [privateGuard],
   },	
+  {
+    path: 'orders/new',
+    loadComponent: () => import('./pages/orders/new-order/new-order').then(m => m.NewOrder),
+    canActivate: [privateGuard],
+  },
   {
     path: '',
     redirectTo: 'home',

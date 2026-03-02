@@ -51,12 +51,21 @@ interface SignUpForm {
         <!-- Nombre -->
         <div class="mb-4">
           <label class="text-sm block mb-1">Nombre</label>
-          <input
-            formControlName="name"
-            autocomplete="name"
-            class="w-full bg-zinc-800/70 px-4 py-3 rounded-2xl outline-none focus:border-amber-500 border border-transparent text-sm"
-            placeholder="Empleado"
-          />
+          <div
+            class="flex items-center gap-3
+                   bg-zinc-800/70
+                   border border-transparent
+                   focus-within:border-amber-500
+                   px-4 py-3 rounded-2xl transition"
+          >
+            <lucide-icon name="user" class="w-5 h-5 text-zinc-400" />
+            <input
+              formControlName="name"
+              autocomplete="name"
+              class="w-full bg-transparent outline-none text-sm"
+              placeholder="Empleado"
+            />
+          </div>
           @if (name?.touched && name?.errors?.['required']) {
             <p class="text-xs text-red-400 mt-1">El nombre es obligatorio</p>
           }
@@ -67,13 +76,22 @@ interface SignUpForm {
         <!-- Email -->
         <div class="mb-4">
           <label class="text-sm block mb-1">Correo</label>
-          <input
-            type="email"
-            formControlName="email"
-            autocomplete="email"
-            class="w-full bg-zinc-800/70 px-4 py-3 rounded-2xl outline-none focus:border-amber-500 border border-transparent text-sm"
-            placeholder="correo@nordikos.com"
-          />
+          <div
+            class="flex items-center gap-3
+                   bg-zinc-800/70
+                   border border-transparent
+                   focus-within:border-amber-500
+                   px-4 py-3 rounded-2xl transition"
+          >
+            <lucide-icon name="mail" class="w-5 h-5 text-zinc-400" />
+            <input
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              class="w-full bg-transparent outline-none text-sm"
+              placeholder="correo@nordikos.com"
+            />
+          </div>
           @if (email?.touched && email?.errors?.['required']) {
             <p class="text-xs text-red-400 mt-1">El correo es obligatorio</p>
           }
@@ -85,15 +103,36 @@ interface SignUpForm {
         <!-- Password -->
         <div class="mb-4">
           <label class="text-sm block mb-1">Contraseña</label>
-          <input
-            type="password"
-            formControlName="password"
-            autocomplete="new-password"
-            class="w-full bg-zinc-800/70 px-4 py-3 rounded-2xl outline-none focus:border-amber-500 border border-transparent text-sm"
-            placeholder="••••••••"
-          />
+          <div
+            class="flex items-center gap-3
+                   bg-zinc-800/70
+                   border border-transparent
+                   focus-within:border-amber-500
+                   px-4 py-3 rounded-2xl transition"
+          >
+            <lucide-icon name="lock" class="w-5 h-5 text-zinc-400" />
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password"
+              class="w-full bg-transparent outline-none text-sm"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              (click)="togglePassword()"
+              class="text-zinc-400 hover:text-amber-400 transition"
+            >
+              <lucide-icon
+                [name]="showPassword() ? 'eye-off' : 'eye'"
+                class="w-5 h-5"
+              />
+            </button>
+          </div>
           @if (password?.touched && password?.errors?.['required']) {
-            <p class="text-xs text-red-400 mt-1">La contraseña es obligatoria</p>
+            <p class="text-xs text-red-400 mt-1">
+              La contraseña es obligatoria
+            </p>
           }
           @if (password?.touched && password?.errors?.['minlength']) {
             <p class="text-xs text-red-400 mt-1">Mínimo 8 caracteres</p>
@@ -108,13 +147,32 @@ interface SignUpForm {
         <!-- Confirm Password -->
         <div class="mb-6">
           <label class="text-sm block mb-1">Confirmar contraseña</label>
-          <input
-            type="password"
-            formControlName="confirmPassword"
-            autocomplete="new-password"
-            class="w-full bg-zinc-800/70 px-4 py-3 rounded-2xl outline-none focus:border-amber-500 border border-transparent text-sm"
-            placeholder="••••••••"
-          />
+          <div
+            class="flex items-center gap-3
+                   bg-zinc-800/70
+                   border border-transparent
+                   focus-within:border-amber-500
+                   px-4 py-3 rounded-2xl transition"
+          >
+            <lucide-icon name="lock" class="w-5 h-5 text-zinc-400" />
+            <input
+              [type]="showConfirmPassword() ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+              class="w-full bg-transparent outline-none text-sm"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              (click)="toggleConfirmPassword()"
+              class="text-zinc-400 hover:text-amber-400 transition"
+            >
+              <lucide-icon
+                [name]="showConfirmPassword() ? 'eye-off' : 'eye'"
+                class="w-5 h-5"
+              />
+            </button>
+          </div>
           @if (form.errors?.['passwordMismatch'] && confirmPassword?.touched) {
             <p class="text-xs text-red-400 mt-1">
               Las contraseñas no coinciden
@@ -153,6 +211,8 @@ export default class SignUp {
   private router = inject(Router);
 
   loading = signal(false);
+  showPassword = signal(false);
+  showConfirmPassword = signal(false);
 
   form = this.fb.group<SignUpForm>(
     {
@@ -198,6 +258,12 @@ export default class SignUp {
 
   get confirmPassword() {
     return this.form.get('confirmPassword');
+  }
+  togglePassword() {
+    this.showPassword.update((v) => !v);
+  }
+  toggleConfirmPassword() {
+    this.showConfirmPassword.update((v) => !v);
   }
   async submit() {
     if (this.form.invalid) {

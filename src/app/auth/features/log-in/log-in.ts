@@ -43,19 +43,13 @@ interface LogInForm {
             alt="logo"
             class="w-20 h-20 mx-auto mb-3"
           />
-          <h1 class="text-3xl font-bold tracking-wide">
-            Iniciar Sesión
-          </h1>
-          <p class="text-sm text-zinc-400 mt-1">
-            Nordikos Grill House
-          </p>
+          <h1 class="text-3xl font-bold tracking-wide">Iniciar Sesión</h1>
+          <p class="text-sm text-zinc-400 mt-1">Nordikos Grill House</p>
         </div>
 
         <!-- Email -->
         <div class="mb-5">
-          <label class="block text-sm mb-1 text-zinc-300">
-            Correo
-          </label>
+          <label class="block text-sm mb-1 text-zinc-300"> Correo </label>
 
           <div
             class="flex items-center gap-3
@@ -64,10 +58,7 @@ interface LogInForm {
                    focus-within:border-amber-500
                    px-4 py-3 rounded-2xl transition"
           >
-            <lucide-icon
-              name="mail"
-              class="w-5 h-5 text-zinc-400"
-            />
+            <lucide-icon name="mail" class="w-5 h-5 text-zinc-400" />
             <input
               type="email"
               formControlName="email"
@@ -78,9 +69,7 @@ interface LogInForm {
           </div>
 
           @if (email?.touched && email?.errors?.['required']) {
-            <p class="text-xs text-red-400 mt-1">
-              El correo es obligatorio
-            </p>
+            <p class="text-xs text-red-400 mt-1">El correo es obligatorio</p>
           }
           @if (email?.touched && email?.errors?.['pattern']) {
             <p class="text-xs text-red-400 mt-1">Formato de correo inválido</p>
@@ -89,9 +78,7 @@ interface LogInForm {
 
         <!-- Password -->
         <div class="mb-6">
-          <label class="block text-sm mb-1 text-zinc-300">
-            Contraseña
-          </label>
+          <label class="block text-sm mb-1 text-zinc-300"> Contraseña </label>
 
           <div
             class="flex items-center gap-3
@@ -100,10 +87,7 @@ interface LogInForm {
                    focus-within:border-amber-500
                    px-4 py-3 rounded-2xl transition"
           >
-            <lucide-icon
-              name="lock"
-              class="w-5 h-5 text-zinc-400"
-            />
+            <lucide-icon name="lock" class="w-5 h-5 text-zinc-400" />
 
             <input
               [type]="showPassword() ? 'text' : 'password'"
@@ -132,16 +116,17 @@ interface LogInForm {
           }
 
           @if (password?.touched && password?.errors?.['minlength']) {
-            <p class="text-xs text-red-400 mt-1">
-              Mínimo 6 caracteres
-            </p>
+            <p class="text-xs text-red-400 mt-1">Mínimo 6 caracteres</p>
           }
         </div>
 
         @if (locked()) {
-          <div class="mb-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3">
+          <div
+            class="mb-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3"
+          >
             <p class="text-sm text-red-400">
-              Demasiados intentos. Espera {{ remainingLockSeconds() }}s para volver a intentar.
+              Demasiados intentos. Espera {{ remainingLockSeconds() }}s para
+              volver a intentar.
             </p>
           </div>
         }
@@ -162,13 +147,13 @@ interface LogInForm {
               <input
                 formControlName="challengeAnswer"
                 class="w-full bg-transparent outline-none text-sm"
-                [placeholder]="'Resuelve: ' + challenge()!.a + ' + ' + challenge()!.b"
+                [placeholder]="
+                  'Resuelve: ' + challenge()!.a + ' + ' + challenge()!.b
+                "
               />
             </div>
             @if (form.get('challengeAnswer')?.touched && !challengeSolved()) {
-              <p class="text-xs text-red-400 mt-1">
-                Respuesta incorrecta
-              </p>
+              <p class="text-xs text-red-400 mt-1">Respuesta incorrecta</p>
             }
           </div>
         }
@@ -176,7 +161,12 @@ interface LogInForm {
         <!-- Submit -->
         <button
           type="submit"
-          [disabled]="form.invalid || loading() || locked() || (challenge() && !challengeSolved())"
+          [disabled]="
+            form.invalid ||
+            loading() ||
+            locked() ||
+            (challenge() && !challengeSolved())
+          "
           class="w-full
                  bg-amber-500 hover:bg-amber-400
                  disabled:bg-zinc-700 disabled:text-zinc-400
@@ -240,7 +230,7 @@ export default class LogIn {
   }
 
   togglePassword() {
-    this.showPassword.update(v => !v);
+    this.showPassword.update((v) => !v);
   }
 
   constructor() {
@@ -315,7 +305,11 @@ export default class LogIn {
       if (typeof parsed?.lockUntil === 'number') {
         this.lockUntil.set(parsed.lockUntil);
       }
-      if (parsed?.challenge && typeof parsed.challenge.a === 'number' && typeof parsed.challenge.b === 'number') {
+      if (
+        parsed?.challenge &&
+        typeof parsed.challenge.a === 'number' &&
+        typeof parsed.challenge.b === 'number'
+      ) {
         this.challenge.set(parsed.challenge);
       }
     } catch {}
@@ -364,19 +358,13 @@ export default class LogIn {
 
       if (error) throw error;
 
-      this.toastService.show(
-        '🔥 Bienvenido a Nordikos Grill House',
-        'success'
-      );
+      this.toastService.show('🔥 Bienvenido a Nordikos Grill House', 'success');
 
       this.router.navigateByUrl('/');
       this.resetThrottling();
       this.logAuthEvent(true, 'success');
     } catch {
-      this.toastService.show(
-        'Correo o contraseña incorrectos',
-        'error'
-      );
+      this.toastService.show('Correo o contraseña incorrectos', 'error');
 
       this.password?.reset();
       this.registerFailedAttempt();

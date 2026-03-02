@@ -1,0 +1,53 @@
+<app-navbar />
+<div class="min-h-screen bg-zinc-950 text-zinc-100">
+  <div class="max-w-7xl mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl sm:text-3xl font-bold">Órdenes</h1>
+      <a routerLink="/orders/new" class="px-3 py-2 rounded-xl bg-amber-500 text-zinc-900 font-semibold hover:bg-amber-400 transition">
+        Nueva orden
+      </a>
+    </div>
+
+    <div class="mb-4 flex gap-2 flex-wrap">
+      <button
+        class="px-3 py-1.5 rounded-lg border border-white/10"
+        [class.bg-amber-600]="selectedTypeId() === null"
+        (click)="selectType(null)"
+      >
+        Todas
+      </button>
+      @for (t of serviceTypes(); track t.id) {
+        <button
+          class="px-3 py-1.5 rounded-lg border border-white/10"
+          [class.bg-amber-600]="selectedTypeId() === t.id"
+          (click)="selectType(t.id)"
+        >
+          {{ t.nombre }}
+        </button>
+      }
+    </div>
+
+    @if (loading()) {
+      <p class="text-zinc-400">Cargando órdenes…</p>
+    } @else {
+      @if (filtered().length === 0) {
+        <p class="text-zinc-400">Sin órdenes para este tipo de servicio.</p>
+      } @else {
+        <div class="space-y-3">
+          @for (o of filtered(); track o.id) {
+            <div class="rounded-xl border border-white/10 bg-[#121212] p-4 flex items-center justify-between">
+              <div class="text-sm">
+                <p class="font-semibold">#{{ o.id }}</p>
+                <p class="text-zinc-400">Estado: {{ o.estado_pedido }}</p>
+              </div>
+              <div class="text-right">
+                <p class="text-emerald-400 font-bold">${{ o.total | number:'1.2-2' }}</p>
+                <p class="text-zinc-400 text-xs">{{ o.fecha_creacion | date:'short' }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+</div>
