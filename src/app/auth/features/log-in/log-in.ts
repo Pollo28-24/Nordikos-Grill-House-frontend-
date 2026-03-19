@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+   import { Component, inject, signal } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -9,6 +9,7 @@ import { RouterLink, Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../data-access/auth.services';
 import { ToastService } from '../../../core/services/toast.service';
+
 interface LogInForm {
   email: FormControl<string | null>;
   password: FormControl<string | null>;

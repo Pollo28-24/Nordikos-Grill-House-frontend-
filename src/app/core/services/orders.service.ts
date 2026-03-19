@@ -1,27 +1,41 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from '../../shared/data-access/supabase.service';
-import { OrderCreateDto, OrderCreateResponse } from '../../core/models/order.model';
+import { OrderCreateDto, OrderCreateResponse, OrderCreateItem } from '../../core/models/order.model';
 
 @Injectable({ providedIn: 'root' })
 export class OrdersService {
   private supabase = inject(SupabaseService).client;
+  private platformId = inject(PLATFORM_ID);
 
   creating = signal(false);
   lastOrder = signal<{ order_id: number; total: number } | null>(null);
   error = signal<string | null>(null);
   orders = signal<any[]>([]);
   loadingOrders = signal(false);
+  cart = signal<OrderCreateItem[]>([]);
+  editingOrderId = signal<number | string | null>(null); // Nuevo: Para rastrear si editamos una orden
 
   private queueKey = 'orders_queue_v1';
+  private channel: any = null;
 
-  async loadOrders(): Promise<void> {
+  async loadOrders(dateFilter?: { start: string; end: string }): Promise<void> {
     try {
       this.loadingOrders.set(true);
-      const { data, error } = await this.supabase
+      let query = this.supabase
         .from('orders')
-        .select('id, fecha_creacion, total, estado_pedido, estado_pago, metodo_pago_id, tipo_servicio_id, turno_id')
-        .order('fecha_creacion', { ascending: false })
-        .limit(200);
+        .select('id, numero_orden, nota_general, fecha_creacion, fecha_cierre, total, estado_pedido, estado_pago, metodo_pago_id, tipo_servicio_id, turno_id')
+        .order('fecha_creacion', { ascending: false });
+
+      if (dateFilter) {
+        query = query
+          .gte('fecha_creacion', dateFilter.start)
+          .lte('fecha_creacion', dateFilter.end);
+      } else {
+        query = query.limit(200);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       this.orders.set(data ?? []);
     } catch (e: any) {
@@ -29,6 +43,61 @@ export class OrdersService {
     } finally {
       this.loadingOrders.set(false);
     }
+  }
+
+  addProduct(product: any) {
+    const items = this.cart();
+    const existing = items.find(i => i.producto_id === product.id && !i.variante_id);
+    if (existing) {
+      existing.cantidad += 1;
+      this.cart.set([...items]);
+    } else {
+      this.cart.set([...items, {
+        producto_id: product.id,
+        nombre_producto: product.nombre,
+        cantidad: 1,
+        modificadores: []
+      }]);
+    }
+  }
+
+  addVariant(variant: any, product: any) {
+    const items = this.cart();
+    const existing = items.find(i => i.variante_id === variant.id);
+    if (existing) {
+      existing.cantidad += 1;
+      this.cart.set([...items]);
+    } else {
+      this.cart.set([...items, {
+        variante_id: variant.id,
+        producto_id: product.id,
+        nombre_producto: `${product.nombre} - ${variant.nombre}`,
+        cantidad: 1,
+        modificadores: []
+      }]);
+    }
+  }
+
+  increment(item: OrderCreateItem) {
+    item.cantidad += 1;
+    this.cart.set([...this.cart()]);
+  }
+
+  decrement(item: OrderCreateItem) {
+    if (item.cantidad > 1) {
+      item.cantidad -= 1;
+      this.cart.set([...this.cart()]);
+    } else {
+      this.remove(item);
+    }
+  }
+
+  remove(item: OrderCreateItem) {
+    this.cart.set(this.cart().filter(i => i !== item));
+  }
+
+  clearCart() {
+    this.cart.set([]);
   }
 
   async createOrder(dto: OrderCreateDto): Promise<OrderCreateResponse> {
@@ -48,6 +117,7 @@ export class OrdersService {
         p_tipo_servicio_id: dto.tipo_servicio_id,
         p_turno_id: dto.turno_id,
         p_propina: dto.propina ?? 0,
+        p_nota_general: dto.nota_general ?? null,
         p_client_request_id: dto.client_request_id,
         p_items: dto.items
       });
@@ -57,63 +127,31 @@ export class OrdersService {
       }
 
       if (error) {
-        // Fallback: si la función instalada aún usa firma simplificada (in_client_request_id, in_items)
-        const code = String((error as any)?.code || '');
-        const msg = String(error?.message || '').toLowerCase();
-        const det = String(error?.details || '').toLowerCase();
-        const notFound =
-          code === '404' ||
-          code === 'PGRST202' ||
-          msg.includes('not found') ||
-          det.includes('not found') ||
-          msg.includes('could not find the function') ||
-          det.includes('could not find the function');
-        if (notFound) {
-          if (DEBUG) {
-            console.warn('rpc.orders_create_v1 not found, trying fallback signature');
-          }
-          const fb = await this.supabase.rpc('orders_create_v1', {
-            in_client_request_id: dto.client_request_id,
-            in_items: dto.items
-          } as any);
-          if (DEBUG) {
-            console.log('rpc.orders_create_v1.fallback.response', fb);
-          }
-          if (!fb.error && typeof fb.data === 'number') {
-            const orderId = fb.data as number;
-            this.lastOrder.set({ order_id: orderId, total: 0 });
-            if (DEBUG) {
-              console.groupEnd();
-            }
-            return { status: 'success', order_id: orderId, total: 0 };
-          } else {
-            if (DEBUG) {
-              console.error('rpc.orders_create_v1.fallback.error', fb.error);
-            }
-          }
-        }
+        // Log error details for debugging
+        console.error('rpc.orders_create_v1.error', error);
+        this.error.set(error.message ?? 'Error creando orden');
+        
         // Network/offline heuristics
         const isOffline = !navigator.onLine || String(error?.message || '').toLowerCase().includes('fetch') || String(error?.message || '').toLowerCase().includes('network');
         if (isOffline) {
-          if (DEBUG) {
-            console.warn('network/offline detected, enqueue order', { error });
-          }
           this.enqueue(dto);
-          if (DEBUG) {
-            console.groupEnd();
-          }
-          return { status: 'validation_error', error_code: 'SERVICE_TYPE_INVALID' } as any;
         }
-        this.error.set(error.message ?? 'Error creando orden');
-        if (DEBUG) {
-          console.error('rpc.orders_create_v1.error', error);
-          console.groupEnd();
-        }
+        
+        if (DEBUG) console.groupEnd();
         return { status: 'validation_error', error_code: 'SERVICE_TYPE_INVALID' } as any;
       }
 
       if (data?.status === 'success') {
         this.lastOrder.set({ order_id: data.order_id, total: data.total });
+        
+        // Generación de ticket asincrónico (side-effect)
+        this.supabase.from('tickets').insert({
+          order_id: data.order_id,
+          tipo: dto.tipo_servicio_id === 1 ? 'ticket_llevar' : 'ticket_cocina',
+          impreso: false
+        }).then(({ error: ticketError }) => {
+          if (ticketError) console.error('Error al encolar ticket:', ticketError);
+        });
       }
       if (DEBUG) {
         console.groupEnd();
@@ -136,7 +174,38 @@ export class OrdersService {
     }
   }
 
+  subscribeRealtime() {
+    if (this.channel) return;
+    this.channel = this.supabase
+      .channel('orders-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        (payload: any) => {
+          const current = this.orders();
+          if (payload.eventType === 'INSERT') {
+            this.orders.set([payload.new, ...current]);
+          } else if (payload.eventType === 'UPDATE') {
+            this.orders.set(
+              current.map((o: any) => (o.id === payload.new?.id ? payload.new : o)),
+            );
+          } else if (payload.eventType === 'DELETE') {
+            this.orders.set(current.filter((o: any) => o.id !== payload.old?.id));
+          }
+        },
+      )
+      .subscribe();
+  }
+
+  unsubscribeRealtime() {
+    if (this.channel) {
+      this.supabase.removeChannel(this.channel);
+      this.channel = null;
+    }
+  }
+
   getQueued(): OrderCreateDto[] {
+    if (!isPlatformBrowser(this.platformId)) return [];
     try {
       const DEBUG = true;
       const raw = localStorage.getItem(this.queueKey);
@@ -150,6 +219,7 @@ export class OrdersService {
   }
 
   private setQueued(items: OrderCreateDto[]) {
+    if (!isPlatformBrowser(this.platformId)) return;
     try {
       localStorage.setItem(this.queueKey, JSON.stringify(items));
       const DEBUG = true;

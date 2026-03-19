@@ -1,0 +1,419 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.categorias (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  nombre character varying NOT NULL,
+  descripcion text,
+  visible boolean DEFAULT true,
+  created_at timestamp without time zone DEFAULT now(),
+  updated_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT categorias_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.clientes (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  nombre character varying,
+  telefono character varying,
+  email character varying,
+  direccion text,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT clientes_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.metodos_pago (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  nombre character varying NOT NULL,
+  tipo character varying NOT NULL CHECK (tipo::text = ANY (ARRAY['manual'::character varying, 'online'::character varying]::text[])),
+  created_at timestamp without time zone DEFAULT now(),
+  updated_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT metodos_pago_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.modificador_categorias (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  nombre character varying NOT NULL,
+  descripcion text,
+  visible boolean DEFAULT true,
+  created_at timestamp without time zone DEFAULT now(),
+  updated_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT modificador_categorias_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.modificadores (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  categoria_id bigint,
+  nombre character varying NOT NULL,
+  precio numeric NOT NULL,
+  costo numeric,
+  descuento numeric,
+  sku character varying,
+  visible boolean DEFAULT true,
+  cantidad_maxima integer DEFAULT 1,
+  created_at timestamp without time zone DEFAULT now(),
+  updated_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT modificadores_pkey PRIMARY KEY (id),
+  CONSTRAINT modificadores_categoria_id_fkey FOREIGN KEY (categoria_id) REFERENCES public.modificador_categorias(id)
+);
+CREATE TABLE public.operation_queue (
+  id integer NOT NULL,
+  uuid text NOT NULL UNIQUE,
+  type text NOT NULL,
+  payload text NOT NULL,
+  status text NOT NULL DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'processing'::text, 'failed'::text, 'done'::text, 'cancelled'::text])),
+  retry_count integer NOT NULL DEFAULT 0,
+  last_error text,
+  locked_at text,
+  related_entity text,
+  created_at integer NOT NULL,
+  CONSTRAINT operation_queue_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.order_item_modificadores (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  order_item_id bigint,
+  nombre_modificador character varying NOT NULL,
+  cantidad integer NOT NULL,
+  precio_unitario numeric NOT NULL,
+  CONSTRAINT order_item_modificadores_pkey PRIMARY KEY (id),
+  CONSTRAINT order_item_modificadores_order_item_id_fkey FOREIGN KEY (order_item_id) REFERENCES public.order_items(id)
+);
+CREATE TABLE public.order_items (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  order_id bigint,
+  producto_id bigint,
+  nombre_producto character varying NOT NULL,
+  cantidad integer NOT NULL,
+  precio_unitario numeric NOT NULL,
+  total numeric NOT NULL,
+  CONSTRAINT order_items_pkey PRIMARY KEY (id),
+  CONSTRAINT order_items_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id)
+);
+CREATE TABLE public.orders (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  cliente_id bigint,
+  fecha_creacion timestamp without time zone DEFAULT now(),
+  fecha_cierre timestamp without time zone,
+  total numeric NOT NULL,
+  propina numeric DEFAULT 0,
+  estado_pedido character varying NOT NULL,
+  estado_pago character varying NOT NULL,
+  metodo_pago_id bigint,
+  tipo_servicio_id bigint,
+  turno_id bigint,
+  client_request_id text,
+  CONSTRAINT orders_pkey PRIMARY KEY (id),
+  CONSTRAINT orders_cliente_id_fkey FOREIGN KEY (cliente_id) REFERENCES public.clientes(id),
+  CONSTRAINT orders_metodo_pago_id_fkey FOREIGN KEY (metodo_pago_id) REFERENCES public.metodos_pago(id),
+  CONSTRAINT orders_tipo_servicio_id_fkey FOREIGN KEY (tipo_servicio_id) REFERENCES public.tipos_servicio(id),
+  CONSTRAINT orders_turno_id_fkey FOREIGN KEY (turno_id) REFERENCES public.turnos(id)
+);
+CREATE TABLE public.producto_fotos (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  producto_id bigint,
+  url text NOT NULL,
+  CONSTRAINT producto_fotos_pkey PRIMARY KEY (id),
+  CONSTRAINT producto_fotos_producto_id_fkey FOREIGN KEY (producto_id) REFERENCES public.productos(id)
+);
+CREATE TABLE public.producto_modificadores (
+  producto_id bigint,
+  modificador_id bigint,
+  cantidad_maxima integer,
+  created_at timestamp without time zone DEFAULT now(),
+  updated_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT producto_modificadores_producto_id_fkey FOREIGN KEY (producto_id) REFERENCES public.productos(id),
+  CONSTRAINT producto_modificadores_modificador_id_fkey FOREIGN KEY (modificador_id) REFERENCES public.modificadores(id)
+);
+CREATE TABLE public.producto_variantes (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  producto_id bigint,
+  nombre character varying NOT NULL,
+  precio numeric NOT NULL,
+  costo numeric,
+  descuento numeric,
+  sku character varying,
+  embalaje character varying,
+  disponible boolean DEFAULT true,
+  created_at timestamp without time zone DEFAULT now(),
+  updated_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT producto_variantes_pkey PRIMARY KEY (id),
+  CONSTRAINT producto_variantes_producto_id_fkey FOREIGN KEY (producto_id) REFERENCES public.productos(id)
+);
+CREATE TABLE public.productos (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  categoria_id bigint,
+  nombre character varying NOT NULL,
+  descripcion text,
+  precio numeric,
+  price_type character varying NOT NULL CHECK (price_type::text = ANY (ARRAY['simple'::character varying, 'variants'::character varying]::text[])),
+  sku character varying,
+  costo numeric,
+  descuento numeric,
+  embalaje character varying,
+  disponible boolean DEFAULT true,
+  visible boolean DEFAULT true,
+  created_at timestamp without time zone DEFAULT now(),
+  updated_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT productos_pkey PRIMARY KEY (id),
+  CONSTRAINT productos_categoria_id_fkey FOREIGN KEY (categoria_id) REFERENCES public.categorias(id)
+);
+CREATE TABLE public.tickets (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  order_id bigint,
+  tipo character varying NOT NULL,
+  impreso boolean DEFAULT false,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT tickets_pkey PRIMARY KEY (id),
+  CONSTRAINT tickets_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id)
+);
+CREATE TABLE public.tipos_servicio (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  nombre character varying NOT NULL,
+  CONSTRAINT tipos_servicio_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.turnos (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  nombre character varying NOT NULL,
+  hora_inicio time without time zone,
+  hora_fin time without time zone,
+  CONSTRAINT turnos_pkey PRIMARY KEY (id)
+);
+
+
+
+Revisión de la información del esquema de órdenes
+1. Tablas principales (Correcto)
+
+Las tablas que identificaste como principales son adecuadas para el flujo de pedidos:
+
+orders
+
+order_items
+
+order_item_modificadores
+
+productos
+
+producto_variantes
+
+Esto sigue un patrón común de sistemas de venta o POS.
+
+El flujo lógico es:
+
+orders
+   │
+   └── order_items
+           │
+           └── order_item_modificadores
+
+Esto está correctamente descrito en tu análisis.
+
+2. Tabla orders
+
+Tu descripción es correcta.
+
+Columnas clave:
+
+id → PK
+
+cliente_id
+
+fecha_creacion
+
+total
+
+propina
+
+estado_pedido
+
+estado_pago
+
+metodo_pago_id
+
+tipo_servicio_id
+
+turno_id
+
+Observación importante
+
+El campo:
+
+client_request_id
+
+es muy buena práctica, porque permite idempotencia.
+
+Ejemplo de problema que evita:
+
+El cliente envía la orden
+
+Se pierde la respuesta
+
+El cliente vuelve a enviar la petición
+
+Sin idempotencia → se crean 2 órdenes duplicadas
+
+Con este campo puedes validar:
+
+SELECT id
+FROM public.orders
+WHERE client_request_id = 'uuid'
+LIMIT 1;
+3. Tabla order_items
+
+Tu descripción es correcta.
+
+Columnas:
+
+order_id
+producto_id
+nombre_producto
+cantidad
+precio_unitario
+total
+Buena práctica que detectaste
+
+nombre_producto es un snapshot.
+
+Esto es importante porque:
+
+Si el producto cambia de nombre después, la orden histórica no se altera.
+
+Ejemplo:
+
+producto actual	orden histórica
+Pizza Grande	Pizza Familiar
+
+La orden sigue mostrando el nombre antiguo.
+
+4. Tabla order_item_modificadores
+
+Relación correcta:
+
+order_item_modificadores
+   → order_items.id
+
+Sirve para extras como:
+
+extra queso
+
+salsa adicional
+
+doble carne
+
+Estructura correcta:
+
+order_item
+   ├── modificador 1
+   ├── modificador 2
+5. Productos y variantes
+
+Tu explicación de price_type está muy bien entendida.
+
+Tipos:
+
+Producto simple
+price_type = 'simple'
+
+Precio viene de:
+
+productos.precio
+
+Ejemplo:
+
+Refresco
+precio = 25
+Producto con variantes
+price_type = 'variants'
+
+Precio viene de:
+
+producto_variantes.precio
+
+Ejemplo:
+
+variante	precio
+Chica	60
+Mediana	80
+Grande	100
+
+Esto es correcto.
+
+6. Relaciones de catálogo
+
+También está bien identificado:
+
+productos
+   ├── producto_variantes
+   ├── producto_fotos
+   ├── producto_modificadores
+
+Esto permite:
+
+fotos del menú
+
+tamaños
+
+extras disponibles
+
+7. Tablas auxiliares
+
+Correcto:
+
+clientes
+
+metodos_pago
+
+tipos_servicio
+
+turnos
+
+Estas funcionan como tablas de referencia (lookup tables).
+
+Ejemplo:
+
+tipos_servicio
+-------------
+1  take_away
+2  delivery
+3  in_place
+8. Flujo de creación de orden
+
+El flujo que describiste es correcto y típico de sistemas POS.
+
+Resumen técnico correcto:
+
+1️⃣ Validación de productos
+2️⃣ Determinar precio (simple o variante)
+3️⃣ Insertar en orders
+4️⃣ Insertar order_items
+5️⃣ Insertar modificadores
+6️⃣ Calcular total
+7️⃣ Crear ticket o side-effects
+
+Esto normalmente ocurre dentro de una transacción:
+
+BEGIN;
+
+INSERT orders
+INSERT order_items
+INSERT modificadores
+
+UPDATE orders.total
+
+COMMIT;
+9. operation_queue
+
+Tu interpretación es correcta.
+
+Sirve para procesos asincrónicos como:
+
+enviar a cocina
+
+enviar notificación
+
+sincronizar con TPV
+
+registrar eventos
+
+Patrón común:
+
+orders_create
+      │
+      └─ enqueue operation_queue
+              │
+              └ worker procesa tarea

@@ -24,6 +24,10 @@ const angularApp = new AngularNodeAppEngine();
  * ```
  */
 
+// Parse JSON bodies for API routes
+app.use(express.json({ limit: '1mb' }));
+
+
 /**
  * Serve static files from /browser
  */
@@ -66,3 +70,12 @@ if (isMainModule(import.meta.url) || process.env['pm_id']) {
  * Request handler used by the Angular CLI (for dev-server and during build) or Firebase Cloud Functions.
  */
 export const reqHandler = createNodeRequestHandler(app);
+
+// Prerender params for dynamic routes (limit to safe samples)
+export function getPrerenderParams() {
+  return {
+    routes: {
+      'manage-products/edit/:id': [{ id: 'sample' }]
+    }
+  };
+}

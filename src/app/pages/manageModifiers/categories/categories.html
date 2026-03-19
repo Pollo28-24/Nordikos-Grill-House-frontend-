@@ -1,0 +1,137 @@
+<app-navbar />
+
+<section class="min-h-screen bg-[#121212] text-[#F5F5F5] p-4 sm:p-8">
+  <div class="max-w-5xl mx-auto">
+    
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl font-black tracking-tight uppercase">Categorías de Modificadores</h1>
+        <p class="text-zinc-500 text-sm mt-1">Organiza los extras y cambios de tus productos</p>
+      </div>
+      <button 
+        (click)="openForm()"
+        class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 transition active:scale-95 shadow-lg shadow-amber-500/20"
+      >
+        <lucide-icon name="plus" class="w-5 h-5" />
+        Nueva Categoría
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    @if (loading()) {
+      <div class="flex flex-col items-center justify-center py-20 gap-4">
+        <lucide-icon name="loader-2" class="w-10 h-10 text-amber-500 animate-spin" />
+        <p class="text-zinc-500 font-medium italic">Cargando categorías...</p>
+      </div>
+    } @else {
+      <!-- List -->
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @for (c of categories(); track c.id) {
+          <div 
+            (click)="navigateToItems(c.id)"
+            class="group relative rounded-2xl border border-white/5 bg-[#181818] p-5 hover:border-amber-500/30 transition shadow-xl cursor-pointer"
+          >
+            <div class="flex items-start justify-between mb-4">
+              <div class="p-3 rounded-xl bg-amber-500/10 text-amber-500">
+                <lucide-icon name="layers" class="w-6 h-6" />
+              </div>
+              <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition" (click)="$event.stopPropagation()">
+                <button (click)="openEdit(c)" class="p-2 rounded-lg bg-zinc-800 text-white hover:bg-zinc-700 transition" title="Editar">
+                  <lucide-icon name="edit-3" class="w-4 h-4" />
+                </button>
+                <button (click)="delete(c.id)" class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition" title="Eliminar">
+                  <lucide-icon name="trash-2" class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            
+            <h3 class="text-lg font-bold text-white mb-1">{{ c.nombre }}</h3>
+            <p class="text-xs text-zinc-500 line-clamp-2 mb-4 h-8">{{ c.descripcion || 'Sin descripción' }}</p>
+            
+            <div class="flex items-center gap-2">
+              <span 
+                class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"
+                [ngClass]="c.visible ? 'bg-emerald-500/10 text-emerald-500' : 'bg-zinc-500/10 text-zinc-500'"
+              >
+                {{ c.visible ? 'Visible' : 'Oculto' }}
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (categories().length === 0) {
+        <div class="text-center py-20 bg-[#181818] rounded-3xl border border-white/5 border-dashed">
+          <lucide-icon name="folder-x" class="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+          <p class="text-zinc-500 font-medium">No hay categorías registradas</p>
+        </div>
+      }
+    }
+
+  </div>
+</section>
+
+<!-- Modal Form -->
+@if (showForm()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+    <div class="bg-[#181818] w-full max-w-lg rounded-3xl border border-white/10 shadow-2xl animate-in zoom-in-95 duration-200">
+      <div class="p-6 border-b border-white/5 flex items-center justify-between">
+        <h2 class="text-xl font-bold text-white">{{ editingId() ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
+        <button (click)="showForm.set(false)" class="p-2 rounded-full hover:bg-white/5 text-zinc-400 transition">
+          <lucide-icon name="x" class="w-6 h-6" />
+        </button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="save()" class="p-6 space-y-6">
+        <div class="space-y-2">
+          <label class="text-xs font-black uppercase tracking-widest text-zinc-500">Nombre de la Categoría</label>
+          <input 
+            type="text" 
+            formControlName="nombre"
+            placeholder="Ej: Extras, Salsas, Términos..."
+            class="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/5 text-white outline-none focus:border-amber-500/50 transition"
+          >
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs font-black uppercase tracking-widest text-zinc-500">Descripción (Opcional)</label>
+          <textarea 
+            formControlName="descripcion"
+            placeholder="Describe qué tipo de modificadores contiene..."
+            class="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/5 text-white outline-none focus:border-amber-500/50 transition h-24 resize-none"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center justify-between p-4 rounded-2xl bg-black/20 border border-white/5">
+          <div>
+            <p class="text-sm font-bold text-white">¿Visible en el POS?</p>
+            <p class="text-xs text-zinc-500">Activa o desactiva la categoría rápidamente</p>
+          </div>
+          <input 
+            type="checkbox" 
+            formControlName="visible"
+            class="w-6 h-6 rounded-lg bg-zinc-800 border-zinc-700 text-amber-500 focus:ring-amber-500/20"
+          >
+        </div>
+
+        <div class="pt-4 flex gap-3">
+          <button 
+            type="button"
+            (click)="showForm.set(false)"
+            class="flex-1 px-6 py-4 rounded-2xl bg-white/5 text-zinc-400 font-bold hover:bg-white/10 transition"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="submit"
+            [disabled]="form.invalid"
+            class="flex-2 px-6 py-4 rounded-2xl bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg shadow-amber-500/20"
+          >
+            {{ editingId() ? 'Actualizar Categoría' : 'Crear Categoría' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

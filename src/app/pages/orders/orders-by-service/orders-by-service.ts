@@ -1,10 +1,14 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { OrdersService } from '../../../core/services/orders.service';
 import { SupabaseService } from '../../../shared/data-access/supabase.service';
 import { Navbar } from '../../../componentes/shared/navbar/navbar';
+
+import { OrderStatus, PaymentStatus } from '../../../core/models/order.model';
+import { ToastService } from '../../../core/services/toast.service';
+import { TicketPrintComponent } from '../../../features/tickets/components/ticket-print.component';
 
 interface ServiceType {
   id: number;
@@ -14,19 +18,35 @@ interface ServiceType {
 @Component({
   selector: 'app-orders-by-service',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, RouterLink, Navbar],
+  imports: [CommonModule, LucideAngularModule, Navbar, TicketPrintComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './orders-by-service.html'
 })
-export class OrdersByService implements OnInit {
+export class OrdersByService implements OnInit, OnDestroy {
   private ordersService = inject(OrdersService);
   private supabase = inject(SupabaseService).client;
+  private toastService = inject(ToastService);
+  private router = inject(Router);
 
   orders = this.ordersService.orders;
   loading = this.ordersService.loadingOrders;
 
   serviceTypes = signal<ServiceType[]>([]);
   selectedTypeId = signal<number | null>(null);
+
+  // Filtros de fecha
+  dateFilterType = signal<'today' | 'week' | 'month' | 'custom'>('today');
+  customStartDate = signal<string>(new Date().toISOString().split('T')[0]);
+  customEndDate = signal<string>(new Date().toISOString().split('T')[0]);
+
+  // Señal para imprimir ticket rápido
+  quickPrintOrderId = signal<number | string | null>(null);
+  quickPrintType = signal<'account' | 'kitchen'>('account');
+  showQuickPrintModal = signal(false);
+
+  // Señal para actualizar el tiempo real
+  private currentTime = signal(Date.now());
+  private timer: any;
 
   filtered = computed(() => {
     const all = this.orders();
@@ -35,9 +55,27 @@ export class OrdersByService implements OnInit {
     return all.filter(o => o.tipo_servicio_id === t);
   });
 
+  selectedServiceName = computed(() => {
+    const id = this.selectedTypeId();
+    if (id == null) return 'Todas las órdenes';
+    const s = this.serviceTypes().find(st => st.id === id);
+    return s ? s.nombre : 'Todas las órdenes';
+  });
+
   ngOnInit(): void {
     this.loadTypes();
-    this.ordersService.loadOrders();
+    this.applyDateFilter();
+    this.ordersService.subscribeRealtime();
+
+    // Actualizar tiempo cada segundo para el cálculo de duración
+    this.timer = setInterval(() => {
+      this.currentTime.set(Date.now());
+    }, 1000);
+  }
+
+  ngOnDestroy(): void {
+    this.ordersService.unsubscribeRealtime();
+    if (this.timer) clearInterval(this.timer);
   }
 
   async loadTypes() {
@@ -53,7 +91,176 @@ export class OrdersByService implements OnInit {
     }
   }
 
+  applyDateFilter() {
+    const type = this.dateFilterType();
+    let start = '';
+    let end = new Date().toISOString();
+
+    const now = new Date();
+
+    if (type === 'today') {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      start = d.toISOString();
+    } else if (type === 'week') {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      start = d.toISOString();
+    } else if (type === 'month') {
+      const d = new Date();
+      d.setMonth(d.getMonth() - 1);
+      start = d.toISOString();
+    } else if (type === 'custom') {
+      if (this.customStartDate()) start = new Date(this.customStartDate()).toISOString();
+      if (this.customEndDate()) {
+        const ed = new Date(this.customEndDate());
+        ed.setHours(23, 59, 59, 999);
+        end = ed.toISOString();
+      }
+    }
+
+    if (start) {
+      this.ordersService.loadOrders({ start, end });
+    } else {
+      this.ordersService.loadOrders();
+    }
+  }
+
+  setDateFilter(type: 'today' | 'week' | 'month' | 'custom') {
+    this.dateFilterType.set(type);
+    if (type !== 'custom') {
+      this.applyDateFilter();
+    }
+  }
+
   selectType(id: number | null) {
     this.selectedTypeId.set(id);
+  }
+
+  refresh() {
+    this.applyDateFilter();
+  }
+
+  async updateOrderStatus(order: any, newStatus: OrderStatus) {
+    const oldStatus = order.estado_pedido;
+    
+    // Optimistic UI update
+    order.estado_pedido = newStatus;
+    if (newStatus === 'entregado') order.fecha_cierre = new Date().toISOString();
+    this.orders.set([...this.orders()]);
+
+    try {
+      const { error } = await this.supabase
+        .from('orders')
+        .update({ 
+          estado_pedido: newStatus,
+          fecha_cierre: newStatus === 'entregado' ? new Date().toISOString() : null
+        })
+        .eq('id', order.id);
+
+      if (error) throw error;
+      this.toastService.show(`Pedido ${newStatus}`, 'success');
+    } catch (err: any) {
+      // Revert on error
+      order.estado_pedido = oldStatus;
+      this.orders.set([...this.orders()]);
+      this.toastService.show('Error al actualizar pedido', 'error');
+      console.error('Error updating status:', err);
+    }
+  }
+
+  async updatePaymentStatus(order: any, newStatus: PaymentStatus) {
+    const oldStatus = order.estado_pago;
+    
+    // Optimistic UI update
+    order.estado_pago = newStatus;
+    this.orders.set([...this.orders()]);
+
+    try {
+      const { error } = await this.supabase
+        .from('orders')
+        .update({ estado_pago: newStatus })
+        .eq('id', order.id);
+
+      if (error) throw error;
+      this.toastService.show(`Pago ${newStatus}`, 'success');
+    } catch (err: any) {
+      // Revert on error
+      order.estado_pago = oldStatus;
+      this.orders.set([...this.orders()]);
+      this.toastService.show('Error al actualizar pago', 'error');
+      console.error('Error updating payment:', err);
+    }
+  }
+
+  navigateToOrderDetail(order: any) {
+    this.router.navigate(['/orders', order.id]);
+  }
+
+  createNewOrder() {
+    this.ordersService.editingOrderId.set(null);
+    this.ordersService.clearCart();
+    this.router.navigate(['/orders/new']);
+  }
+
+  printQuickTicket(orderId: number | string, type: 'account' | 'kitchen' = 'account') {
+    this.quickPrintType.set(type);
+    this.quickPrintOrderId.set(orderId);
+    this.showQuickPrintModal.set(true);
+  }
+
+  async bulkUpdateStatus(type: 'pedido' | 'pago', status: OrderStatus | PaymentStatus) {
+    const filteredOrders = this.filtered();
+    if (filteredOrders.length === 0) return;
+
+    const ids = filteredOrders.map(o => o.id);
+    const updateData: any = type === 'pedido' ? { 
+      estado_pedido: status,
+      fecha_cierre: status === 'entregado' ? new Date().toISOString() : null
+    } : { 
+      estado_pago: status 
+    };
+
+    // Optimistic UI
+    this.orders.update(all => all.map(o => {
+      if (ids.includes(o.id)) {
+        return { ...o, ...updateData };
+      }
+      return o;
+    }));
+
+    try {
+      const { error } = await this.supabase
+        .from('orders')
+        .update(updateData)
+        .in('id', ids);
+
+      if (error) throw error;
+      this.toastService.show('Actualización masiva completada', 'success');
+    } catch (err: any) {
+      this.applyDateFilter(); // Re-fetch on error to ensure sync
+      this.toastService.show('Error en actualización masiva', 'error');
+    }
+  }
+
+  getDuration(order: any): string {
+    if (!order.fecha_creacion) return '...';
+    
+    // Al usar this.currentTime(), Angular reactivará este cálculo cada segundo
+    const current = this.currentTime();
+    const start = new Date(order.fecha_creacion).getTime();
+    const end = order.fecha_cierre ? new Date(order.fecha_cierre).getTime() : current;
+    
+    const diffMs = end - start;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 60) {
+      const diffSecs = Math.floor((diffMs % 60000) / 1000);
+      return `${diffMins}m ${diffSecs}s`;
+    } else {
+      const diffHours = Math.floor(diffMins / 60);
+      const remainingMins = diffMins % 60;
+      return `${diffHours}h ${remainingMins}m`;
+    }
   }
 }

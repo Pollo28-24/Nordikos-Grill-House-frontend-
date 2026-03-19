@@ -1,0 +1,218 @@
+<app-navbar />
+
+<section class="min-h-screen bg-[#121212] text-[#F5F5F5] p-4 sm:p-8">
+  <div class="max-w-6xl mx-auto">
+    
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl font-black tracking-tight uppercase">Modificadores (Extras)</h1>
+        <p class="text-zinc-500 text-sm mt-1">Crea y asigna extras, cambios o términos a tus productos</p>
+      </div>
+      <div class="flex gap-3">
+        <button 
+          routerLink="/manageModifiers/categories"
+          class="px-6 py-3 rounded-xl bg-white/5 text-zinc-400 font-bold hover:bg-white/10 transition"
+        >
+          Gestionar Categorías
+        </button>
+        <button 
+          (click)="openCreate()"
+          class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 text-black font-bold hover:bg-emerald-400 transition active:scale-95 shadow-lg shadow-emerald-500/20"
+        >
+          <lucide-icon name="plus" class="w-5 h-5" />
+          Nuevo Modificador
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    @if (loading()) {
+      <div class="flex flex-col items-center justify-center py-20 gap-4">
+        <lucide-icon name="loader-2" class="w-10 h-10 text-emerald-500 animate-spin" />
+        <p class="text-zinc-500 font-medium italic">Cargando modificadores...</p>
+      </div>
+    } @else {
+      @if (selectedCategoryId()) {
+        <div class="mb-6 flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 animate-in fade-in slide-in-from-left-2">
+          <div class="flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
+              <lucide-icon name="filter" class="w-4 h-4"></lucide-icon>
+            </div>
+            <div>
+              <p class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Filtrando por categoría</p>
+              <h3 class="text-sm font-bold text-white">Mostrando modificadores específicos</h3>
+            </div>
+          </div>
+          <button 
+            (click)="selectedCategoryId.set(null)"
+            class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 text-xs font-bold transition"
+          >
+            Ver todos
+          </button>
+        </div>
+      }
+
+      <!-- List -->
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        @for (m of filteredModifiers(); track m.id) {
+          <div class="group relative rounded-2xl border border-white/5 bg-[#181818] p-5 hover:border-emerald-500/30 transition shadow-xl">
+            <div class="flex items-start justify-between mb-4">
+              <div class="p-3 rounded-xl bg-emerald-500/10 text-emerald-500">
+                <lucide-icon name="plus-circle" class="w-6 h-6" />
+              </div>
+              <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                <button (click)="openAssign(m)" class="p-2 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition" title="Asignar a Productos">
+                  <lucide-icon name="link" class="w-4 h-4" />
+                </button>
+                <button (click)="openEdit(m)" class="p-2 rounded-lg bg-zinc-800 text-white hover:bg-zinc-700 transition" title="Editar">
+                  <lucide-icon name="edit-3" class="w-4 h-4" />
+                </button>
+                <button (click)="delete(m.id)" class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition" title="Eliminar">
+                  <lucide-icon name="trash-2" class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            
+            <h3 class="text-lg font-bold text-white mb-1">{{ m.nombre }}</h3>
+            <p class="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">
+              {{ m.modificador_categorias?.nombre || 'Sin Categoría' }}
+            </p>
+            
+            <div class="flex items-center justify-between">
+              <span class="text-emerald-500 font-black text-lg">+${{ m.precio }}</span>
+              <span class="text-[10px] bg-white/5 px-2 py-1 rounded text-zinc-400">Max: {{ m.cantidad_maxima }}</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (modifiers().length === 0) {
+        <div class="text-center py-20 bg-[#181818] rounded-3xl border border-white/5 border-dashed">
+          <lucide-icon name="plus-circle" class="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+          <p class="text-zinc-500 font-medium">No hay modificadores registrados</p>
+        </div>
+      }
+    }
+
+  </div>
+</section>
+
+<!-- Modal Form -->
+@if (showForm()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+    <div class="bg-[#181818] w-full max-w-lg rounded-3xl border border-white/10 shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+      <div class="p-6 border-b border-white/5 flex items-center justify-between bg-[#1c1c1c]">
+        <h2 class="text-xl font-bold text-white">{{ editingId() ? 'Editar Modificador' : 'Nuevo Modificador' }}</h2>
+        <button (click)="showForm.set(false)" class="p-2 rounded-full hover:bg-white/5 text-zinc-400 transition">
+          <lucide-icon name="x" class="w-6 h-6" />
+        </button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="save()" class="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2 space-y-2">
+            <label class="text-xs font-black uppercase tracking-widest text-zinc-500">Nombre del Modificador</label>
+            <input type="text" formControlName="nombre" class="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/5 text-white outline-none focus:border-emerald-500/50 transition">
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-black uppercase tracking-widest text-zinc-500">Categoría</label>
+            <select formControlName="categoria_id" class="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/5 text-white outline-none focus:border-emerald-500/50 transition">
+              @for (c of categories(); track c.id) {
+                <option [value]="c.id">{{ c.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-black uppercase tracking-widest text-zinc-500">Precio Extra ($)</label>
+            <input type="number" formControlName="precio" class="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/5 text-white outline-none focus:border-emerald-500/50 transition">
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-black uppercase tracking-widest text-zinc-500">Costo ($)</label>
+            <input type="number" formControlName="costo" class="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/5 text-white outline-none focus:border-emerald-500/50 transition">
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-black uppercase tracking-widest text-zinc-500">Cant. Máxima</label>
+            <input type="number" formControlName="cantidad_maxima" class="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/5 text-white outline-none focus:border-emerald-500/50 transition">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between p-4 rounded-2xl bg-black/20 border border-white/5">
+          <div>
+            <p class="text-sm font-bold text-white">¿Visible?</p>
+            <p class="text-xs text-zinc-500">Mostrar en el menú del POS</p>
+          </div>
+          <input type="checkbox" formControlName="visible" class="w-6 h-6 rounded-lg bg-zinc-800 border-zinc-700 text-emerald-500 focus:ring-emerald-500/20">
+        </div>
+
+        <div class="pt-4 flex gap-3">
+          <button type="button" (click)="showForm.set(false)" class="flex-1 px-6 py-4 rounded-2xl bg-white/5 text-zinc-400 font-bold hover:bg-white/10 transition">Cancelar</button>
+          <button type="submit" [disabled]="form.invalid" class="flex-2 px-6 py-4 rounded-2xl bg-emerald-500 text-black font-bold hover:bg-emerald-400 disabled:opacity-50 transition shadow-lg shadow-emerald-500/20">
+            {{ editingId() ? 'Actualizar' : 'Crear' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Assignment Modal -->
+@if (showAssignModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
+    <div class="bg-[#181818] w-full max-w-2xl rounded-3xl border border-white/10 shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="p-6 border-b border-white/5 bg-[#1c1c1c]">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xl font-bold text-white">Asignar Modificador</h2>
+          <button (click)="showAssignModal.set(false)" class="p-2 rounded-full hover:bg-white/5 text-zinc-400 transition">
+            <lucide-icon name="x" class="w-6 h-6" />
+          </button>
+        </div>
+        <p class="text-emerald-500 font-black uppercase tracking-widest text-xs">
+          Modificador: {{ selectedModifierForAssign()?.nombre }}
+        </p>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-6 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          @for (p of products(); track p.id) {
+            <button 
+              (click)="toggleAssignment(p)"
+              [class.border-emerald-500]="assignedProductIds().has(p.id)"
+              [class.bg-emerald-500\/10]="assignedProductIds().has(p.id)"
+              class="flex items-center gap-4 p-3 rounded-2xl border border-white/5 bg-black/20 text-left transition hover:bg-white/5"
+            >
+              <div 
+                class="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center overflow-hidden border border-white/5"
+              >
+                @if (p.imagen_url) {
+                  <img [src]="p.imagen_url" class="w-full h-full object-cover">
+                } @else {
+                  <lucide-icon name="image" class="w-5 h-5 text-zinc-600" />
+                }
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-white truncate">{{ p.nombre }}</p>
+                <p class="text-[10px] text-zinc-500 uppercase">{{ p.sku || 'Sin SKU' }}</p>
+              </div>
+              @if (assignedProductIds().has(p.id)) {
+                <div class="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+                  <lucide-icon name="check" class="w-4 h-4 text-black font-bold" />
+                </div>
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="p-6 border-t border-white/5 bg-[#1c1c1c] text-center">
+        <button (click)="showAssignModal.set(false)" class="px-8 py-3 rounded-xl bg-white/5 text-white font-bold hover:bg-white/10 transition">
+          Listo
+        </button>
+      </div>
+    </div>
+  </div>
+}

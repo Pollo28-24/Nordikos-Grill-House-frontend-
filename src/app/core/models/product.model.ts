@@ -1,3 +1,25 @@
+export interface ModifierCategory {
+  id: string | number;
+  nombre: string;
+  descripcion?: string;
+  visible: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Modifier {
+  id: string | number;
+  categoria_id?: string | number;
+  nombre: string;
+  precio: number;
+  costo?: number;
+  descuento?: number;
+  sku?: string;
+  visible: boolean;
+  cantidad_maxima: number;
+  modificador_categorias?: { nombre: string }; // Para joins
+}
+
 export interface ProductVariant {
   id: string;
   producto_id: string;
@@ -42,6 +64,7 @@ export interface Product {
   imagen_url?: string; // Añadido para compatibilidad
   images?: ProductImage[];
   variants?: ProductVariant[];
+  modifiers?: Modifier[];
   created_at: string;
   updated_at: string;
 }

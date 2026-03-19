@@ -1,0 +1,227 @@
+.ticket {
+  width: 58mm;
+  padding: 2mm;
+  background: white;
+  color: black;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 10px;
+  line-height: 1.2;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+}
+
+.brand {
+  font-size: 18px;
+  font-weight: 900;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.tagline {
+  font-size: 10px;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.order-id {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 3px 0;
+}
+
+.timestamp, .service-type {
+  font-size: 10px;
+  margin: 0;
+}
+
+.divider {
+  border-top: 1px dashed #000;
+  margin: 5px 0;
+}
+
+.client {
+  font-size: 11px;
+}
+
+.items {
+  margin: 10px 0;
+}
+
+.item-block {
+  margin-bottom: 5px;
+}
+
+.item-line {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+}
+
+.item-qty {
+  width: 20px;
+}
+
+.item-name {
+  flex: 1;
+}
+
+.item-total {
+  width: 50px;
+  text-align: right;
+}
+
+.modifiers {
+  margin-left: 25px;
+  font-size: 10px;
+  color: #555;
+}
+
+.modifier-line {
+  display: flex;
+  justify-content: space-between;
+}
+
+.totals {
+  margin: 10px 0;
+}
+
+.total-line {
+  display: flex;
+  justify-content: space-between;
+}
+
+.grand-total {
+  font-size: 14px;
+  font-weight: 900;
+  margin-top: 3px;
+}
+
+.general-note {
+  font-size: 9px;
+  margin: 5px 0;
+}
+
+.note-title {
+  font-weight: bold;
+  margin: 0;
+}
+
+.note-content {
+  margin: 2px 0 0 0;
+  font-style: italic;
+}
+
+.footer {
+  text-align: center;
+  font-size: 10px;
+  margin-top: 10px;
+}
+
+/* Estilos para Ticket de Cocina */
+.kitchen-ticket {
+  font-family: Arial, sans-serif;
+}
+
+.kitchen-ticket .order-id {
+  font-size: 24px;
+  border: 2px solid black;
+  display: inline-block;
+  padding: 5px 10px;
+}
+
+.ticket-label {
+  font-size: 20px;
+  font-weight: 900;
+  background: black;
+  color: white;
+  margin: 5px 0;
+  text-align: center;
+}
+
+.kitchen-items .item-line {
+  font-size: 16px;
+  margin-top: 8px;
+}
+
+.kitchen-items .item-qty {
+  font-size: 20px;
+  background: #eee;
+  text-align: center;
+  margin-right: 5px;
+}
+
+.kitchen-items .modifiers {
+  font-size: 12px;
+  color: black;
+  font-weight: bold;
+  margin-left: 25px;
+}
+
+.item-note {
+  margin-left: 25px;
+  font-style: italic;
+  font-size: 11px;
+  background: #f9f9f9;
+  padding: 2px;
+}
+
+.general-note .note-title {
+  font-weight: 900;
+  font-size: 14px;
+  text-decoration: underline;
+}
+
+.general-note .note-content {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* Print Specific Styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .ticket, .ticket * {
+    visibility: visible;
+  }
+  .ticket {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 58mm;
+    margin: 0;
+    padding: 1mm;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+.print-actions {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.print-btn {
+  padding: 10px 20px;
+  background: #FFB300;
+  color: #121212;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.print-btn:hover {
+  background: #FFC107;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+}

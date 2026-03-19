@@ -71,7 +71,15 @@ export class ProductsService {
 
       const { data, error } = await this.supabase
         .from('productos')
-        .select('*, producto_variantes(*), producto_fotos(*)')
+        .select(`
+          *,
+          producto_variantes(*),
+          producto_fotos(*),
+          producto_modificadores(
+            modificador_id,
+            modificadores(*)
+          )
+        `)
         .order('nombre');
 
       if (error) throw error;
@@ -542,6 +550,21 @@ export class ProductsService {
         created_at: v.created_at,
         updated_at: v.updated_at,
       }));
+    }
+    if (row.producto_modificadores && row.producto_modificadores.length) {
+      product.modifiers = row.producto_modificadores
+        .filter((pm: any) => pm.modificadores)
+        .map((pm: any) => ({
+          id: pm.modificadores.id,
+          categoria_id: pm.modificadores.categoria_id,
+          nombre: pm.modificadores.nombre,
+          precio: pm.modificadores.precio,
+          costo: pm.modificadores.costo,
+          descuento: pm.modificadores.descuento,
+          sku: pm.modificadores.sku,
+          visible: pm.modificadores.visible,
+          cantidad_maxima: pm.modificadores.cantidad_maxima,
+        }));
     }
     return product;
   }
