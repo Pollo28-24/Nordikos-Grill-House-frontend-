@@ -77,7 +77,10 @@ export class ProductsService {
           producto_fotos(*),
           producto_modificadores(
             modificador_id,
-            modificadores(*)
+            modificadores(
+              *,
+              modificador_categorias(*)
+            )
           )
         `)
         .order('nombre');
@@ -564,6 +567,7 @@ export class ProductsService {
           sku: pm.modificadores.sku,
           visible: pm.modificadores.visible,
           cantidad_maxima: pm.modificadores.cantidad_maxima,
+          modificador_categorias: pm.modificadores.modificador_categorias
         }));
     }
     return product;

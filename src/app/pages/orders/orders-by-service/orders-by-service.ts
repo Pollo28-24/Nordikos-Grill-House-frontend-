@@ -48,6 +48,9 @@ export class OrdersByService implements OnInit, OnDestroy {
   private currentTime = signal(Date.now());
   private timer: any;
 
+  // Seguimiento de orden activa en móvil
+  activeOrderIdMobile = signal<number | string | null>(null);
+
   filtered = computed(() => {
     const all = this.orders();
     const t = this.selectedTypeId();
@@ -60,6 +63,20 @@ export class OrdersByService implements OnInit, OnDestroy {
     if (id == null) return 'Todas las órdenes';
     const s = this.serviceTypes().find(st => st.id === id);
     return s ? s.nombre : 'Todas las órdenes';
+  });
+
+  // Cálculo de ventas totales (solo pagadas y entregadas)
+  totalSales = computed(() => {
+    const filtered = this.filtered();
+    return filtered
+      .filter(o => o.estado_pedido === 'entregado' && o.estado_pago === 'pagado')
+      .reduce((sum, o) => sum + (o.total || 0), 0);
+  });
+
+  // Cantidad de órdenes completadas
+  completedOrdersCount = computed(() => {
+    const filtered = this.filtered();
+    return filtered.filter(o => o.estado_pedido === 'entregado' && o.estado_pago === 'pagado').length;
   });
 
   ngOnInit(): void {
@@ -137,6 +154,14 @@ export class OrdersByService implements OnInit, OnDestroy {
     this.selectedTypeId.set(id);
   }
 
+  toggleActiveOrderMobile(id: number | string) {
+    if (this.activeOrderIdMobile() === id) {
+      this.activeOrderIdMobile.set(null);
+    } else {
+      this.activeOrderIdMobile.set(id);
+    }
+  }
+
   refresh() {
     this.applyDateFilter();
   }
@@ -207,6 +232,11 @@ export class OrdersByService implements OnInit, OnDestroy {
     this.quickPrintType.set(type);
     this.quickPrintOrderId.set(orderId);
     this.showQuickPrintModal.set(true);
+
+    // Auto-imprimir después de que el componente ticket-print cargue (500ms aprox)
+    setTimeout(() => {
+      window.print();
+    }, 1000);
   }
 
   async bulkUpdateStatus(type: 'pedido' | 'pago', status: OrderStatus | PaymentStatus) {

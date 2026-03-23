@@ -228,12 +228,12 @@ export class NewOrderCart {
 
   async createNewOrder() {
     const dto: OrderCreateDto = {
-      cliente_id: this.form.value.cliente_id ?? undefined,
+      cliente_id: this.form.value.cliente_id || null,
       metodo_pago_id: Number(this.form.value.metodo_pago_id),
       tipo_servicio_id: Number(this.form.value.tipo_servicio_id),
       turno_id: null as any, // Por ahora irrelevante
       propina: this.propina(),
-      nota_general: this.form.value.nota_general || undefined,
+      nota_general: this.form.value.nota_general || null,
       items: this.cart(),
       client_request_id: crypto.randomUUID(),
     };

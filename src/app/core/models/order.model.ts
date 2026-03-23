@@ -17,14 +17,14 @@ export interface OrderCreateItem {
 }
 
 export interface OrderCreateDto {
-  cliente_id?: number | string;
+  cliente_id?: number | string | null;
   metodo_pago_id: number | string;
   tipo_servicio_id: number | string;
-  turno_id?: number | string; // Opcional por ahora
+  turno_id?: number | string | null; // Opcional por ahora
   estado_pedido?: OrderStatus;
   estado_pago?: PaymentStatus;
   propina?: number;
-  nota_general?: string; // Nuevo campo
+  nota_general?: string | null; // Nuevo campo
   items: OrderCreateItem[];
   client_request_id: string;
 }

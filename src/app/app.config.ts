@@ -3,7 +3,13 @@ import {
   importProvidersFrom,
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
+  LOCALE_ID,
 } from '@angular/core';
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es';
+
+registerLocaleData(localeEs);
+
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
@@ -74,6 +80,7 @@ providers: [
   provideHttpClient(withFetch()),
   provideClientHydration(withEventReplay()),
   provideRouter(routes, withComponentInputBinding()),
+  { provide: LOCALE_ID, useValue: 'es' },
   importProvidersFrom(
     LucideAngularModule.pick({
         User,

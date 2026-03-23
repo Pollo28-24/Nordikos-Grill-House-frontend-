@@ -174,9 +174,33 @@
   text-decoration: underline;
 }
 
+.kitchen-ticket .general-note {
+  border: 2px solid black;
+  padding: 5px;
+  margin: 10px 0;
+  background: #f0f0f0;
+}
+
+.kitchen-ticket .general-note .note-title {
+  font-size: 16px;
+  text-decoration: none;
+  background: black;
+  color: white;
+  padding: 2px 5px;
+  display: block;
+  text-align: center;
+}
+
 .general-note .note-content {
   font-size: 14px;
   font-weight: bold;
+}
+
+.kitchen-ticket .general-note .note-content {
+  font-size: 18px;
+  text-align: center;
+  display: block;
+  margin-top: 5px;
 }
 
 /* Print Specific Styles */

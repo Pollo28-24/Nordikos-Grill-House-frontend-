@@ -134,7 +134,23 @@
 
       <!-- Items de la Orden -->
       <div class="space-y-4 mb-8">
-        <h3 class="text-xs font-bold text-zinc-500 uppercase tracking-widest px-2">Productos en la Orden</h3>
+        <div class="flex items-center justify-between px-2">
+          <h3 class="text-xs font-bold text-zinc-500 uppercase tracking-widest">Productos en la Orden</h3>
+          @if (order().nota_general) {
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+              <lucide-icon name="info" class="w-3.5 h-3.5" />
+              <span class="text-[10px] font-bold uppercase tracking-wider">Nota General</span>
+            </div>
+          }
+        </div>
+        
+        @if (order().nota_general) {
+          <div class="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 mb-4 animate-in fade-in slide-in-from-top-2">
+            <p class="text-sm text-amber-200/80 italic leading-relaxed">
+              "{{ order().nota_general }}"
+            </p>
+          </div>
+        }
         
         <div class="space-y-2">
           @for (item of items(); track item.id) {
@@ -154,9 +170,9 @@
                 }
 
                 @if (item.modificadores?.length > 0) {
-                  <div class="ml-9 mt-1 flex flex-wrap gap-2">
+                  <div class="ml-9 mt-1.5 flex flex-wrap gap-1.5">
                     @for (m of item.modificadores; track m.id) {
-                      <span class="text-[10px] text-zinc-500 bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                      <span class="text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
                         + {{ m.nombre_modificador }}
                       </span>
                     }

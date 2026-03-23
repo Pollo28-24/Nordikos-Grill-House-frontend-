@@ -7,11 +7,29 @@
     <!-- HEADER -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
 
-      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">
-        Órdenes
-      </h1>
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">
+          Órdenes
+        </h1>
+        <p class="text-zinc-500 text-xs mt-1 font-medium uppercase tracking-widest">Gestión de pedidos y ventas</p>
+      </div>
 
       <div class="flex items-center gap-3">
+        <!-- Dashboard de Ventas (Solo filtradas) -->
+        @if (filtered().length > 0) {
+          <div class="hidden md:flex items-center gap-4 px-4 py-2 rounded-2xl bg-white/5 border border-white/5 animate-in fade-in slide-in-from-right-2">
+            <div class="flex flex-col">
+              <span class="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Ventas Totales</span>
+              <span class="text-lg font-black text-emerald-500 tabular-nums">${{ totalSales() | number:'1.2-2' }}</span>
+            </div>
+            <div class="w-px h-8 bg-white/10"></div>
+            <div class="flex flex-col">
+              <span class="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Completadas</span>
+              <span class="text-lg font-black text-white tabular-nums">{{ completedOrdersCount() }}</span>
+            </div>
+          </div>
+        }
+
         <button (click)="refresh()" class="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 transition">
           <lucide-icon name="refresh-cw" class="w-5 h-5" [class.animate-spin]="loading()"></lucide-icon>
         </button>
@@ -35,6 +53,20 @@
       </div>
 
     </div>
+
+    <!-- DASHBOARD MÓVIL -->
+    @if (filtered().length > 0) {
+      <div class="md:hidden grid grid-cols-2 gap-3 mb-8 animate-in fade-in slide-in-from-top-2">
+        <div class="p-4 rounded-2xl bg-white/5 border border-white/5 flex flex-col gap-1">
+          <span class="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Ventas Totales</span>
+          <span class="text-xl font-black text-emerald-500 tabular-nums">${{ totalSales() | number:'1.2-2' }}</span>
+        </div>
+        <div class="p-4 rounded-2xl bg-white/5 border border-white/5 flex flex-col gap-1">
+          <span class="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Completadas</span>
+          <span class="text-xl font-black text-white tabular-nums">{{ completedOrdersCount() }}</span>
+        </div>
+      </div>
+    }
 
     <!-- FILTROS DE FECHA -->
     <div class="mb-8 space-y-4">
@@ -174,6 +206,7 @@
       @for (o of filtered(); track o.id) {
 
       <div
+        (click)="toggleActiveOrderMobile(o.id)"
         class="
               group
               rounded-2xl
@@ -186,10 +219,18 @@
               hover:-translate-y-1
               hover:bg-[#1A1A1A]
               relative
-              ">
+              cursor-pointer
+              "
+        [class.border-amber-500\/50]="activeOrderIdMobile() === o.id"
+        [class.bg-[#1A1A1A]]="activeOrderIdMobile() === o.id"
+      >
 
         <!-- BOTONES DE ACCIÓN RÁPIDA -->
-        <div class="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+        <div 
+          class="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+          [class.opacity-100]="activeOrderIdMobile() === o.id"
+          (click)="$event.stopPropagation()"
+        >
           <button 
             (click)="printQuickTicket(o.id, 'kitchen')"
             class="w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center shadow-lg hover:bg-orange-500 active:scale-95"
@@ -304,7 +345,7 @@
                 <div class="flex items-center justify-between">
                   <div class="text-[#B0B0B0] flex flex-col">
                     <span class="text-[10px] uppercase tracking-wider font-bold text-zinc-500">
-                      {{ o.fecha_creacion | date:'EEEE' }}
+                      {{ o.fecha_creacion | date:'EEEE':'':'es' }}
                     </span>
                     <span class="text-xs">
                       {{ o.fecha_creacion | date:'dd/MM/yy, hh:mm a' }}

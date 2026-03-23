@@ -112,15 +112,23 @@ export class OrdersService {
       }
 
       const { data, error } = await this.supabase.rpc('orders_create_v1', {
-        p_cliente_id: dto.cliente_id ?? null,
-        p_metodo_pago_id: dto.metodo_pago_id,
-        p_tipo_servicio_id: dto.tipo_servicio_id,
-        p_turno_id: dto.turno_id,
-        p_propina: dto.propina ?? 0,
-        p_nota_general: dto.nota_general ?? null,
         p_client_request_id: dto.client_request_id,
-        p_items: dto.items
+        p_cliente_id: dto.cliente_id ?? null,
+        p_items: dto.items,
+        p_metodo_pago_id: dto.metodo_pago_id,
+        p_propina: dto.propina ?? 0,
+        p_tipo_servicio_id: dto.tipo_servicio_id,
+        p_turno_id: dto.turno_id ?? null
       });
+
+      if (data?.status === 'success' && dto.nota_general) {
+        // Si la orden se creó con éxito pero la función RPC no soporta nota_general,
+        // la actualizamos en un paso separado
+        await this.supabase
+          .from('orders')
+          .update({ nota_general: dto.nota_general })
+          .eq('id', data.order_id);
+      }
 
       if (DEBUG) {
         console.log('rpc.orders_create_v1.response', { data, error });

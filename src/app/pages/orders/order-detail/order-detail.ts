@@ -36,6 +36,11 @@ export class OrderDetail implements OnInit, OnDestroy {
   openTicket(type: 'account' | 'kitchen') {
     this.ticketType.set(type);
     this.showTicket.set(true);
+
+    // Auto-imprimir después de que el componente ticket-print cargue (500ms aprox)
+    setTimeout(() => {
+      window.print();
+    }, 1000);
   }
 
   // Señal para actualizar el tiempo real

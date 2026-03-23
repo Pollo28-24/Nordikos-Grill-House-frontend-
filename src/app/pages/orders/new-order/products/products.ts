@@ -117,6 +117,29 @@ export class NewOrderProducts {
   selectedModifiers = signal<any[]>([]);
   productNote = signal<string>('');
 
+  // Grouped modifiers for modal
+  groupedModifiers = computed(() => {
+    const p = this.selectedProductForModal();
+    if (!p || !p.modifiers) return [];
+    
+    // Group modifiers by their category name
+    const groups: Record<string, { name: string; items: any[] }> = {};
+    
+    p.modifiers.forEach((m: any) => {
+      // Accessing the category name from the joined table
+      // Ensure we look into the nested modificador_categorias object
+      const catName = m.modificador_categorias?.nombre || 'Extras opcionales';
+      
+      if (!groups[catName]) {
+        groups[catName] = { name: catName, items: [] };
+      }
+      groups[catName].items.push(m);
+    });
+    
+    // Convert to array and ensure categories are unique
+    return Object.values(groups);
+  });
+
   getProductPrice(p: any): string {
     const hasVariants = p.variants && p.variants.length > 0;
     
