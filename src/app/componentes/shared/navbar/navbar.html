@@ -49,6 +49,13 @@
       >
         Nueva orden
       </a>
+      <a 
+        routerLink="/profile" 
+        routerLinkActive="text-brand"
+        class="text-sm font-medium text-zinc-400 hover:text-zinc-100 transition-colors"
+      >
+        Mi Perfil
+      </a>
     </nav>
 
     <!-- Right Actions -->
@@ -115,7 +122,16 @@
           <lucide-icon name="plus-circle" class="w-5 h-5"></lucide-icon>
           ordenes
         </a>
-       
+
+        <a 
+          routerLink="/profile" 
+          routerLinkActive="text-brand bg-zinc-800/50"
+          (click)="toggleMenu()"
+          class="px-4 py-3 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-3"
+        >
+          <lucide-icon name="user" class="w-5 h-5"></lucide-icon>
+          Mi Perfil
+        </a>
 
         @if (isAuthenticated()) {
           <div class="h-px bg-zinc-800 my-2"></div>

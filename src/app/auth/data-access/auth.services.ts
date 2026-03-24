@@ -1,11 +1,14 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { SupabaseService } from '../../shared/data-access/supabase.service';
 import { SignInWithPasswordCredentials, User } from '@supabase/supabase-js';
+import { EncryptionService } from '../../core/services/encryption.service';
 
 export interface EmailSignUp {
   email: string;
   password: string;
   name?: string;
+  telefono?: string;
+  curp?: string;
 }
 
 @Injectable({
@@ -13,6 +16,7 @@ export interface EmailSignUp {
 })
 export class AuthService {
   private supabase = inject(SupabaseService).supabaseClient;
+  private encryptionService = inject(EncryptionService);
 
   // Signal for reactive auth state
   readonly user = signal<User | null>(null);
@@ -23,7 +27,9 @@ export class AuthService {
 
   private async init() {
     // 1. Get initial session
-    const { data: { session } } = await this.supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await this.supabase.auth.getSession();
     this.user.set(session?.user ?? null);
 
     // 2. Listen for auth changes
@@ -43,13 +49,19 @@ export class AuthService {
   }
 
   async getUser() {
-    const { data: { session }, error: sessionError } = await this.getSession();
+    const {
+      data: { session },
+      error: sessionError,
+    } = await this.getSession();
     if (sessionError) {
       console.error('Error getting session:', sessionError);
       return { data: { user: null }, error: sessionError };
     }
     if (session && session.user) {
-      console.log('AuthService.getUser() resolved user from session:', session.user);
+      console.log(
+        'AuthService.getUser() resolved user from session:',
+        session.user,
+      );
       return { data: { user: session.user }, error: null };
     }
     console.log('AuthService.getUser() no active session or user in session.');
@@ -58,12 +70,29 @@ export class AuthService {
 
   // ===== SIGN UP =====
   signUp(credentials: EmailSignUp) {
+    // Encrypt sensitive fields
+    const encryptedTelefono = credentials.telefono
+      ? this.encryptionService.encrypt(credentials.telefono)
+      : undefined;
+    const encryptedCurp = credentials.curp
+      ? this.encryptionService.encrypt(credentials.curp)
+      : undefined;
+
+    console.log('--- VERIFICACIÓN DE CIFRADO ---');
+    console.log('Teléfono Original:', credentials.telefono);
+    console.log('Teléfono Cifrado (a DB):', encryptedTelefono);
+    console.log('CURP Original:', credentials.curp);
+    console.log('CURP Cifrado (a DB):', encryptedCurp);
+    console.log('-------------------------------');
+
     return this.supabase.auth.signUp({
       email: credentials.email,
       password: credentials.password,
       options: {
         data: {
           name: credentials.name,
+          telefono: encryptedTelefono,
+          curp: encryptedCurp,
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
