@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, PLATFORM_ID } from '@angular/core';
+import { Injectable, inject, signal, PLATFORM_ID, computed } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from '../../shared/data-access/supabase.service';
 import { OrderCreateDto, OrderCreateResponse, OrderCreateItem } from '../../core/models/order.model';
@@ -13,8 +13,16 @@ export class OrdersService {
   error = signal<string | null>(null);
   orders = signal<any[]>([]);
   loadingOrders = signal(false);
+  
+  // Cart State
   cart = signal<OrderCreateItem[]>([]);
-  editingOrderId = signal<number | string | null>(null); // Nuevo: Para rastrear si editamos una orden
+  editingOrderId = signal<number | string | null>(null);
+
+  // Computed Cart Stats
+  cartCount = computed(() => this.cart().reduce((acc, item) => acc + item.cantidad, 0));
+  
+  // Note: Prices are not in OrderCreateItem but we could add them to calculate totals
+  // For now, these basic signals improve reactivity
 
   private queueKey = 'orders_queue_v1';
   private channel: any = null;
@@ -22,9 +30,25 @@ export class OrdersService {
   async loadOrders(dateFilter?: { start: string; end: string }): Promise<void> {
     try {
       this.loadingOrders.set(true);
+      
+      // Optimizamos la consulta para traer solo lo necesario y con joins eficientes
       let query = this.supabase
         .from('orders')
-        .select('id, numero_orden, nota_general, fecha_creacion, fecha_cierre, total, estado_pedido, estado_pago, metodo_pago_id, tipo_servicio_id, turno_id')
+        .select(`
+          id, 
+          numero_orden, 
+          nota_general, 
+          fecha_creacion, 
+          fecha_cierre, 
+          total, 
+          estado_pedido, 
+          estado_pago, 
+          metodo_pago_id, 
+          tipo_servicio_id, 
+          turno_id,
+          clientes (nombre),
+          tipos_servicio (nombre)
+        `)
         .order('fecha_creacion', { ascending: false });
 
       if (dateFilter) {
@@ -32,13 +56,22 @@ export class OrdersService {
           .gte('fecha_creacion', dateFilter.start)
           .lte('fecha_creacion', dateFilter.end);
       } else {
-        query = query.limit(200);
+        query = query.limit(100); // Reducimos el límite inicial para mayor rapidez
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      this.orders.set(data ?? []);
+      
+      // Mapeo simple para evitar cálculos pesados en el template
+      const mappedOrders = (data || []).map((o: any) => ({
+        ...o,
+        cliente_nombre: o.clientes?.nombre || 'Consumidor Final',
+        tipo_servicio_nombre: o.tipos_servicio?.nombre || 'N/A'
+      }));
+
+      this.orders.set(mappedOrders);
     } catch (e: any) {
+      console.error('Error cargando órdenes:', e);
       this.error.set(e?.message ?? 'Error cargando órdenes');
     } finally {
       this.loadingOrders.set(false);
@@ -47,10 +80,15 @@ export class OrdersService {
 
   addProduct(product: any) {
     const items = this.cart();
-    const existing = items.find(i => i.producto_id === product.id && !i.variante_id);
-    if (existing) {
-      existing.cantidad += 1;
-      this.cart.set([...items]);
+    const existingIndex = items.findIndex(i => i.producto_id === product.id && !i.variante_id);
+    
+    if (existingIndex !== -1) {
+      const updatedItems = items.map((item, index) => 
+        index === existingIndex 
+          ? { ...item, cantidad: item.cantidad + 1 } 
+          : item
+      );
+      this.cart.set(updatedItems);
     } else {
       this.cart.set([...items, {
         producto_id: product.id,
@@ -63,10 +101,15 @@ export class OrdersService {
 
   addVariant(variant: any, product: any) {
     const items = this.cart();
-    const existing = items.find(i => i.variante_id === variant.id);
-    if (existing) {
-      existing.cantidad += 1;
-      this.cart.set([...items]);
+    const existingIndex = items.findIndex(i => i.variante_id === variant.id);
+    
+    if (existingIndex !== -1) {
+      const updatedItems = items.map((item, index) => 
+        index === existingIndex 
+          ? { ...item, cantidad: item.cantidad + 1 } 
+          : item
+      );
+      this.cart.set(updatedItems);
     } else {
       this.cart.set([...items, {
         variante_id: variant.id,
@@ -79,14 +122,18 @@ export class OrdersService {
   }
 
   increment(item: OrderCreateItem) {
-    item.cantidad += 1;
-    this.cart.set([...this.cart()]);
+    const updatedItems = this.cart().map(i => 
+      i === item ? { ...i, cantidad: i.cantidad + 1 } : i
+    );
+    this.cart.set(updatedItems);
   }
 
   decrement(item: OrderCreateItem) {
     if (item.cantidad > 1) {
-      item.cantidad -= 1;
-      this.cart.set([...this.cart()]);
+      const updatedItems = this.cart().map(i => 
+        i === item ? { ...i, cantidad: i.cantidad - 1 } : i
+      );
+      this.cart.set(updatedItems);
     } else {
       this.remove(item);
     }

@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SupabaseService } from '../../../shared/data-access/supabase.service';
@@ -11,7 +11,7 @@ import { TicketPrintComponent } from '../../../features/tickets/components/ticke
 @Component({
   selector: 'app-order-detail',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, Navbar, TicketPrintComponent],
+  imports: [DatePipe, DecimalPipe, NgClass, LucideAngularModule, Navbar, TicketPrintComponent],
   templateUrl: './order-detail.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -36,11 +36,10 @@ export class OrderDetail implements OnInit, OnDestroy {
   openTicket(type: 'account' | 'kitchen') {
     this.ticketType.set(type);
     this.showTicket.set(true);
+  }
 
-    // Auto-imprimir después de que el componente ticket-print cargue (500ms aprox)
-    setTimeout(() => {
-      window.print();
-    }, 1000);
+  onTicketReady() {
+    window.print();
   }
 
   // Señal para actualizar el tiempo real

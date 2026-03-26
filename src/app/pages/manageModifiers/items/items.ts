@@ -1,8 +1,8 @@
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {  Navbar } from "../../../componentes/shared/navbar/navbar";
 import { ModifiersService } from '../../../core/services/modifiers/modifiers.service';
 import { ProductsService } from '../../../core/services/products.service';
@@ -12,7 +12,7 @@ import { Modifier, Product } from '../../../core/models/product.model';
 @Component({
   selector: 'app-manage-modifiers',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, ReactiveFormsModule, Navbar, RouterLink, ],
+  imports: [LucideAngularModule, ReactiveFormsModule, Navbar, RouterLink, ],
   templateUrl: './items.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -54,13 +54,18 @@ export class ManageModifiers implements OnInit {
     sku: ['']
   });
 
+  constructor() {
+    this.route.queryParams
+      .pipe(takeUntilDestroyed())
+      .subscribe(params => {
+        if (params['categoria_id']) {
+          this.selectedCategoryId.set(params['categoria_id']);
+        }
+      });
+  }
+
   ngOnInit() {
-    this.modifiersService.loadAll();
-    this.route.queryParams.subscribe(params => {
-      if (params['categoria_id']) {
-        this.selectedCategoryId.set(params['categoria_id']);
-      }
-    });
+    this.modifiersService.reloadAll();
   }
 
   openCreate() {

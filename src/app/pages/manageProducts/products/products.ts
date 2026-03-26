@@ -8,7 +8,7 @@ import {
   ViewChild,
   WritableSignal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 
@@ -21,7 +21,7 @@ import { Navbar } from '../../../componentes/shared/navbar/navbar';
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [Navbar, CommonModule, LucideAngularModule],
+  imports: [Navbar, CurrencyPipe, LucideAngularModule],
   templateUrl: './products.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

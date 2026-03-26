@@ -1,4 +1,5 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from '../../shared/data-access/supabase.service';
 import { SignInWithPasswordCredentials, User } from '@supabase/supabase-js';
 import { EncryptionService } from '../../core/services/encryption.service';
@@ -15,6 +16,7 @@ export interface EmailSignUp {
   providedIn: 'root',
 })
 export class AuthService {
+  private platformId = inject(PLATFORM_ID);
   private supabase = inject(SupabaseService).supabaseClient;
   private encryptionService = inject(EncryptionService);
 
@@ -22,7 +24,9 @@ export class AuthService {
   readonly user = signal<User | null>(null);
 
   constructor() {
-    this.init();
+    if (isPlatformBrowser(this.platformId)) {
+      this.init();
+    }
   }
 
   private async init() {
@@ -94,7 +98,7 @@ export class AuthService {
           telefono: encryptedTelefono,
           curp: encryptedCurp,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: isPlatformBrowser(this.platformId) ? `${window.location.origin}/auth/callback` : '',
       },
     });
   }

@@ -1,5 +1,4 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { CategoriesService } from '../../core/services/categories.service';
 import { ProductsService } from '../../core/services/products.service';
@@ -9,7 +8,7 @@ import { Category } from '../../core/services/categories.service';
 @Component({
   selector: 'app-public-menu',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [LucideAngularModule],
   templateUrl: './public-menu.html',
   styles: [`
     .hide-scrollbar::-webkit-scrollbar {

@@ -69,8 +69,7 @@ import {
   Crosshair,
   ChefHat,
   MessageSquare,
-  ShieldCheck,
-  PhoneCall
+  ArrowLeft,
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -139,8 +138,8 @@ providers: [
         Crosshair,
         ChefHat,
         MessageSquare,
-        ShieldCheck,
-        PhoneCall
+        ArrowLeft,
+
       }),
     ),
   ],

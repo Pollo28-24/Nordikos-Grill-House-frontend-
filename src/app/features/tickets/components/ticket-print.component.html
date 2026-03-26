@@ -1,103 +1,145 @@
-<div class="ticket" [class.kitchen-ticket]="ticketType() === 'kitchen'" *ngIf="ticketData() as data; else loadingTpl">
-  
-  <!-- Encabezado (Diferente según tipo) -->
-  <div class="header" *ngIf="data.order as order">
-    <h1 class="brand" *ngIf="ticketType() === 'account'">NORDIKOS</h1>
-    <p class="tagline" *ngIf="ticketType() === 'account'">Grill House</p>
+@if (ticketData(); as data) {
+  <div class="ticket" [class.kitchen-ticket]="ticketType() === 'kitchen'">
     
-    <div class="ticket-header-main">
-      <h2 class="order-id">
-        {{ order.numero_orden ? 'ORDEN #' + order.numero_orden : 'ORDEN #' + order.id }}
-      </h2>
-      <p class="ticket-label" *ngIf="ticketType() === 'kitchen'">COCINA</p>
-    </div>
+    <!-- Encabezado (Diferente según tipo) -->
+    @if (data.order; as order) {
+      <div class="header">
+        @if (ticketType() === 'account') {
+          <h1 class="brand">NORDIKOS</h1>
+          <p class="tagline">Grill House</p>
+        }
+        
+        <div class="ticket-header-main">
+          <div class="divider"></div>
+          <h2 class="order-id">
+            {{ order.numero_orden ? 'ORDEN #' + order.numero_orden : 'ORDEN #' + order.id }}
+          </h2>
+          <div class="divider"></div>        
+          @if (ticketType() === 'kitchen') {
+            <p class="ticket-label">COCINA</p>
+          }
+        </div>
 
-    <div class="header-details">
-      <p class="timestamp">{{ order.fecha_creacion | date:'dd/MM/yy, hh:mm a' }}</p>
-      <p class="service-type">{{ order.tipo_servicio }}</p>
-    </div>
-  </div>
-
-  <div class="divider"></div>
-
-  <!-- Cliente -->
-  <div class="client" *ngIf="data.order.cliente as cliente">
-    <p class="client-name">Cliente: {{ cliente.nombre }}</p>
-    <p *ngIf="cliente.telefono">Tel: {{ cliente.telefono }}</p>
-  </div>
-
-  <div class="divider" *ngIf="data.order.cliente"></div>
-
-  <!-- Productos -->
-  <div class="items" [class.kitchen-items]="ticketType() === 'kitchen'">
-    <div *ngFor="let item of data.items" class="item-block">
-      <div class="item-line">
-        <span class="item-qty">{{ item.cantidad }}x</span>
-        <span class="item-name">{{ item.nombre_producto }}</span>
-        <span class="item-total" *ngIf="ticketType() === 'account'">${{ item.total | number:'1.2-2' }}</span>
-      </div>
-      
-      <!-- Variantes / Modificadores -->
-      <div *ngIf="(item.variante || (item.modificadores && item.modificadores.length > 0))" class="modifiers">
-        <p *ngIf="item.variante" class="variant-line">• {{ item.variante }}</p>
-        <div *ngFor="let mod of item.modificadores" class="modifier-line">
-          <span>+ {{ mod.nombre_modificador }}</span>
-          <span *ngIf="ticketType() === 'account' && mod.precio_unitario > 0">${{ mod.precio_unitario | number:'1.2-2' }}</span>
+        <div class="header-details">
+          <p class="timestamp">{{ order.fecha_creacion | date:'dd/MM/yy, hh:mm a' }}</p>
+          <p class="service-type">{{ order.tipo_servicio }}</p>
         </div>
       </div>
+    }
 
-      <!-- Nota del item -->
-      <div *ngIf="item.nota" class="item-note">
-        <p>Instrucción: {{ item.nota }}</p>
+    <div class="divider"></div>
+
+    <!-- Cliente -->
+    @if (data.order.cliente; as cliente) {
+      <div class="client">
+        <p class="client-name">Cliente: {{ cliente.nombre }}</p>
+        @if (cliente.telefono) {
+          <p>Tel: {{ cliente.telefono }}</p>
+        }
       </div>
+    }
+
+    @if (data.order.cliente) {
+      <div class="divider"></div>
+    }
+
+    <!-- Productos -->
+    <div class="items" [class.kitchen-items]="ticketType() === 'kitchen'">
+      @for (item of data.items; track $index) {
+        <div class="item-block">
+          <div class="item-line">
+            <span class="item-qty">{{ item.cantidad }}x</span>
+            <span class="item-name">{{ item.nombre_producto }}</span>
+            @if (ticketType() === 'account') {
+              <span class="item-total">${{ item.total | number:'1.2-2' }}</span>
+            }
+          </div>
+          
+          <!-- Variantes / Modificadores -->
+          @if (item.variante || (item.modificadores && item.modificadores.length > 0)) {
+            <div class="modifiers">
+              @if (item.variante) {
+                <p class="variant-line">• {{ item.variante }}</p>
+              }
+              @for (mod of item.modificadores; track $index) {
+                <div class="modifier-line">
+                  <span>+ {{ mod.nombre_modificador }}</span>
+                  @if (ticketType() === 'account' && mod.precio_unitario > 0) {
+                    <span>${{ mod.precio_unitario | number:'1.2-2' }}</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Nota del item -->
+          @if (item.nota) {
+            <div class="item-note">
+              <p>Instrucción: {{ item.nota }}</p>
+            </div>
+          }
+        </div>
+      }
     </div>
-  </div>
 
-  <div class="divider"></div>
-
-  <!-- Nota General (Muy importante en cocina) -->
-  <div class="general-note" *ngIf="data.order.nota_general">
-    <p class="note-title">--- NOTA GENERAL ---</p>
-    <p class="note-content">{{ data.order.nota_general }}</p>
     <div class="divider"></div>
-  </div>
 
-  <!-- Totales (Solo en cuenta) -->
-  <div class="totals" *ngIf="ticketType() === 'account' && data.order as order">
-    <div class="total-line">
-      <span>SUBTOTAL</span>
-      <span>${{ (order.total - (order.propina || 0)) | number:'1.2-2' }}</span>
+    <!-- Nota General (Muy importante en cocina) -->
+    @if (data.order.nota_general) {
+      <div class="general-note">
+        <p class="note-title">--- NOTA GENERAL ---</p>
+        <p class="note-content">{{ data.order.nota_general }}</p>
+        <div class="divider"></div>
+      </div>
+    }
+
+    <!-- Totales (Solo en cuenta) -->
+    @if (ticketType() === 'account' && data.order; as order) {
+      <div class="totals">
+        <div class="total-line">
+          <span>SUBTOTAL</span>
+          <span>${{ (order.total - (order.propina || 0)) | number:'1.2-2' }}</span>
+        </div>
+        @if (order.propina && order.propina > 0) {
+          <div class="total-line">
+            <span>PROPINA</span>
+            <span>${{ order.propina | number:'1.2-2' }}</span>
+          </div>
+        }
+        <div class="total-line grand-total">
+          <span>TOTAL</span>
+          <span>${{ order.total | number:'1.2-2' }}</span>
+        </div>
+        <div class="divider"></div>
+      </div>
+    }
+
+    <!-- Footer -->
+    @if (ticketType() === 'account') {
+      <div class="footer">
+        <p>¡Gracias por su compra!</p>
+        <p>Nordikos Grill House</p>
+      </div>
+    }
+
+    @if (ticketType() === 'kitchen') {
+      <div class="footer kitchen-footer">
+        <p>--- FIN DE TICKET COCINA ---</p>
+      </div>
+    }
+  </div>
+} @else {
+  @if (loading()) {
+    <div class="loading">
+      Cargando datos del ticket...
     </div>
-    <div class="total-line" *ngIf="order.propina && order.propina > 0">
-      <span>PROPINA</span>
-      <span>${{ order.propina | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-line grand-total">
-      <span>TOTAL</span>
-      <span>${{ order.total | number:'1.2-2' }}</span>
-    </div>
-    <div class="divider"></div>
-  </div>
+  }
+}
 
-  <!-- Footer -->
-  <div class="footer" *ngIf="ticketType() === 'account'">
-    <p>¡Gracias por su compra!</p>
-    <p>Nordikos Grill House</p>
+@if (ticketData()) {
+  <div class="print-actions no-print">
+    <button (click)="print()" class="print-btn">
+      Imprimir {{ ticketType() === 'kitchen' ? 'Ticket Cocina' : 'Ticket Cuenta' }}
+    </button>
   </div>
-
-  <div class="footer kitchen-footer" *ngIf="ticketType() === 'kitchen'">
-    <p>--- FIN DE TICKET COCINA ---</p>
-  </div>
-</div>
-
-<ng-template #loadingTpl>
-  <div class="loading" *ngIf="loading()">
-    Cargando datos del ticket...
-  </div>
-</ng-template>
-
-<div class="print-actions no-print">
-  <button (click)="print()" class="print-btn">
-    Imprimir {{ ticketType() === 'kitchen' ? 'Ticket Cocina' : 'Ticket Cuenta' }}
-  </button>
-</div>
+}

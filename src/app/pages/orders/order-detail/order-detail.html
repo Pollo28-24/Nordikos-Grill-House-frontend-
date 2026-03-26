@@ -1,6 +1,6 @@
 <app-navbar />
 
-<div class="min-h-screen bg-[#121212] text-[#F5F5F5] pb-24">
+<div class="min-h-screen bg-[#121212] text-[#F5F5F5] pb-24 no-print">
   <div class="max-w-4xl mx-auto px-5 py-6">
     
     <!-- Header -->
@@ -61,24 +61,6 @@
         }
       </div>
     </div>
-
-    <!-- Modal de Ticket (Overlay) -->
-    @if (showTicket()) {
-      <div class="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm no-print">
-        <div class="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-[#121212] border border-white/10 p-6 animate-in zoom-in-95">
-          <button 
-            (click)="showTicket.set(false)"
-            class="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 transition"
-          >
-            <lucide-icon name="x" class="w-6 h-6" />
-          </button>
-          
-          @if (orderIdNumber(); as id) {
-            <app-ticket-print [orderId]="id" [ticketType]="ticketType()" />
-          }
-        </div>
-      </div>
-    }
 
     @if (loading()) {
       <div class="flex flex-col items-center justify-center py-20 gap-4">
@@ -210,6 +192,28 @@
 
   </div>
 </div>
+
+<!-- Modal de Ticket (Overlay) -->
+@if (showTicket()) {
+  <div class="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm print:bg-white print:p-0">
+    <div class="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-[#121212] border border-white/10 p-6 animate-in zoom-in-95 print:bg-white print:border-none print:p-0 print:max-w-none print:max-h-none print:overflow-visible">
+      <button 
+        (click)="showTicket.set(false)"
+        class="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 transition no-print"
+      >
+        <lucide-icon name="x" class="w-6 h-6" />
+      </button>
+      
+      @if (orderIdNumber(); as id) {
+        <app-ticket-print 
+          [orderId]="id" 
+          [ticketType]="ticketType()" 
+          (readyToPrint)="onTicketReady()"
+        />
+      }
+    </div>
+  </div>
+}
 
 <!-- Botón Flotante para Agregar más productos -->
 @if (order() && order().estado_pedido === 'confirmado' && order().estado_pago === 'pendiente') {

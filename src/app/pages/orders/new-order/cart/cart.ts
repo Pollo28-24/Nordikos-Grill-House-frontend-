@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
@@ -35,7 +35,7 @@ interface Client {
 @Component({
   selector: 'app-new-order-cart',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
+  imports: [DecimalPipe, ReactiveFormsModule, LucideAngularModule],
   templateUrl: './cart.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

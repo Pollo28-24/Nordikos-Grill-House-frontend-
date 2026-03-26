@@ -1,12 +1,12 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-toast',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [NgClass, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="fixed top-6 right-6 z-50 flex flex-col gap-3 w-85 max-w-[90vw]">

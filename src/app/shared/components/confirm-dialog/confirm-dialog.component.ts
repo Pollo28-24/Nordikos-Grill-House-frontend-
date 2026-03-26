@@ -4,14 +4,13 @@ import {
   ChangeDetectionStrategy,
   HostListener
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { ConfirmService } from '../../../core/services/confirm.service';
 
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (confirmService.state(); as confirm) {

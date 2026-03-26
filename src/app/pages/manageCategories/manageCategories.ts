@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
@@ -10,7 +9,7 @@ import { ConfirmService } from '../../core/services/confirm.service';
 @Component({
   selector: 'app-manage-categories',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, Navbar],
+  imports: [FormsModule, LucideAngularModule, Navbar],
   templateUrl: './manageCategories.html',
   styles: `
     :host {

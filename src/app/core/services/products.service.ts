@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, computed, PLATFORM_ID } from '@angular/core';
+import { Injectable, inject, signal, computed, PLATFORM_ID, resource } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { isPlatformBrowser } from '@angular/common';
 import { map } from 'rxjs/operators';
@@ -19,56 +19,11 @@ export class ProductsService {
   private platformId = inject(PLATFORM_ID);
 
   // -----------------------------
-  // STATE (Signal First)
+  // DATA RESOURCE (Angular 20+)
   // -----------------------------
 
-  private _products = signal<Product[]>([]);
-  private _loading = signal(false);
-  private _error = signal<string | null>(null);
-  private _initialized = signal(false);
-
-  // -----------------------------
-  // PUBLIC READ-ONLY STATE
-  // -----------------------------
-
-  readonly products = this._products.asReadonly();
-  readonly loading = this._loading.asReadonly();
-  readonly error = this._error.asReadonly();
-
-  readonly totalProducts = computed(() => this._products().length);
-
-  // -----------------------------
-  // OBSERVABLES FOR BACKWARD COMPATIBILITY
-  // -----------------------------
-  readonly products$ = toObservable(this.products);
-  readonly loading$ = toObservable(this.loading);
-  readonly error$ = toObservable(this.error);
-
-  // -----------------------------
-  // EAGER INITIALIZATION
-  // -----------------------------
-
-  constructor() {
-    this.init();
-  }
-
-  private async init() {
-    // Prevent SSR from fetching data
-    if (!isPlatformBrowser(this.platformId)) return;
-    if (this._initialized()) return;
-    this._initialized.set(true);
-    await this.loadProducts();
-  }
-
-  // -----------------------------
-  // LOAD
-  // -----------------------------
-
-  async loadProducts(): Promise<void> {
-    try {
-      this._loading.set(true);
-      this._error.set(null);
-
+  private productsResource = resource({
+    loader: async () => {
       const { data, error } = await this.supabase
         .from('productos')
         .select(`
@@ -86,18 +41,41 @@ export class ProductsService {
         .order('nombre');
 
       if (error) throw error;
-
-      if (data) {
-        const products: Product[] = data.map((row: any) => this.mapProductRow(row));
-        this._products.set(products);
-      }
-
-    } catch (err: any) {
-      this._error.set(err.message ?? 'Error loading products');
-      console.error('Error loading products:', err);
-    } finally {
-      this._loading.set(false);
+      
+      return (data || []).map((row: any) => this.mapProductRow(row)) as Product[];
     }
+  });
+
+  // -----------------------------
+  // STATE (Signal First)
+  // -----------------------------
+
+  private _loading = signal(false);
+  private _error = signal<string | null>(null);
+
+  // -----------------------------
+  // PUBLIC READ-ONLY STATE
+  // -----------------------------
+
+  readonly products = computed(() => this.productsResource.value() ?? []);
+  readonly loading = computed(() => this.productsResource.isLoading() || this._loading());
+  readonly error = computed(() => (this.productsResource.error() as any)?.message ?? this._error());
+
+  readonly totalProducts = computed(() => this.products().length);
+
+  // -----------------------------
+  // OBSERVABLES FOR BACKWARD COMPATIBILITY
+  // -----------------------------
+  readonly products$ = toObservable(this.products);
+  readonly loading$ = toObservable(this.loading);
+  readonly error$ = toObservable(this.error);
+
+  // -----------------------------
+  // ACTIONS
+  // -----------------------------
+
+  reload() {
+    this.productsResource.reload();
   }
 
   // -----------------------------
@@ -196,8 +174,8 @@ export class ProductsService {
         }
       }
 
-      // Optimistic local update
-      this._products.update(prev => [...prev, newProduct]);
+      // Optimistic local update removed in favor of resource reload
+      this.reload();
 
       return newProduct;
 
@@ -350,9 +328,7 @@ export class ProductsService {
 
       if (updateProductError) throw updateProductError;
 
-      const updatedProduct = this.mapProductRow(updatedProductData);
-
-      this._products.update(prev => prev.map(p => p.id === parsedId ? updatedProduct : p));
+      this.reload();
 
       return true;
 
@@ -383,7 +359,7 @@ export class ProductsService {
 
       if (error) throw error;
 
-      this._products.update(prev => prev.filter(p => p.id !== parsedId));
+      this.reload();
 
       return true;
 
@@ -400,18 +376,14 @@ export class ProductsService {
   // -----------------------------
   async getProduct(id: string): Promise<Product | null> {
     // Determine if ID should be treated as number or string
-    // Supabase handles string->number conversion for queries usually, 
-    // but strict type might be needed for some comparisons.
     const isNumeric = /^-?\d+$/.test(String(id));
     const parsedId = isNumeric ? Number(id) : id;
     
-    // 1. Try to find in local state
-    // We compare softly or ensure types match. 
-    // If store has numbers, parsedId is number. If store has strings (UUID), parsedId is string.
-    const existing = this._products().find(p => p.id == parsedId); // Using == for safety or stick to ===
+    // 1. Try to find in current resource value
+    const existing = this.products().find(p => p.id == parsedId);
     if (existing) return existing;
 
-    // 2. If not found (e.g. reload), fetch from DB
+    // 2. If not found (e.g. reload or direct access), fetch from DB
     try {
       this._loading.set(true);
       const { data, error } = await this.supabase
@@ -427,9 +399,7 @@ export class ProductsService {
       }
       return null;
     } catch (err: any) {
-      // Handle "Row not found" gracefully
       if (err?.code === 'PGRST116') {
-        console.warn(`Product with id "${parsedId}" not found in database.`);
         return null;
       }
       console.error('Error fetching product:', err);
@@ -443,8 +413,8 @@ export class ProductsService {
   // SELECTOR (Memoized)
   // -----------------------------
 
-  productById = (id: string) =>
-    computed(() => this._products().find(p => p.id === id));
+  productById = (id: string | number) =>
+    computed(() => this.products().find(p => String(p.id) === String(id)));
 
 
   // ===============================

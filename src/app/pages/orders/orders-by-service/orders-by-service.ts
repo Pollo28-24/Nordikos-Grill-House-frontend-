@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { Router, RouterLink } from '@angular/router';
 import { OrdersService } from '../../../core/services/orders.service';
@@ -18,7 +18,7 @@ interface ServiceType {
 @Component({
   selector: 'app-orders-by-service',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, Navbar, TicketPrintComponent],
+  imports: [DatePipe, DecimalPipe, NgClass, LucideAngularModule, Navbar, TicketPrintComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './orders-by-service.html'
 })
@@ -232,11 +232,10 @@ export class OrdersByService implements OnInit, OnDestroy {
     this.quickPrintType.set(type);
     this.quickPrintOrderId.set(orderId);
     this.showQuickPrintModal.set(true);
+  }
 
-    // Auto-imprimir después de que el componente ticket-print cargue (500ms aprox)
-    setTimeout(() => {
-      window.print();
-    }, 1000);
+  onTicketReady() {
+    window.print();
   }
 
   async bulkUpdateStatus(type: 'pedido' | 'pago', status: OrderStatus | PaymentStatus) {

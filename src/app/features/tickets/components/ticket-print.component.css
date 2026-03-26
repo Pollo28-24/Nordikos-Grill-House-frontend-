@@ -1,209 +1,4 @@
-.ticket {
-  width: 58mm;
-  padding: 2mm;
-  background: white;
-  color: black;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 10px;
-  line-height: 1.2;
-  margin: 0 auto;
-}
-
-.header {
-  text-align: center;
-}
-
-.brand {
-  font-size: 18px;
-  font-weight: 900;
-  margin: 0;
-  letter-spacing: 1px;
-}
-
-.tagline {
-  font-size: 10px;
-  text-transform: uppercase;
-  margin: 0;
-}
-
-.order-id {
-  font-size: 16px;
-  font-weight: bold;
-  margin: 3px 0;
-}
-
-.timestamp, .service-type {
-  font-size: 10px;
-  margin: 0;
-}
-
-.divider {
-  border-top: 1px dashed #000;
-  margin: 5px 0;
-}
-
-.client {
-  font-size: 11px;
-}
-
-.items {
-  margin: 10px 0;
-}
-
-.item-block {
-  margin-bottom: 5px;
-}
-
-.item-line {
-  display: flex;
-  justify-content: space-between;
-  font-weight: bold;
-}
-
-.item-qty {
-  width: 20px;
-}
-
-.item-name {
-  flex: 1;
-}
-
-.item-total {
-  width: 50px;
-  text-align: right;
-}
-
-.modifiers {
-  margin-left: 25px;
-  font-size: 10px;
-  color: #555;
-}
-
-.modifier-line {
-  display: flex;
-  justify-content: space-between;
-}
-
-.totals {
-  margin: 10px 0;
-}
-
-.total-line {
-  display: flex;
-  justify-content: space-between;
-}
-
-.grand-total {
-  font-size: 14px;
-  font-weight: 900;
-  margin-top: 3px;
-}
-
-.general-note {
-  font-size: 9px;
-  margin: 5px 0;
-}
-
-.note-title {
-  font-weight: bold;
-  margin: 0;
-}
-
-.note-content {
-  margin: 2px 0 0 0;
-  font-style: italic;
-}
-
-.footer {
-  text-align: center;
-  font-size: 10px;
-  margin-top: 10px;
-}
-
-/* Estilos para Ticket de Cocina */
-.kitchen-ticket {
-  font-family: Arial, sans-serif;
-}
-
-.kitchen-ticket .order-id {
-  font-size: 24px;
-  border: 2px solid black;
-  display: inline-block;
-  padding: 5px 10px;
-}
-
-.ticket-label {
-  font-size: 20px;
-  font-weight: 900;
-  background: black;
-  color: white;
-  margin: 5px 0;
-  text-align: center;
-}
-
-.kitchen-items .item-line {
-  font-size: 16px;
-  margin-top: 8px;
-}
-
-.kitchen-items .item-qty {
-  font-size: 20px;
-  background: #eee;
-  text-align: center;
-  margin-right: 5px;
-}
-
-.kitchen-items .modifiers {
-  font-size: 12px;
-  color: black;
-  font-weight: bold;
-  margin-left: 25px;
-}
-
-.item-note {
-  margin-left: 25px;
-  font-style: italic;
-  font-size: 11px;
-  background: #f9f9f9;
-  padding: 2px;
-}
-
-.general-note .note-title {
-  font-weight: 900;
-  font-size: 14px;
-  text-decoration: underline;
-}
-
-.kitchen-ticket .general-note {
-  border: 2px solid black;
-  padding: 5px;
-  margin: 10px 0;
-  background: #f0f0f0;
-}
-
-.kitchen-ticket .general-note .note-title {
-  font-size: 16px;
-  text-decoration: none;
-  background: black;
-  color: white;
-  padding: 2px 5px;
-  display: block;
-  text-align: center;
-}
-
-.general-note .note-content {
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.kitchen-ticket .general-note .note-content {
-  font-size: 18px;
-  text-align: center;
-  display: block;
-  margin-top: 5px;
-}
-
-/* Print Specific Styles */
+/* Estilos para ocultar todo lo que no sea el ticket al imprimir */
 @media print {
   body * {
     visibility: hidden;
@@ -217,10 +12,292 @@
     top: 0;
     width: 58mm;
     margin: 0;
-    padding: 1mm;
+    padding: 0;
+    border: none;
   }
-  .no-print {
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
+}
+
+.ticket {
+  width: 58mm;
+  padding: 1mm;
+  background: white;
+  color: black;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  line-height: 1.1;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 5px;
+}
+
+.brand {
+  font-size: 20px;
+  font-weight: 900;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.tagline {
+  font-size: 11px;
+  text-transform: uppercase;
+  margin: 0;
+  font-weight: bold;
+}
+
+.ticket-header-main {
+  margin: 5px 0;
+}
+
+.order-id {
+  font-size: 22px;
+  font-weight: 900;
+  margin: 2px 0;
+}
+
+.timestamp, .service-type {
+  font-size: 11px;
+  margin: 0;
+  font-weight: bold;
+}
+
+.divider {
+  border-top: 1px dashed black;
+  margin: 4px 0;
+}
+
+.client {
+  font-size: 12px;
+  margin: 3px 0;
+}
+
+.items {
+  margin: 5px 0;
+}
+
+.item-block {
+  margin-bottom: 3px;
+  page-break-inside: avoid;
+}
+
+.item-line {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.item-qty {
+  width: 25px;
+}
+
+.item-name {
+  flex: 1;
+  padding-right: 5px;
+}
+
+.item-total {
+  width: 60px;
+  text-align: right;
+}
+
+.modifiers {
+  margin-left: 25px;
+  font-size: 10px;
+}
+
+.modifier-line {
+  display: flex;
+  justify-content: space-between;
+}
+
+.totals {
+  margin: 5px 0;
+}
+
+.total-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.grand-total {
+  font-size: 16px;
+  font-weight: 900;
+  margin-top: 2px;
+  border-top: 1px solid black;
+  padding-top: 2px;
+}
+
+.general-note {
+  font-size: 11px;
+  margin: 5px 0;
+  border: 1px solid black;
+  padding: 2px;
+}
+
+.note-title {
+  font-weight: 900;
+  text-align: center;
+  display: block;
+}
+
+.note-content {
+  margin: 2px 0;
+  text-align: center;
+}
+
+.footer {
+  text-align: center;
+  font-size: 11px;
+  margin-top: 8px;
+  font-weight: bold;
+}
+
+/* Estilos para Ticket de Cocina (Fuentes más grandes y Negritas) */
+.kitchen-ticket {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.kitchen-ticket .order-id {
+  font-size: 28px;
+  background: black;
+  color: white;
+  padding: 2px 5px;
+}
+
+.kitchen-ticket .ticket-label {
+  font-size: 18px;
+  font-weight: 900;
+  text-decoration: underline;
+}
+
+.kitchen-items .item-line {
+  font-size: 18px;
+  margin-top: 5px;
+  border-bottom: 1px solid #ccc;
+}
+
+.kitchen-items .item-qty {
+  font-size: 22px;
+  width: 40px;
+}
+
+.kitchen-items .modifiers {
+  font-size: 14px;
+  font-weight: 900;
+  margin-left: 30px;
+}
+
+.item-note {
+  margin-left: 30px;
+  font-weight: bold;
+  font-size: 13px;
+  background: #eee;
+  padding: 2px;
+}
+
+.kitchen-ticket .general-note {
+  border: 3px solid black;
+  padding: 5px;
+}
+
+.kitchen-ticket .general-note .note-title {
+  font-size: 18px;
+  background: black;
+  color: white;
+}
+
+.kitchen-ticket .general-note .note-content {
+  font-size: 18px;
+  font-weight: 900;
+  text-align: center;
+  display: block;
+  margin-top: 5px;
+}
+
+/* Print Specific Styles */
+@media print {
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
+
+  /* 1. RESET DE PÁGINA PARA NITIDEZ MÁXIMA */
+  html, body {
+    width: 58mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+    zoom: 100% !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    
+    /* 🔥 ELIMINAR SUAVIZADO DE FUENTE (Antialiasing) */
+    -webkit-font-smoothing: none !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    text-rendering: crispEdges !important;
+  }
+
+  /* 2. ESTRATEGIA DE OCULTACIÓN LIMPIA */
+  app-navbar, 
+  .navbar, 
+  .no-print, 
+  .print-actions, 
+  button, 
+  header, 
+  nav,
+  .min-h-screen, 
+  .fixed:not([class*="print:bg-white"]), 
+  .absolute:not(.ticket) {
     display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* 3. EL TICKET */
+  .ticket {
+    display: block !important;
+    position: relative !important;
+    width: 58mm !important;
+    max-width: 58mm !important;
+    margin: 0 !important;
+    padding: 1mm !important;
+    box-sizing: border-box !important;
+    background: white !important;
+    color: #000 !important;
+    font-family: monospace !important;
+    
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .ticket * {
+    visibility: visible !important;
+    color: #000 !important;
+  }
+
+  .kitchen-ticket {
+    font-family: Arial, sans-serif !important;
+  }
+
+  app-root, main, .relative {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 58mm !important;
+    position: static !important;
   }
 }
 
@@ -248,4 +325,10 @@
   text-align: center;
   padding: 20px;
   color: #888;
+}
+
+@media print {
+  .loading {
+    display: none !important;
+  }
 }
