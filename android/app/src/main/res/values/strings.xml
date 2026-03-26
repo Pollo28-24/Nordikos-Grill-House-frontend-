@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Nordikos</string>
+    <string name="title_activity_main">Nordikos</string>
+    <string name="package_name">com.nordikos.app</string>
+    <string name="custom_url_scheme">com.nordikos.app</string>
+</resources>
