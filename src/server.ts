@@ -51,8 +51,8 @@ app.use((req, res, next) => {
       // Inject environment variables into the HTML for the client
       const html = await response.text();
       const env = {
-        supabaseUrl: process.env['SUPABASE_URL'] || '',
-        supabaseKey: process.env['SUPABASE_KEY'] || '',
+        supabaseUrl: process.env['PUBLIC_SUPABASE_URL'] || process.env['SUPABASE_URL'] || '',
+        supabaseKey: process.env['PUBLIC_SUPABASE_ANON_KEY'] || process.env['SUPABASE_KEY'] || '',
       };
       
       const envScript = `<script>window.__ENV__ = ${JSON.stringify(env)};</script>`;

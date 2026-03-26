@@ -2,6 +2,7 @@ import { Injectable, inject, signal, PLATFORM_ID, computed } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from '../../shared/data-access/supabase.service';
 import { OrderCreateDto, OrderCreateResponse, OrderCreateItem } from '../../core/models/order.model';
+import { orderDb } from './order-db.service';
 
 @Injectable({ providedIn: 'root' })
 export class OrdersService {
@@ -24,8 +25,15 @@ export class OrdersService {
   // Note: Prices are not in OrderCreateItem but we could add them to calculate totals
   // For now, these basic signals improve reactivity
 
-  private queueKey = 'orders_queue_v1';
   private channel: any = null;
+
+  constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      window.addEventListener('online', () => this.retryQueued());
+      // Reintento inicial al cargar
+      setTimeout(() => this.retryQueued(), 5000);
+    }
+  }
 
   async loadOrders(dateFilter?: { start: string; end: string }): Promise<void> {
     try {
@@ -152,10 +160,14 @@ export class OrdersService {
       this.creating.set(true);
       this.error.set(null);
 
-      const DEBUG = true;
-      if (DEBUG) {
-        console.group('orders.createOrder');
-        console.log('dto', dto);
+      // Paso 1: Guardar localmente siempre primero (IndexedDB)
+      if (isPlatformBrowser(this.platformId)) {
+        await orderDb.saveOrder({
+          id: dto.client_request_id,
+          status: 'pending',
+          payload: dto,
+          createdAt: Date.now()
+        });
       }
 
       const { data, error } = await this.supabase.rpc('orders_create_v1', {
@@ -168,88 +180,85 @@ export class OrdersService {
         p_turno_id: dto.turno_id ?? null
       });
 
-      if (data?.status === 'success' && dto.nota_general) {
-        // Si la orden se creó con éxito pero la función RPC no soporta nota_general,
-        // la actualizamos en un paso separado
-        await this.supabase
-          .from('orders')
-          .update({ nota_general: dto.nota_general })
-          .eq('id', data.order_id);
-      }
-
-      if (DEBUG) {
-        console.log('rpc.orders_create_v1.response', { data, error });
-      }
-
       if (error) {
-        // Log error details for debugging
-        console.error('rpc.orders_create_v1.error', error);
-        this.error.set(error.message ?? 'Error creando orden');
-        
-        // Network/offline heuristics
-        const isOffline = !navigator.onLine || String(error?.message || '').toLowerCase().includes('fetch') || String(error?.message || '').toLowerCase().includes('network');
-        if (isOffline) {
-          this.enqueue(dto);
-        }
-        
-        if (DEBUG) console.groupEnd();
-        return { status: 'validation_error', error_code: 'SERVICE_TYPE_INVALID' } as any;
+        console.error('Error RPC:', error);
+        // Si es error de red, la orden ya está en IndexedDB como 'pending'
+        throw error;
       }
 
       if (data?.status === 'success') {
+        // Paso 2: Marcar como sincronizada
+        if (isPlatformBrowser(this.platformId)) {
+          await orderDb.saveOrder({
+            id: dto.client_request_id,
+            status: 'synced',
+            payload: dto,
+            createdAt: Date.now()
+          });
+        }
+
         this.lastOrder.set({ order_id: data.order_id, total: data.total });
         
-        // Generación de ticket asincrónico (side-effect)
+        // Ticket y nota general (se mantienen igual)
+        if (dto.nota_general) {
+          await this.supabase.from('orders').update({ nota_general: dto.nota_general }).eq('id', data.order_id);
+        }
+
         this.supabase.from('tickets').insert({
           order_id: data.order_id,
           tipo: dto.tipo_servicio_id === 1 ? 'ticket_llevar' : 'ticket_cocina',
           impreso: false
-        }).then(({ error: ticketError }) => {
-          if (ticketError) console.error('Error al encolar ticket:', ticketError);
-        });
+        }).then(({ error: te }) => { if (te) console.error(te); });
+
+        return data as OrderCreateResponse;
       }
-      if (DEBUG) {
-        console.groupEnd();
-      }
+
       return data as OrderCreateResponse;
+
     } catch (e: any) {
-      const DEBUG = true;
-      if (DEBUG) {
-        console.error('orders.createOrder.exception', e);
+      console.error('createOrder error:', e);
+      const isNetworkError = !navigator.onLine || e.message?.includes('fetch') || e.code === 'PGRST301';
+      
+      if (isNetworkError) {
+        this.error.set('Sin conexión. La orden se guardó localmente y se enviará al recuperar internet.');
+        return { status: 'success', order_id: 0, total: 0 } as any; // Retornamos éxito falso para UI
       }
-      const isOffline = !navigator.onLine || String(e?.message || '').toLowerCase().includes('fetch') || String(e?.message || '').toLowerCase().includes('network');
-      if (isOffline) {
-        this.enqueue(dto);
-        return { status: 'validation_error', error_code: 'SERVICE_TYPE_INVALID' } as any;
-      }
-      this.error.set(e?.message ?? 'Error creando orden');
+
+      this.error.set(e.message || 'Error desconocido');
       return { status: 'validation_error', error_code: 'SERVICE_TYPE_INVALID' } as any;
     } finally {
       this.creating.set(false);
     }
   }
 
-  subscribeRealtime() {
-    if (this.channel) return;
-    this.channel = this.supabase
-      .channel('orders-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders' },
-        (payload: any) => {
-          const current = this.orders();
-          if (payload.eventType === 'INSERT') {
-            this.orders.set([payload.new, ...current]);
-          } else if (payload.eventType === 'UPDATE') {
-            this.orders.set(
-              current.map((o: any) => (o.id === payload.new?.id ? payload.new : o)),
-            );
-          } else if (payload.eventType === 'DELETE') {
-            this.orders.set(current.filter((o: any) => o.id !== payload.old?.id));
-          }
-        },
-      )
-      .subscribe();
+  async retryQueued(): Promise<void> {
+    if (!isPlatformBrowser(this.platformId) || !navigator.onLine) return;
+    
+    const pending = await orderDb.getPendingOrders();
+    if (pending.length === 0) return;
+
+    console.log(`Reintentando ${pending.length} órdenes pendientes...`);
+
+    for (const order of pending) {
+      try {
+        const { data, error } = await this.supabase.rpc('orders_create_v1', {
+          p_client_request_id: order.payload.client_request_id,
+          p_cliente_id: order.payload.cliente_id ?? null,
+          p_items: order.payload.items,
+          p_metodo_pago_id: order.payload.metodo_pago_id,
+          p_propina: order.payload.propina ?? 0,
+          p_tipo_servicio_id: order.payload.tipo_servicio_id,
+          p_turno_id: order.payload.turno_id ?? null
+        });
+
+        if (!error && (data?.status === 'success' || data?.error_code === 'IDEMPOTENCY_CONFLICT')) {
+          await orderDb.saveOrder({ ...order, status: 'synced' });
+          console.log(`Orden ${order.id} sincronizada.`);
+        }
+      } catch (e) {
+        console.error(`Error reintentando orden ${order.id}:`, e);
+      }
+    }
   }
 
   unsubscribeRealtime() {
@@ -259,64 +268,8 @@ export class OrdersService {
     }
   }
 
-  getQueued(): OrderCreateDto[] {
-    if (!isPlatformBrowser(this.platformId)) return [];
-    try {
-      const DEBUG = true;
-      const raw = localStorage.getItem(this.queueKey);
-      if (DEBUG) {
-        console.log('orders.queue.get', raw);
-      }
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  private setQueued(items: OrderCreateDto[]) {
-    if (!isPlatformBrowser(this.platformId)) return;
-    try {
-      localStorage.setItem(this.queueKey, JSON.stringify(items));
-      const DEBUG = true;
-      if (DEBUG) {
-        console.log('orders.queue.set', items?.length || 0);
-      }
-    } catch {}
-  }
-
-  private enqueue(dto: OrderCreateDto) {
-    const items = this.getQueued();
-    items.push(dto);
-    this.setQueued(items);
-    const DEBUG = true;
-    if (DEBUG) {
-      console.log('orders.queue.enqueue', dto.client_request_id);
-    }
-  }
-
-  async retryQueued(): Promise<void> {
-    const items = this.getQueued();
-    if (!items.length) return;
-    const DEBUG = true;
-    if (DEBUG) {
-      console.group('orders.queue.retry');
-      console.log('count', items.length);
-    }
-    const remaining: OrderCreateDto[] = [];
-    for (const dto of items) {
-      try {
-        const res = await this.createOrder(dto);
-        if (res?.status !== 'success' && res?.error_code !== 'IDEMPOTENCY_CONFLICT') {
-          remaining.push(dto);
-        }
-      } catch {
-        remaining.push(dto);
-      }
-    }
-    this.setQueued(remaining);
-    if (DEBUG) {
-      console.log('remaining', remaining.length);
-      console.groupEnd();
-    }
-  }
+  // Métodos antiguos de localStorage (limpieza opcional después)
+  getQueued(): OrderCreateDto[] { return []; }
+  private setQueued(items: OrderCreateDto[]) {}
+  private enqueue(dto: OrderCreateDto) {}
 }
