@@ -15,6 +15,7 @@ export class OrdersService {
   syncing = signal(false); 
   error = signal<string | null>(null); 
   lastOrder = signal<{ order_id: number; total: number } | null>(null); 
+  editingOrderId = signal<number | string | null>(null); 
 
   orders = signal<any[]>([]); 
   loadingOrders = signal(false); 
