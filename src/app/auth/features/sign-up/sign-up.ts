@@ -24,145 +24,184 @@ interface SignUpForm {
   standalone: true,
   imports: [ReactiveFormsModule, LucideAngularModule, RouterLink],
   template: `
-   <div
-  class="min-h-screen flex items-center justify-center
-         bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200
-         text-gray-800 px-4"
->
-  <form
-    [formGroup]="form"
-    (ngSubmit)="submit()"
-    class="w-full max-w-md
-           bg-white
-           border border-gray-200
-           p-8 rounded-3xl
-           shadow-lg"
-  >
-    <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold text-gray-800">Crear Cuenta</h1>
-    </div>
-
-    <!-- Nombre -->
-    <div class="mb-4">
-      <label class="text-sm block mb-1 text-gray-600">Nombre</label>
-      <div
-        class="flex items-center gap-3
-               bg-gray-50
-               border border-gray-200
-               focus-within:border-indigo-500
-               px-4 py-3 rounded-2xl transition"
-      >
-        <lucide-icon name="user" class="w-5 h-5 text-gray-400" />
-        <input
-          formControlName="name"
-          class="w-full bg-transparent outline-none text-sm text-gray-800 placeholder-gray-400"
-          placeholder="Empleado"
-        />
-      </div>
-    </div>
-
-    <!-- Email -->
-    <div class="mb-4">
-      <label class="text-sm block mb-1 text-gray-600">Correo</label>
-      <div
-        class="flex items-center gap-3
-               bg-gray-50
-               border border-gray-200
-               focus-within:border-indigo-500
-               px-4 py-3 rounded-2xl transition"
-      >
-        <lucide-icon name="mail" class="w-5 h-5 text-gray-400" />
-        <input
-          type="email"
-          formControlName="email"
-          class="w-full bg-transparent outline-none text-sm text-gray-800 placeholder-gray-400"
-          placeholder="correo@nordikos.com"
-        />
-      </div>
-    </div>
-
-    <!-- Password -->
-    <div class="mb-4">
-      <label class="text-sm block mb-1 text-gray-600">Contraseña</label>
-      <div
-        class="flex items-center gap-3
-               bg-gray-50
-               border border-gray-200
-               focus-within:border-indigo-500
-               px-4 py-3 rounded-2xl transition"
-      >
-        <lucide-icon name="lock" class="w-5 h-5 text-gray-400" />
-        <input
-          [type]="showPassword() ? 'text' : 'password'"
-          formControlName="password"
-          class="w-full bg-transparent outline-none text-sm text-gray-800"
-          placeholder="••••••••"
-        />
-        <button
-          type="button"
-          (click)="togglePassword()"
-          class="text-gray-400 hover:text-indigo-500 transition"
-        >
-          <lucide-icon
-            [name]="showPassword() ? 'eye-off' : 'eye'"
-            class="w-5 h-5"
-          />
-        </button>
-      </div>
-    </div>
-
-    <!-- Confirm Password -->
-    <div class="mb-6">
-      <label class="text-sm block mb-1 text-gray-600">Confirmar contraseña</label>
-      <div
-        class="flex items-center gap-3
-               bg-gray-50
-               border border-gray-200
-               focus-within:border-indigo-500
-               px-4 py-3 rounded-2xl transition"
-      >
-        <lucide-icon name="lock" class="w-5 h-5 text-gray-400" />
-        <input
-          [type]="showConfirmPassword() ? 'text' : 'password'"
-          formControlName="confirmPassword"
-          class="w-full bg-transparent outline-none text-sm text-gray-800"
-          placeholder="••••••••"
-        />
-        <button
-          type="button"
-          (click)="toggleConfirmPassword()"
-          class="text-gray-400 hover:text-indigo-500 transition"
-        >
-          <lucide-icon
-            [name]="showConfirmPassword() ? 'eye-off' : 'eye'"
-            class="w-5 h-5"
-          />
-        </button>
-      </div>
-    </div>
-
-    <button
-      type="submit"
-      [disabled]="form.invalid || loading()"
-      class="w-full bg-indigo-500 hover:bg-indigo-600
-             disabled:bg-gray-300 disabled:text-gray-500
-             text-white font-bold py-3
-             rounded-2xl transition"
+    <div
+      class="min-h-screen flex items-center justify-center
+             bg-linear-to-br from-zinc-950 via-zinc-900 to-black
+             text-zinc-100 px-4"
     >
-      {{ loading() ? 'Creando cuenta...' : 'Registrar' }}
-    </button>
-
-    <p class="text-sm text-center text-gray-500 mt-6">
-      ¿Ya tienes cuenta?
-      <a
-        routerLink="/auth/log-in"
-        class="text-indigo-500 hover:text-indigo-600 font-semibold ml-1"
+      <form
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+        class="w-full max-w-md
+               bg-[#121212]/80 backdrop-blur-xl
+               border border-white/5
+               p-8 rounded-3xl
+               shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
       >
-        Inicia sesión
-      </a>
-    </p>
-  </form>
-</div>
+        <div class="text-center mb-8">
+          <img
+            src="assets/logo/logo.webp"
+            class="w-20 h-20 mx-auto mb-3"
+            alt="logo"
+          />
+          <h1 class="text-3xl font-bold">Crear Cuenta</h1>
+          <p class="text-sm text-zinc-400">Nordikos Grill House</p>
+        </div>
+
+        <!-- Nombre -->
+        <div class="mb-4">
+          <label class="text-sm block mb-1">Nombre</label>
+          <div
+            class="flex items-center gap-3
+                   bg-zinc-800/70
+                   border border-transparent
+                   focus-within:border-amber-500
+                   px-4 py-3 rounded-2xl transition"
+          >
+            <lucide-icon name="user" class="w-5 h-5 text-zinc-400" />
+            <input
+              formControlName="name"
+              autocomplete="name"
+              class="w-full bg-transparent outline-none text-sm"
+              placeholder="Empleado"
+            />
+          </div>
+          @if (name?.touched && name?.errors?.['required']) {
+            <p class="text-xs text-red-400 mt-1">El nombre es obligatorio</p>
+          }
+          @if (name?.touched && name?.errors?.['minlength']) {
+            <p class="text-xs text-red-400 mt-1">Mínimo 2 caracteres</p>
+          }
+        </div>
+        <!-- Email -->
+        <div class="mb-4">
+          <label class="text-sm block mb-1">Correo</label>
+          <div
+            class="flex items-center gap-3
+                   bg-zinc-800/70
+                   border border-transparent
+                   focus-within:border-amber-500
+                   px-4 py-3 rounded-2xl transition"
+          >
+            <lucide-icon name="mail" class="w-5 h-5 text-zinc-400" />
+            <input
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              class="w-full bg-transparent outline-none text-sm"
+              placeholder="correo@nordikos.com"
+            />
+          </div>
+          @if (email?.touched && email?.errors?.['required']) {
+            <p class="text-xs text-red-400 mt-1">El correo es obligatorio</p>
+          }
+          @if (email?.touched && email?.errors?.['pattern']) {
+            <p class="text-xs text-red-400 mt-1">Formato de correo inválido</p>
+          }
+        </div>
+
+        <!-- Password -->
+        <div class="mb-4">
+          <label class="text-sm block mb-1">Contraseña</label>
+          <div
+            class="flex items-center gap-3
+                   bg-zinc-800/70
+                   border border-transparent
+                   focus-within:border-amber-500
+                   px-4 py-3 rounded-2xl transition"
+          >
+            <lucide-icon name="lock" class="w-5 h-5 text-zinc-400" />
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password"
+              class="w-full bg-transparent outline-none text-sm"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              (click)="togglePassword()"
+              class="text-zinc-400 hover:text-amber-400 transition"
+            >
+              <lucide-icon
+                [name]="showPassword() ? 'eye-off' : 'eye'"
+                class="w-5 h-5"
+              />
+            </button>
+          </div>
+          @if (password?.touched && password?.errors?.['required']) {
+            <p class="text-xs text-red-400 mt-1">
+              La contraseña es obligatoria
+            </p>
+          }
+          @if (password?.touched && password?.errors?.['minlength']) {
+            <p class="text-xs text-red-400 mt-1">Mínimo 8 caracteres</p>
+          }
+          @if (password?.touched && password?.errors?.['pattern']) {
+            <p class="text-xs text-red-400 mt-1">
+              Debe incluir mayúsculas, minúsculas, número y símbolo
+            </p>
+          }
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="mb-6">
+          <label class="text-sm block mb-1">Confirmar contraseña</label>
+          <div
+            class="flex items-center gap-3
+                   bg-zinc-800/70
+                   border border-transparent
+                   focus-within:border-amber-500
+                   px-4 py-3 rounded-2xl transition"
+          >
+            <lucide-icon name="lock" class="w-5 h-5 text-zinc-400" />
+            <input
+              [type]="showConfirmPassword() ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+              class="w-full bg-transparent outline-none text-sm"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              (click)="toggleConfirmPassword()"
+              class="text-zinc-400 hover:text-amber-400 transition"
+            >
+              <lucide-icon
+                [name]="showConfirmPassword() ? 'eye-off' : 'eye'"
+                class="w-5 h-5"
+              />
+            </button>
+          </div>
+          @if (form.errors?.['passwordMismatch'] && confirmPassword?.touched) {
+            <p class="text-xs text-red-400 mt-1">
+              Las contraseñas no coinciden
+            </p>
+          }
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="form.invalid || loading()"
+          class="w-full bg-amber-500 hover:bg-amber-400
+                 disabled:bg-zinc-700 disabled:text-zinc-400
+                 text-zinc-900 font-bold py-3
+                 rounded-2xl transition"
+        >
+          {{ loading() ? 'Creando cuenta...' : 'Registrar' }}
+        </button>
+
+        <p class="text-sm text-center text-zinc-400 mt-6">
+          ¿Ya tienes cuenta?
+          <a
+            routerLink="/auth/log-in"
+            class="text-amber-400 hover:text-amber-300 font-semibold ml-1"
+          >
+            Inicia sesión
+          </a>
+        </p>
+      </form>
+    </div>
   `,
 })
 export default class SignUp {
