@@ -261,6 +261,29 @@ export class OrdersService {
     }
   }
 
+  subscribeRealtime() {
+    if (this.channel) return;
+    this.channel = this.supabase
+      .channel('orders-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        (payload: any) => {
+          const current = this.orders();
+          if (payload.eventType === 'INSERT') {
+            this.orders.set([payload.new, ...current]);
+          } else if (payload.eventType === 'UPDATE') {
+            this.orders.set(
+              current.map((o: any) => (o.id === payload.new?.id ? payload.new : o)),
+            );
+          } else if (payload.eventType === 'DELETE') {
+            this.orders.set(current.filter((o: any) => o.id !== payload.old?.id));
+          }
+        },
+      )
+      .subscribe();
+  }
+
   unsubscribeRealtime() {
     if (this.channel) {
       this.supabase.removeChannel(this.channel);
