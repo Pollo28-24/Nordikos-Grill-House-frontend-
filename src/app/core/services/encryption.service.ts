@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import * as CryptoJS from 'crypto-js';
 import { environment } from '../../../environments/environment';
 
@@ -6,8 +7,20 @@ import { environment } from '../../../environments/environment';
   providedIn: 'root',
 })
 export class EncryptionService {
-  private readonly key = CryptoJS.enc.Utf8.parse(environment.encryptionKey);
-  private readonly iv = CryptoJS.enc.Utf8.parse(environment.encryptionIV);
+  private platformId = inject(PLATFORM_ID);
+  private key: any;
+  private iv: any;
+
+  constructor() {
+    const isBrowser = isPlatformBrowser(this.platformId);
+    const env = isBrowser ? (window as any).__ENV__ : process.env;
+
+    const encryptionKey = env?.encryptionKey || env?.ENCRYPTION_KEY || environment.encryptionKey;
+    const encryptionIV = env?.encryptionIV || env?.ENCRYPTION_IV || environment.encryptionIV;
+
+    this.key = CryptoJS.enc.Utf8.parse(encryptionKey);
+    this.iv = CryptoJS.enc.Utf8.parse(encryptionIV);
+  }
 
   encrypt(text: string): string {
     if (!text) return '';
