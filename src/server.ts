@@ -53,8 +53,6 @@ app.use((req, res, next) => {
       const env = {
         supabaseUrl: process.env['SUPABASE_URL'] || '',
         supabaseKey: process.env['SUPABASE_KEY'] || '',
-        encryptionKey: process.env['ENCRYPTION_KEY'] || '',
-        encryptionIV: process.env['ENCRYPTION_IV'] || '',
       };
       
       const envScript = `<script>window.__ENV__ = ${JSON.stringify(env)};</script>`;

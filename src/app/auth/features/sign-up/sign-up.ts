@@ -15,8 +15,6 @@ import { ToastService } from '../../../core/services/toast.service';
 interface SignUpForm {
   name: FormControl<string | null>;
   email: FormControl<string | null>;
-  telefono: FormControl<string | null>;
-  curp: FormControl<string | null>;
   password: FormControl<string | null>;
   confirmPassword: FormControl<string | null>;
 }
@@ -79,44 +77,6 @@ interface SignUpForm {
           formControlName="email"
           class="w-full bg-transparent outline-none text-sm text-gray-800 placeholder-gray-400"
           placeholder="correo@nordikos.com"
-        />
-      </div>
-    </div>
-
-    <!-- Teléfono -->
-    <div class="mb-4">
-      <label class="text-sm block mb-1 text-gray-600">Teléfono</label>
-      <div
-        class="flex items-center gap-3
-               bg-gray-50
-               border border-gray-200
-               focus-within:border-indigo-500
-               px-4 py-3 rounded-2xl transition"
-      >
-        <lucide-icon name="phone" class="w-5 h-5 text-gray-400" />
-        <input
-          formControlName="telefono"
-          class="w-full bg-transparent outline-none text-sm text-gray-800"
-          placeholder="5512345678"
-        />
-      </div>
-    </div>
-
-    <!-- CURP -->
-    <div class="mb-4">
-      <label class="text-sm block mb-1 text-gray-600">CURP</label>
-      <div
-        class="flex items-center gap-3
-               bg-gray-50
-               border border-gray-200
-               focus-within:border-indigo-500
-               px-4 py-3 rounded-2xl transition"
-      >
-        <lucide-icon name="file-text" class="w-5 h-5 text-gray-400" />
-        <input
-          formControlName="curp"
-          class="w-full bg-transparent outline-none text-sm text-gray-800 uppercase"
-          placeholder="AAAA000000XXXXXX00"
         />
       </div>
     </div>
@@ -227,15 +187,6 @@ export default class SignUp {
         Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/),
         Validators.maxLength(100),
       ]),
-      telefono: this.fb.control(null, [
-        Validators.required,
-        Validators.pattern(/^[0-9]{10}$/),
-      ]),
-      curp: this.fb.control(null, [
-        Validators.required,
-        Validators.minLength(18),
-        Validators.maxLength(18),
-      ]),
       password: this.fb.control(null, [
         Validators.required,
         Validators.minLength(8),
@@ -260,14 +211,6 @@ export default class SignUp {
 
   get email() {
     return this.form.get('email');
-  }
-
-  get telefono() {
-    return this.form.get('telefono');
-  }
-
-  get curp() {
-    return this.form.get('curp');
   }
 
   get password() {
@@ -296,8 +239,6 @@ export default class SignUp {
         email: this.form.value.email!,
         password: this.form.value.password!,
         name: this.form.value.name!,
-        telefono: this.form.value.telefono!,
-        curp: this.form.value.curp!,
       });
 
       if (error) throw error;
