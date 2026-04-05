@@ -15,11 +15,13 @@ export class SupabaseService {
     
     const env = isBrowser ? (window as any).__ENV__ : process.env;
     
-    const supabaseUrl = env?.supabaseUrl || env?.SUPABASE_URL || environment.supabaseUrl;
-    const supabaseKey = env?.supabaseKey || env?.SUPABASE_KEY || environment.supabaseKey;
+    // Fallback strings to prevent crash during build/prerender if env vars are missing
+    const supabaseUrl = env?.supabaseUrl || env?.SUPABASE_URL || environment.supabaseUrl || 'https://placeholder.supabase.co';
+    const supabaseKey = env?.supabaseKey || env?.SUPABASE_KEY || environment.supabaseKey || 'placeholder';
 
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('[SupabaseService] Missing Supabase configuration. Set SUPABASE_URL and SUPABASE_KEY environment variables.');
+    if ((!env?.supabaseUrl && !env?.SUPABASE_URL && !environment.supabaseUrl) || 
+        (!env?.supabaseKey && !env?.SUPABASE_KEY && !environment.supabaseKey)) {
+      console.warn('[SupabaseService] Missing Supabase configuration. Using placeholders for build/prerender.');
     }
 
     this.supabaseClient = createClient(
