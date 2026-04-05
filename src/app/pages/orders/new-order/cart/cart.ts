@@ -238,69 +238,38 @@ export class NewOrderCart {
 
   async updateExistingOrder() {
     const orderId = this.ordersService.editingOrderId();
+    if (!orderId) return;
     
     try {
-      let addedTotal = 0;
-      for (const item of this.cart()) {
-        const lineTotal = this.lineTotal(item);
-        addedTotal += lineTotal;
+      // Preparamos los items con sus precios calculados para el RPC
+      const itemsToUpdate = this.cart().map(item => ({
+        producto_id: item.producto_id,
+        variante_id: item.variante_id,
+        nombre_producto: item.nombre_producto,
+        cantidad: item.cantidad,
+        nota: item.nota,
+        precio_unitario: this.unitPrice(item),
+        modificadores: (item.modificadores || []).map(m => ({
+          nombre_modificador: m.nombre_modificador,
+          cantidad: m.cantidad,
+          precio_unitario: m.precio_unitario || 0
+        }))
+      }));
 
-        const { data: newItem, error: itemError } = await this.supabase
-          .from('order_items')
-          .insert({
-            order_id: orderId,
-            producto_id: item.producto_id,
-            variante_id: item.variante_id,
-            nombre_producto: item.nombre_producto,
-            cantidad: item.cantidad,
-            nota: item.nota,
-            precio_unitario: this.unitPrice(item),
-            total: lineTotal
-          })
-          .select()
-          .single();
+      const res = await this.ordersService.updateOrderRpc(
+        orderId, 
+        itemsToUpdate, 
+        this.form.value.nota_general
+      );
 
-        if (itemError) throw itemError;
-
-        if (item.modificadores && item.modificadores.length > 0) {
-          const modsToInsert = item.modificadores.map(m => ({
-            order_item_id: newItem.id,
-            nombre_modificador: m.nombre_modificador,
-            cantidad: m.cantidad,
-            precio_unitario: m.precio_unitario || 0
-          }));
-
-          const { error: modsError } = await this.supabase
-            .from('order_item_modificadores')
-            .insert(modsToInsert);
-          
-          if (modsError) throw modsError;
-        }
+      if (res?.status === 'success') {
+        this.toastService.show('Orden actualizada correctamente', 'success');
+        this.finalizeSubmit();
+      } else {
+        throw new Error(res?.message || 'Error al actualizar');
       }
-
-      const { data: orderData, error: fetchError } = await this.supabase
-        .from('orders')
-        .select('total')
-        .eq('id', orderId)
-        .single();
-      
-      if (fetchError) throw fetchError;
-
-      const newTotal = Number(orderData.total || 0) + addedTotal;
-      const { error: updateError } = await this.supabase
-        .from('orders')
-        .update({ 
-          total: newTotal,
-          nota_general: this.form.value.nota_general 
-        })
-        .eq('id', orderId);
-      
-      if (updateError) throw updateError;
-
-      this.toastService.show('Orden actualizada correctamente', 'success');
-      this.finalizeSubmit();
     } catch (e) {
-      this.logger.error('Error updating order', e, 'NewOrderCart');
+      this.logger.error('Error updating order via RPC', e, 'NewOrderCart');
       this.toastService.show('Error al actualizar la orden', 'error');
     }
   }

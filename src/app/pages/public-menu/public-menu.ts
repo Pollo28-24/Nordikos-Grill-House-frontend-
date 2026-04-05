@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Meta, Title } from '@angular/platform-browser';
 import { LucideAngularModule } from 'lucide-angular';
 import { CategoriesService } from '../../core/services/categories.service';
 import { ProductsService } from '../../core/services/products.service';
@@ -23,6 +24,8 @@ import { Category } from '../../core/services/categories.service';
 export class PublicMenu implements OnInit {
   private categoriesService = inject(CategoriesService);
   private productsService = inject(ProductsService);
+  private meta = inject(Meta);
+  private title = inject(Title);
 
   // Categories and Products from services
   categories = this.categoriesService.visibleCategories;
@@ -55,8 +58,20 @@ export class PublicMenu implements OnInit {
   });
 
   ngOnInit() {
-    // Wait for categories to load then select the first one by default if none selected
-    // Note: Categories are already loaded by the service on init
+    this.setMetaTags();
+  }
+
+  private setMetaTags() {
+    this.title.setTitle('Menú | Nordikos Grill House');
+    
+    this.meta.addTags([
+      { name: 'description', content: 'Explora nuestro delicioso menú de Nordikos Grill House. Hamburguesas, cortes y más con el sabor que te transporta al norte.' },
+      { property: 'og:title', content: 'Nordikos Grill House - Menú Digital' },
+      { property: 'og:description', content: 'Sabor que te transporta al norte. Consulta nuestros platillos y precios en línea.' },
+      { property: 'og:image', content: 'https://nordikos-grill-house-frontend.vercel.app/assets/logo/header.webp' },
+      { property: 'og:url', content: 'https://nordikos-grill-house-frontend.vercel.app/menu' },
+      { name: 'twitter:card', content: 'summary_large_image' }
+    ]);
   }
 
   selectCategory(id: string | null) {

@@ -57,8 +57,8 @@ export interface Product {
   costo?: number | null;
   descuento?: number | null;
   embalaje?: string | null; // character varying en BD
-  disponible: boolean;
-  visible: boolean;
+  disponible?: boolean;
+  visible?: boolean;
   // Campo calculador - primera foto del producto
   imagen_url?: string; 
   images?: ProductImage[];
