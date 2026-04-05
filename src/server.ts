@@ -45,28 +45,9 @@ app.use(
 app.use((req, res, next) => {
   angularApp
     .handle(req)
-    .then(async (response) => {
-      if (!response) return next();
-      
-      // Inject environment variables into the HTML for the client
-      const html = await response.text();
-      const env = {
-        supabaseUrl: process.env['PUBLIC_SUPABASE_URL'] || process.env['SUPABASE_URL'] || '',
-        supabaseKey: process.env['PUBLIC_SUPABASE_ANON_KEY'] || process.env['SUPABASE_KEY'] || '',
-      };
-      
-      console.log('[Server] Injecting ENV:', { url: env.supabaseUrl, key: env.supabaseKey ? 'PRESENT' : 'MISSING' });
-      
-      const envScript = `<script>window.__ENV__ = ${JSON.stringify(env)};</script>`;
-      const injectedHtml = html.replace('</head>', `${envScript}</head>`);
-      
-      // We need to rebuild the response headers and status
-      res.status(response.status);
-      response.headers.forEach((value, key) => {
-        res.setHeader(key, value);
-      });
-      res.send(injectedHtml);
-    })
+    .then((response) =>
+      response ? writeResponseToNodeResponse(response, res) : next(),
+    )
     .catch(next);
 });
 

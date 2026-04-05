@@ -13,36 +13,9 @@ export class SupabaseService {
   constructor() {
     const isBrowser = isPlatformBrowser(this.platformId);
     
-    const env = isBrowser ? (window as any).__ENV__ : process.env;
-    
-    // 1. Prioritize injected variables from window.__ENV__ (Client) or process.env (Server)
-    let supabaseUrl = env?.supabaseUrl || env?.SUPABASE_URL;
-    let supabaseKey = env?.supabaseKey || env?.SUPABASE_KEY;
-
-    // 2. Fallback to environment.ts (if defined there)
-    if (!supabaseUrl || !supabaseKey) {
-      supabaseUrl = environment.supabaseUrl;
-      supabaseKey = environment.supabaseKey;
-    }
-
-    // 3. Last resort placeholders (only to prevent crash during build, but warning in console)
-    const finalUrl = supabaseUrl || 'https://placeholder.supabase.co';
-    const finalKey = supabaseKey || 'placeholder';
-
-    if (isBrowser) {
-      if (!supabaseUrl || !supabaseKey) {
-        console.error('[SupabaseService] CRITICAL: Supabase configuration missing in browser!', {
-          foundInWindow: (window as any).__ENV__,
-          foundInEnvTs: { url: environment.supabaseUrl, key: '***' }
-        });
-      } else {
-        console.log('[SupabaseService] Initialized correctly in browser.');
-      }
-    }
-
     this.supabaseClient = createClient(
-      finalUrl, 
-      finalKey,
+      environment.supabaseUrl, 
+      environment.supabaseKey,
       {
         auth: {
           persistSession: isBrowser,
