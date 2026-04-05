@@ -15,18 +15,34 @@ export class SupabaseService {
     
     const env = isBrowser ? (window as any).__ENV__ : process.env;
     
-    // Fallback strings to prevent crash during build/prerender if env vars are missing
-    const supabaseUrl = env?.supabaseUrl || env?.SUPABASE_URL || environment.supabaseUrl || 'https://placeholder.supabase.co';
-    const supabaseKey = env?.supabaseKey || env?.SUPABASE_KEY || environment.supabaseKey || 'placeholder';
+    // 1. Prioritize injected variables from window.__ENV__ (Client) or process.env (Server)
+    let supabaseUrl = env?.supabaseUrl || env?.SUPABASE_URL;
+    let supabaseKey = env?.supabaseKey || env?.SUPABASE_KEY;
 
-    if ((!env?.supabaseUrl && !env?.SUPABASE_URL && !environment.supabaseUrl) || 
-        (!env?.supabaseKey && !env?.SUPABASE_KEY && !environment.supabaseKey)) {
-      console.warn('[SupabaseService] Missing Supabase configuration. Using placeholders for build/prerender.');
+    // 2. Fallback to environment.ts (if defined there)
+    if (!supabaseUrl || !supabaseKey) {
+      supabaseUrl = environment.supabaseUrl;
+      supabaseKey = environment.supabaseKey;
+    }
+
+    // 3. Last resort placeholders (only to prevent crash during build, but warning in console)
+    const finalUrl = supabaseUrl || 'https://placeholder.supabase.co';
+    const finalKey = supabaseKey || 'placeholder';
+
+    if (isBrowser) {
+      if (!supabaseUrl || !supabaseKey) {
+        console.error('[SupabaseService] CRITICAL: Supabase configuration missing in browser!', {
+          foundInWindow: (window as any).__ENV__,
+          foundInEnvTs: { url: environment.supabaseUrl, key: '***' }
+        });
+      } else {
+        console.log('[SupabaseService] Initialized correctly in browser.');
+      }
     }
 
     this.supabaseClient = createClient(
-      supabaseUrl, 
-      supabaseKey,
+      finalUrl, 
+      finalKey,
       {
         auth: {
           persistSession: isBrowser,

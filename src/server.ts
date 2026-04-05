@@ -55,6 +55,8 @@ app.use((req, res, next) => {
         supabaseKey: process.env['PUBLIC_SUPABASE_ANON_KEY'] || process.env['SUPABASE_KEY'] || '',
       };
       
+      console.log('[Server] Injecting ENV:', { url: env.supabaseUrl, key: env.supabaseKey ? 'PRESENT' : 'MISSING' });
+      
       const envScript = `<script>window.__ENV__ = ${JSON.stringify(env)};</script>`;
       const injectedHtml = html.replace('</head>', `${envScript}</head>`);
       
