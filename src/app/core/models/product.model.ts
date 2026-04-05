@@ -17,7 +17,7 @@ export interface Modifier {
   sku?: string;
   visible: boolean;
   cantidad_maxima: number;
-  modificador_categorias?: { nombre: string }; // Para joins
+  modificador_categorias?: { nombre: string };
 }
 
 export interface ProductVariant {
@@ -28,15 +28,14 @@ export interface ProductVariant {
   costo?: number;
   descuento?: number;
   sku?: string;
-  embalaje?: string;
+  embalaje?: string; // character varying en BD
   disponible: boolean;
   created_at: string;
   updated_at: string;
 }
 
 export interface ProductVariantCreateDto extends Omit<ProductVariant, 'id' | 'producto_id' | 'created_at' | 'updated_at' | 'disponible'> {
-  // 'nombre' y 'precio' son requeridos aquí
-  disponible?: boolean; // Puede ser opcional para la creación, el servicio puede establecer un valor por defecto
+  disponible?: boolean;
 }
 
 export type ProductVariantUpdateDto = Partial<Omit<ProductVariant, 'created_at' | 'updated_at'>>;
@@ -49,19 +48,19 @@ export interface ProductImage {
 
 export interface Product {
   id: string;
-  categoria_id?: string;
+  categoria_id?: string | number | null;
   nombre: string;
   descripcion?: string;
-  precio?: number;
-  price_type?: string;
-  sku?: string;
-  costo?: number;
-  descuento?: number;
-  embalaje?: number;
-  disponible?: boolean;
-  visible?: boolean;
-  stock?: number;
-  imagen_url?: string; // Añadido para compatibilidad
+  precio?: number | null;
+  price_type: 'simple' | 'variants';
+  sku?: string | null;
+  costo?: number | null;
+  descuento?: number | null;
+  embalaje?: string | null; // character varying en BD
+  disponible: boolean;
+  visible: boolean;
+  // Campo calculador - primera foto del producto
+  imagen_url?: string; 
   images?: ProductImage[];
   variants?: ProductVariant[];
   modifiers?: Modifier[];
@@ -69,13 +68,16 @@ export interface Product {
   updated_at: string;
 }
 
-export interface CreateProductDto extends Omit<Product, 'id' | 'created_at' | 'updated_at' | 'images' | 'variants'> {
+export interface CreateProductDto extends Omit<Product, 'id' | 'created_at' | 'updated_at' | 'images' | 'variants' | 'imagen_url' | 'modifiers'> {
+  disponible?: boolean;
+  visible?: boolean;
   images?: File[];
   variants?: ProductVariantCreateDto[];
 }
 
-export interface UpdateProductDto extends Partial<Omit<Product, 'id' | 'created_at' | 'updated_at' | 'images' | 'variants'>> {
+export interface UpdateProductDto extends Partial<Omit<Product, 'id' | 'created_at' | 'updated_at' | 'images' | 'variants' | 'imagen_url' | 'modifiers'>> {
+  disponible?: boolean;
+  visible?: boolean;
   images?: (File | ProductImage)[];
-  variants?: ProductVariantUpdateDto[];
+  variants?: (ProductVariant | ProductVariantCreateDto)[];
 }
-

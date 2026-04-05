@@ -105,10 +105,19 @@
 
                   @for (product of getProductsByCategory(category.id); track product.id) {
 
-                    <div class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+                    <div class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden relative">
+
+                      <!-- DISPONIBILIDAD OVERLAY -->
+                      @if (product.disponible === false) {
+                        <div class="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center p-4">
+                          <span class="bg-zinc-900/90 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-xl">
+                            Agotado
+                          </span>
+                        </div>
+                      }
 
                       <!-- IMAGE -->
-                      <div class="relative aspect-square bg-gray-100 overflow-hidden">
+                      <div class="relative aspect-square bg-gray-100 overflow-hidden" [class.grayscale]="product.disponible === false">
                         @if (product.imagen_url) {
                           <img 
                             [src]="product.imagen_url" 
@@ -157,9 +166,18 @@
 
             @for (product of filteredProducts(); track product.id) {
 
-              <div class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition overflow-hidden">
+              <div class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition overflow-hidden relative">
 
-                <div class="relative aspect-square bg-gray-100">
+                <!-- DISPONIBILIDAD OVERLAY -->
+                @if (product.disponible === false) {
+                  <div class="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center p-4">
+                    <span class="bg-zinc-900/90 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-xl">
+                      Agotado
+                    </span>
+                  </div>
+                }
+
+                <div class="relative aspect-square bg-gray-100" [class.grayscale]="product.disponible === false">
                   @if (product.imagen_url) {
                     <img [src]="product.imagen_url" class="w-full h-full object-cover">
                   }

@@ -50,8 +50,8 @@ export class PublicMenu implements OnInit {
       );
     }
 
-    // Only show visible and available products
-    return items.filter(p => p.visible !== false && p.disponible !== false);
+    // Only show visible products
+    return items.filter(p => p.visible !== false);
   });
 
   ngOnInit() {
@@ -68,8 +68,8 @@ export class PublicMenu implements OnInit {
     this.searchQuery.set(target.value);
   }
 
-  formatPrice(price: number | undefined): string {
-    if (price === undefined) return '';
+  formatPrice(price: number | null | undefined): string {
+    if (price == null) return '';
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
       currency: 'MXN'

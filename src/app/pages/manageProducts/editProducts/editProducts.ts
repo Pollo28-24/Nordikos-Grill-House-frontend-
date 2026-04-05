@@ -1,13 +1,14 @@
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray } from '@angular/forms';
-import { Component, ChangeDetectionStrategy, inject, signal, effect, computed } from '@angular/core';
-import { ActivatedRoute, ParamMap, RouterLink } from '@angular/router';
+import { Component, ChangeDetectionStrategy, inject, signal, effect } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { LucideAngularModule } from "lucide-angular";
-import { Product, ProductImage, ProductVariant, UpdateProductDto } from '../../../core/models/product.model';
+import { Product, ProductVariant, UpdateProductDto } from '../../../core/models/product.model';
 import { ProductsService } from '../../../core/services/products.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmService } from '../../../core/services/confirm.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { DecimalPipe } from '@angular/common';
 
 type PriceMode = 'simple' | 'variant';
@@ -28,15 +29,14 @@ export class EditProducts {
   private confirmService = inject(ConfirmService);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
+  private logger = inject(LoggerService);
 
-  // 1. Reactive Route Param (Signal-Driven)
   private routeId = toSignal(
     this.route.paramMap.pipe(map(params => params.get('id')))
   );
 
   product = signal<Product | null>(null);
   
-  // 2. Granular Variant Expansion State
   expandedVariants = signal<Set<string>>(new Set());
 
   priceMode = signal<PriceMode>('simple');
@@ -51,16 +51,16 @@ export class EditProducts {
       nombre: ['', [Validators.required, Validators.minLength(2)]],
       descripcion: [''],
       precio: [0, [Validators.required, Validators.min(0)]],
-      stock: [0, [Validators.min(0)]],
       descuento: [0, [Validators.min(0)]],
       costo: [0, [Validators.min(0)]],
-      embalaje: [0, [Validators.min(0)]],
+      embalaje: [''],
       sku: [''],
       productImage: [''],
+      disponible: [true],
+      visible: [true],
       variants: this.fb.array([]),
     });
 
-    // 3. Effect to load product when ID changes
     effect(() => {
       const id = this.routeId();
       if (id) {
@@ -76,7 +76,7 @@ export class EditProducts {
       precio: [variant?.precio || 0, [Validators.required, Validators.min(0)]],
       descuento: [variant?.descuento || 0, [Validators.min(0)]],
       costo: [variant?.costo || 0, [Validators.min(0)]],
-      embalaje: [variant?.embalaje || 0, [Validators.min(0)]],
+      embalaje: [variant?.embalaje || ''],
       sku: [variant?.sku || ''],
     });
   }
@@ -94,25 +94,23 @@ export class EditProducts {
           nombre: product.nombre,
           descripcion: product.descripcion || '',
           precio: product.precio ?? 0,
-          stock: product.stock ?? 0,
           descuento: product.descuento ?? 0,
           costo: product.costo ?? 0,
-          embalaje: product.embalaje ?? 0,
+          embalaje: product.embalaje || '',
           sku: product.sku || '',
           productImage: mainImageUrl || '',
+          disponible: product.disponible ?? true,
+          visible: product.visible ?? true,
         });
         if (mainImageUrl) {
           this.imagePreviewUrl.set(mainImageUrl);
         }
-        // Populate variants FormArray
         this.variants.clear();
         if (product.variants) {
-          product.variants.forEach((variant, index) => {
+          product.variants.forEach((variant) => {
             this.variants.push(this.createVariantFormGroup(variant));
-            // Auto-expand loaded variants if desired, or keep collapsed
           });
         }
-        // Determinar el priceMode inicial basado en si el producto tiene variantes
         if (product.variants && product.variants.length > 0) {
           this.priceMode.set('variant');
         } else {
@@ -122,7 +120,7 @@ export class EditProducts {
         this.toastService.show('Producto no encontrado', 'error');
       }
     } catch (error) {
-      console.error('Error loading product:', error);
+      this.logger.error('Error loading product', error, 'EditProducts');
       this.toastService.show('Error al cargar el producto', 'error');
     }
   }
@@ -134,7 +132,6 @@ export class EditProducts {
   addVariant() {
     const group = this.createVariantFormGroup();
     this.variants.push(group);
-    // Automatically expand the new variant
     const id = group.get('id')?.value;
     if (id) this.toggleVariant(id);
   }
@@ -151,7 +148,6 @@ export class EditProducts {
 
         this.variants.removeAt(index);
         
-        // Cleanup expanded state
         if (id) {
           this.expandedVariants.update(set => {
             const newSet = new Set(set);
@@ -163,7 +159,6 @@ export class EditProducts {
     });
   }
 
-  // 4. Granular Expansion Logic
   toggleVariant(id: string) {
     this.expandedVariants.update(set => {
       const newSet = new Set(set);
@@ -195,14 +190,12 @@ export class EditProducts {
       const file = input.files[0];
       this.selectedFile.set(file);
 
-      // Mostrar vista previa de la imagen sin subirla todavía
       const reader = new FileReader();
       reader.onload = (e) => {
         this.imagePreviewUrl.set(e.target?.result as string);
       };
       reader.readAsDataURL(file);
 
-      // Guardar algo en el formulario solo para referencia visual
       this.productForm.get('productImage')?.setValue(file.name);
     } else {
       this.selectedFile.set(null);
@@ -215,12 +208,10 @@ export class EditProducts {
     const imageUrl = this.productForm.get('productImage')?.value;
     if (imageUrl) {
       try {
-        // Usar el servicio de productos para eliminar de Storage y de la BD
         await this.productsService.deleteImage(imageUrl);
-        console.log('Image deleted successfully from storage and database.');
         this.toastService.show('Imagen eliminada correctamente', 'success');
       } catch (error) {
-        console.error('Error deleting image from storage:', error);
+        this.logger.error('Error deleting image from storage', error, 'EditProducts');
         this.toastService.show('Error al eliminar la imagen', 'error');
       }
     }
@@ -244,7 +235,7 @@ export class EditProducts {
         (precio == null || precio === 0) &&
         (descuento == null || descuento === 0) &&
         (costo == null || costo === 0) &&
-        (embalaje == null || embalaje === 0) &&
+        (!embalaje || embalaje.toString().trim() === '') &&
         (!sku || sku.toString().trim() === '');
       if (isEmpty) {
         variantsArray.removeAt(i);
@@ -257,7 +248,7 @@ export class EditProducts {
     this.removeEmptyVariants();
     
     if (this.productForm.invalid) {
-      console.error('Form is invalid. Cannot save changes.');
+      this.logger.warn('Form is invalid. Cannot save changes.', { form: this.productForm.value }, 'EditProducts');
       this.productForm.markAllAsTouched();
       this.toastService.show('Por favor, corrige los errores en el formulario', 'error');
       this.isSaving.set(false); 
@@ -266,24 +257,25 @@ export class EditProducts {
 
     const productId = this.product()?.id;
     if (!productId) {
-      console.error('Product ID is missing. Cannot save changes.');
+      this.logger.error('Product ID is missing', null, 'EditProducts');
       this.toastService.show('Error: ID del producto no encontrado', 'error');
       this.isSaving.set(false); 
       return;
     }
 
-    // 5. Enterprise Level DTO Construction (Explicit & Safe)
     const rawValue = this.productForm.getRawValue();
     
     const updatedProductData: UpdateProductDto = {
       nombre: rawValue.nombre,
       descripcion: rawValue.descripcion,
       precio: rawValue.precio,
-      stock: rawValue.stock,
       descuento: rawValue.descuento,
       costo: rawValue.costo,
-      embalaje: rawValue.embalaje,
+      embalaje: rawValue.embalaje || undefined,
       sku: rawValue.sku,
+      price_type: this.priceMode() === 'variant' ? 'variants' : 'simple',
+      disponible: rawValue.disponible,
+      visible: rawValue.visible,
       variants: rawValue.variants.map((v: any) => ({
         id: v.id,
         nombre: v.nombre,
@@ -293,23 +285,18 @@ export class EditProducts {
         embalaje: v.embalaje,
         sku: v.sku,
       })),
-      // Handle images explicitly below
     };
 
-    // Si hay una imagen nueva seleccionada, se subirá en el servicio de productos
     if (this.selectedFile()) {
       updatedProductData.images = [this.selectedFile()!];
     }
 
-    console.log('Datos de actualización enviados:', updatedProductData);
-
     try {
       const updatedProduct = await this.productsService.updateProduct(productId, updatedProductData);
       this.product.set(updatedProduct);
-      console.log('Product updated successfully:', updatedProduct);
       this.toastService.show('Producto actualizado exitosamente', 'success');
     } catch (err: any) {
-      console.error('Error updating product:', err);
+      this.logger.error('Error updating product', err, 'EditProducts');
       this.toastService.show('Error al actualizar el producto', 'error');
     } finally {
       this.isSaving.set(false); 

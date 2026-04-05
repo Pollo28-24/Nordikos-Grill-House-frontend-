@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../../shared/data-access/supabase.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { TicketData } from '../models/ticket.model';
 
 @Injectable({
@@ -7,10 +8,10 @@ import { TicketData } from '../models/ticket.model';
 })
 export class TicketService {
   private supabase = inject(SupabaseService).client;
+  private logger = inject(LoggerService);
 
   async getTicketData(orderId: number): Promise<TicketData | null> {
     try {
-      // Optimizamos cargando todo en dos consultas paralelas y usando joins
       const [orderResult, itemsResult] = await Promise.all([
         this.supabase
           .from('orders')
@@ -21,7 +22,7 @@ export class TicketService {
             estado_pedido,
             estado_pago,
             total,
-            propina,
+            provincia,
             nota_general,
             clientes (nombre, telefono),
             tipos_servicio (nombre)
@@ -72,7 +73,7 @@ export class TicketService {
         }))
       };
     } catch (error) {
-      console.error('Error fetching ticket data:', error);
+      this.logger.error('Error fetching ticket data', error, 'TicketService');
       return null;
     }
   }

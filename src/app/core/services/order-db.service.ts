@@ -1,6 +1,7 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { openDB, IDBPDatabase } from 'idb';
+import { LoggerService } from './logger.service';
 import { OrderCreateDto } from '../models/order.model';
 
 export interface LocalOrder {
@@ -14,6 +15,7 @@ export interface LocalOrder {
 @Injectable({ providedIn: 'root' })
 export class OrderDatabase {
   private platformId = inject(PLATFORM_ID);
+  private logger = inject(LoggerService);
   private dbPromise: Promise<IDBPDatabase | null> | null = null;
 
   private isBrowser() {
@@ -31,7 +33,7 @@ export class OrderDatabase {
           }
         },
       }).catch(err => {
-        console.error('Error opening IndexedDB:', err);
+        this.logger.error('Error opening IndexedDB', err, 'OrderDatabase');
         return null;
       });
     }

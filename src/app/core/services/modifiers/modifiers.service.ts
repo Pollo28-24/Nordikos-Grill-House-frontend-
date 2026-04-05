@@ -1,6 +1,7 @@
-import { Injectable, inject, signal, computed, resource, PLATFORM_ID } from '@angular/core';
+import { Injectable, inject, computed, resource, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from '../../../shared/data-access/supabase.service';
+import { LoggerService } from '../logger.service';
 import { Modifier, ModifierCategory } from '../../models/product.model';
 
 @Injectable({
@@ -9,24 +10,31 @@ import { Modifier, ModifierCategory } from '../../models/product.model';
 export class ModifiersService {
   private supabase = inject(SupabaseService).client;
   private platformId = inject(PLATFORM_ID);
+  private logger = inject(LoggerService);
 
-  // DATA RESOURCES (Angular 20+)
+  private isBrowser = () => isPlatformBrowser(this.platformId);
   
   private categoriesResource = resource({
     loader: async () => {
-      if (!isPlatformBrowser(this.platformId)) return [];
+      if (!this.isBrowser()) return [];
+      
       const { data, error } = await this.supabase
         .from('modificador_categorias')
         .select('*')
         .order('nombre');
-      if (error) throw error;
+      
+      if (error) {
+        this.logger.error('Error loading modifier categories', error, 'ModifiersService');
+        throw error;
+      }
       return data || [];
     }
   });
 
   private modifiersResource = resource({
     loader: async () => {
-      if (!isPlatformBrowser(this.platformId)) return [];
+      if (!this.isBrowser()) return [];
+      
       const { data, error } = await this.supabase
         .from('modificadores')
         .select(`
@@ -34,12 +42,15 @@ export class ModifiersService {
           modificador_categorias (nombre)
         `)
         .order('nombre');
-      if (error) throw error;
+      
+      if (error) {
+        this.logger.error('Error loading modifiers', error, 'ModifiersService');
+        throw error;
+      }
       return data || [];
     }
   });
 
-  // STORES
   readonly categories = computed(() => this.categoriesResource.value() ?? []);
   readonly modifiers = computed(() => this.modifiersResource.value() ?? []);
   readonly loading = computed(() => this.categoriesResource.isLoading() || this.modifiersResource.isLoading());
@@ -49,7 +60,6 @@ export class ModifiersService {
     this.modifiersResource.reload();
   }
 
-  // CRUD CATEGORIES
   async createCategory(cat: Partial<ModifierCategory>) {
     const { data, error } = await this.supabase
       .from('modificador_categorias')
@@ -58,6 +68,9 @@ export class ModifiersService {
       .single();
     if (!error && data) {
       this.categoriesResource.reload();
+    }
+    if (error) {
+      this.logger.error('Error creating modifier category', error, 'ModifiersService');
     }
     return { data, error };
   }
@@ -72,6 +85,9 @@ export class ModifiersService {
     if (!error && data) {
       this.categoriesResource.reload();
     }
+    if (error) {
+      this.logger.error('Error updating modifier category', error, 'ModifiersService');
+    }
     return { data, error };
   }
 
@@ -83,10 +99,12 @@ export class ModifiersService {
     if (!error) {
       this.categoriesResource.reload();
     }
+    if (error) {
+      this.logger.error('Error deleting modifier category', error, 'ModifiersService');
+    }
     return { error };
   }
 
-  // CRUD MODIFIERS
   async createModifier(mod: Partial<Modifier>) {
     const { data, error } = await this.supabase
       .from('modificadores')
@@ -98,6 +116,9 @@ export class ModifiersService {
       .single();
     if (!error && data) {
       this.modifiersResource.reload();
+    }
+    if (error) {
+      this.logger.error('Error creating modifier', error, 'ModifiersService');
     }
     return { data, error };
   }
@@ -115,6 +136,9 @@ export class ModifiersService {
     if (!error && data) {
       this.modifiersResource.reload();
     }
+    if (error) {
+      this.logger.error('Error updating modifier', error, 'ModifiersService');
+    }
     return { data, error };
   }
 
@@ -126,10 +150,12 @@ export class ModifiersService {
     if (!error) {
       this.modifiersResource.reload();
     }
+    if (error) {
+      this.logger.error('Error deleting modifier', error, 'ModifiersService');
+    }
     return { error };
   }
 
-  // ASSIGNMENTS
   async assignToProduct(productId: string | number, modifierId: string | number, maxQty: number = 1) {
     const { data, error } = await this.supabase
       .from('producto_modificadores')
@@ -139,6 +165,9 @@ export class ModifiersService {
         cantidad_maxima: maxQty
       })
       .select();
+    if (error) {
+      this.logger.error('Error assigning modifier to product', error, 'ModifiersService');
+    }
     return { data, error };
   }
 
@@ -147,6 +176,9 @@ export class ModifiersService {
       .from('producto_modificadores')
       .delete()
       .match({ producto_id: productId, modificador_id: modifierId });
+    if (error) {
+      this.logger.error('Error removing modifier from product', error, 'ModifiersService');
+    }
     return { error };
   }
 

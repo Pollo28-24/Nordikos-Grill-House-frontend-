@@ -31,6 +31,11 @@ export const routes: Routes = [
     canActivate: [privateGuard],
   },
   {
+    path: 'manage-products/createProducts',
+    loadComponent: () => import('./pages/manageProducts/createProducts/createProducts').then((m) => m.CreateProducts),
+    canActivate: [privateGuard],
+  },
+  {
     path: 'manageModifiers/categories',
     loadComponent: () => import('./pages/manageModifiers/categories/categories').then(m => m.ManageModifierCategories),
     canActivate: [privateGuard],

@@ -7,8 +7,8 @@ import { map } from 'rxjs/operators';
 import { SupabaseService } from '../../shared/data-access/supabase.service';
 import { ToastService } from './toast.service';
 import { ProductsService } from './products.service';
+import { LoggerService } from './logger.service';
 
-// Domain Interfaces
 export interface Category {
   id: string;
   nombre: string;
@@ -19,7 +19,6 @@ export interface Category {
   products_count?: number;
 }
 
-// Enterprise Type Safety
 export type CategoryWithCount = Category & {
   productos?: { count: number }[];
 };
@@ -32,11 +31,8 @@ export class CategoriesService {
   private toastService = inject(ToastService);
   private productsService = inject(ProductsService);
   private platformId = inject(PLATFORM_ID);
+  private logger = inject(LoggerService);
 
-  // -----------------------------
-  // DATA RESOURCE (Angular 20+)
-  // -----------------------------
-  
   private categoriesResource = resource({
     loader: async () => {
       const { data, error } = await this.supabase
@@ -52,21 +48,12 @@ export class CategoriesService {
       })) as Category[];
     }
   });
-
-  // -----------------------------
-  // STATE (Signal First)
-  // -----------------------------
   
-  // Loading states
-  private _updatingId = signal<string | null>(null); // Granular update loading
-  private _creating = signal(false); // Creating loading
+  private _updatingId = signal<string | null>(null);
+  private _creating = signal(false);
   
-  // -----------------------------
-  // PUBLIC READ-ONLY STATE
-  // -----------------------------
   readonly categories = computed(() => this.categoriesResource.value() ?? []);
   
-  // Computed Signals
   readonly visibleCategories = computed(() => 
     this.categories().filter(c => c.visible !== false)
   );
@@ -80,24 +67,14 @@ export class CategoriesService {
   readonly creating = this._creating.asReadonly();
   readonly error = computed(() => (this.categoriesResource.error() as any)?.message ?? null);
 
-  // -----------------------------
-  // COMPATIBILITY
-  // -----------------------------
   readonly categories$ = toObservable(this.categories);
   readonly loading$ = toObservable(this.loading);
   readonly error$ = toObservable(this.error);
-
-  // -----------------------------
-  // ACTIONS
-  // -----------------------------
 
   reload() {
     this.categoriesResource.reload();
   }
 
-  // -----------------------------
-  // CREATE
-  // -----------------------------
   async createCategory(nombre: string, descripcion: string = ''): Promise<Category | null> {
     try {
       this._creating.set(true);
@@ -116,18 +93,16 @@ export class CategoriesService {
     } catch (err: any) {
       const msg = err.message || 'Error creating category';
       this.toastService.show(msg, 'error');
+      this.logger.error('Error creating category', err, 'CategoriesService');
       return null;
     } finally {
       this._creating.set(false);
     }
   }
 
-  // -----------------------------
-  // UPDATE
-  // -----------------------------
   async updateCategory(id: string, updates: Partial<Category>): Promise<Category | null> {
     try {
-      this._updatingId.set(id); // Granular loading
+      this._updatingId.set(id);
 
       const { data, error } = await this.supabase
         .from('categorias')
@@ -144,20 +119,17 @@ export class CategoriesService {
     } catch (err: any) {
       const msg = err.message || 'Error updating category';
       this.toastService.show(msg, 'error');
+      this.logger.error('Error updating category', err, 'CategoriesService');
       return null;
     } finally {
       this._updatingId.set(null);
     }
   }
 
-  // -----------------------------
-  // DELETE
-  // -----------------------------
   async deleteCategory(id: string): Promise<boolean> {
     try {
       this._updatingId.set(id);
 
-      // 1. Fetch products to delete images
       const { data: products, error: productsError } = await this.supabase
         .from('productos')
         .select('id, producto_fotos(url)')
@@ -166,21 +138,18 @@ export class CategoriesService {
       if (productsError) throw productsError;
 
       if (products && products.length > 0) {
-        // 2. Delete all images from storage
         const allImages = products.flatMap((p: any) => p.producto_fotos || []);
         const deleteImagePromises = allImages.map((foto: any) => 
-          this.productsService.deleteImage(foto.url).catch(err => console.error('Error deleting image:', err))
+          this.productsService.deleteImage(foto.url).catch(err => this.logger.error('Error deleting image', err, 'CategoriesService'))
         );
         
         await Promise.allSettled(deleteImagePromises);
 
-        // 3. Delete products one by one to update ProductsService state
         for (const product of products) {
            await this.productsService.delete(product.id);
         }
       }
 
-      // 4. Delete Category
       const { error } = await this.supabase
         .from('categorias')
         .delete()
@@ -188,7 +157,6 @@ export class CategoriesService {
 
       if (error) throw error;
 
-      // 5. Update Local State
       this.toastService.show('Categoría eliminada correctamente', 'success');
       this.reload();
       return true;
@@ -196,15 +164,12 @@ export class CategoriesService {
     } catch (err: any) {
       const msg = err.message || 'Error deleting category';
       this.toastService.show(msg, 'error');
+      this.logger.error('Error deleting category', err, 'CategoriesService');
       return false;
     } finally {
       this._updatingId.set(null);
     }
   }
-
-  // ===============================
-  // COMPATIBILITY METHODS
-  // ===============================
 
   getCategories(): Observable<Category[]> {
     return this.categories$;

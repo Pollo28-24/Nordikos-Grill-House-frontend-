@@ -166,6 +166,19 @@
                   <p class="text-xs text-[#B0B0B0]">
                     ID: {{ product.id }}
                   </p>
+
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    @if (product.visible === false) {
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20 uppercase tracking-tight">
+                        Oculto en menú
+                      </span>
+                    }
+                    @if (product.disponible === false) {
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-tight">
+                        Agotado
+                      </span>
+                    }
+                  </div>
                 </div>
               </div>
 

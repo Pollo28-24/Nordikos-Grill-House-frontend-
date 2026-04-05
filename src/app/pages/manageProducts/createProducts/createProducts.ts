@@ -52,6 +52,8 @@ export class CreateProducts {
       embalaje: [0, [Validators.min(0)]],
       sku: [''],
       productImage: [''],
+      disponible: [true],
+      visible: [true],
       variants: this.fb.array([]),
     });
   }
@@ -135,6 +137,8 @@ export class CreateProducts {
       descripcion: formValue.descripcion,
       categoria_id: this.categoriaId() ?? undefined,
       price_type: this.priceMode() === 'variant' ? 'variants' : 'simple',
+      disponible: formValue.disponible,
+      visible: formValue.visible,
     };
 
     if (this.priceMode() === 'simple') {

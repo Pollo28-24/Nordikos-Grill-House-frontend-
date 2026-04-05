@@ -87,6 +87,31 @@
                 placeholder="Descripción del producto..."
               ></textarea>
             </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="flex items-center gap-3 p-3 rounded-xl bg-[#1A1A1A] border border-[#2A2A2A]">
+                <input
+                  type="checkbox"
+                  id="disponible"
+                  formControlName="disponible"
+                  class="w-5 h-5 rounded border-[#2A2A2A] text-[#FFB300] focus:ring-[#FFB300]/20 bg-[#121212]"
+                />
+                <label for="disponible" class="text-sm font-medium text-[#F5F5F5] cursor-pointer">
+                  Disponible para orden
+                </label>
+              </div>
+              <div class="flex items-center gap-3 p-3 rounded-xl bg-[#1A1A1A] border border-[#2A2A2A]">
+                <input
+                  type="checkbox"
+                  id="visible"
+                  formControlName="visible"
+                  class="w-5 h-5 rounded border-[#2A2A2A] text-[#FFB300] focus:ring-[#FFB300]/20 bg-[#121212]"
+                />
+                <label for="visible" class="text-sm font-medium text-[#F5F5F5] cursor-pointer">
+                  Visible en menú público
+                </label>
+              </div>
+            </div>
           </div>
         </div>
       </div>

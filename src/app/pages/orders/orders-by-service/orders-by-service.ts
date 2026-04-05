@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { OrdersService } from '../../../core/services/orders.service';
 import { SupabaseService } from '../../../shared/data-access/supabase.service';
 import { Navbar } from '../../../componentes/shared/navbar/navbar';
+import { LoggerService } from '../../../core/services/logger.service';
 
 import { OrderStatus, PaymentStatus } from '../../../core/models/order.model';
 import { ToastService } from '../../../core/services/toast.service';
@@ -27,6 +28,7 @@ export class OrdersByService implements OnInit, OnDestroy {
   private supabase = inject(SupabaseService).client;
   private toastService = inject(ToastService);
   private router = inject(Router);
+  private logger = inject(LoggerService);
 
   orders = this.ordersService.orders;
   loading = this.ordersService.loadingOrders;
@@ -34,21 +36,17 @@ export class OrdersByService implements OnInit, OnDestroy {
   serviceTypes = signal<ServiceType[]>([]);
   selectedTypeId = signal<number | null>(null);
 
-  // Filtros de fecha
   dateFilterType = signal<'today' | 'week' | 'month' | 'custom'>('today');
   customStartDate = signal<string>(new Date().toISOString().split('T')[0]);
   customEndDate = signal<string>(new Date().toISOString().split('T')[0]);
 
-  // Señal para imprimir ticket rápido
   quickPrintOrderId = signal<number | string | null>(null);
   quickPrintType = signal<'account' | 'kitchen'>('account');
   showQuickPrintModal = signal(false);
 
-  // Señal para actualizar el tiempo real
   private currentTime = signal(Date.now());
-  private timer: any;
+  private timer: ReturnType<typeof setInterval> | null = null;
 
-  // Seguimiento de orden activa en móvil
   activeOrderIdMobile = signal<number | string | null>(null);
 
   filtered = computed(() => {
@@ -65,7 +63,6 @@ export class OrdersByService implements OnInit, OnDestroy {
     return s ? s.nombre : 'Todas las órdenes';
   });
 
-  // Cálculo de ventas totales (solo pagadas y entregadas)
   totalSales = computed(() => {
     const filtered = this.filtered();
     return filtered
@@ -73,7 +70,6 @@ export class OrdersByService implements OnInit, OnDestroy {
       .reduce((sum, o) => sum + (o.total || 0), 0);
   });
 
-  // Cantidad de órdenes completadas
   completedOrdersCount = computed(() => {
     const filtered = this.filtered();
     return filtered.filter(o => o.estado_pedido === 'entregado' && o.estado_pago === 'pagado').length;
@@ -84,7 +80,6 @@ export class OrdersByService implements OnInit, OnDestroy {
     this.applyDateFilter();
     this.ordersService.subscribeRealtime();
 
-    // Actualizar tiempo cada segundo para el cálculo de duración
     this.timer = setInterval(() => {
       this.currentTime.set(Date.now());
     }, 1000);
@@ -169,7 +164,6 @@ export class OrdersByService implements OnInit, OnDestroy {
   async updateOrderStatus(order: any, newStatus: OrderStatus) {
     const oldStatus = order.estado_pedido;
     
-    // Optimistic UI update
     order.estado_pedido = newStatus;
     if (newStatus === 'entregado') order.fecha_cierre = new Date().toISOString();
     this.orders.set([...this.orders()]);
@@ -186,18 +180,16 @@ export class OrdersByService implements OnInit, OnDestroy {
       if (error) throw error;
       this.toastService.show(`Pedido ${newStatus}`, 'success');
     } catch (err: any) {
-      // Revert on error
       order.estado_pedido = oldStatus;
       this.orders.set([...this.orders()]);
       this.toastService.show('Error al actualizar pedido', 'error');
-      console.error('Error updating status:', err);
+      this.logger.error('Error updating status', err, 'OrdersByService');
     }
   }
 
   async updatePaymentStatus(order: any, newStatus: PaymentStatus) {
     const oldStatus = order.estado_pago;
     
-    // Optimistic UI update
     order.estado_pago = newStatus;
     this.orders.set([...this.orders()]);
 
@@ -210,11 +202,10 @@ export class OrdersByService implements OnInit, OnDestroy {
       if (error) throw error;
       this.toastService.show(`Pago ${newStatus}`, 'success');
     } catch (err: any) {
-      // Revert on error
       order.estado_pago = oldStatus;
       this.orders.set([...this.orders()]);
       this.toastService.show('Error al actualizar pago', 'error');
-      console.error('Error updating payment:', err);
+      this.logger.error('Error updating payment', err, 'OrdersByService');
     }
   }
 
@@ -250,7 +241,6 @@ export class OrdersByService implements OnInit, OnDestroy {
       estado_pago: status 
     };
 
-    // Optimistic UI
     this.orders.update(all => all.map(o => {
       if (ids.includes(o.id)) {
         return { ...o, ...updateData };
@@ -267,7 +257,7 @@ export class OrdersByService implements OnInit, OnDestroy {
       if (error) throw error;
       this.toastService.show('Actualización masiva completada', 'success');
     } catch (err: any) {
-      this.applyDateFilter(); // Re-fetch on error to ensure sync
+      this.applyDateFilter();
       this.toastService.show('Error en actualización masiva', 'error');
     }
   }
@@ -275,7 +265,6 @@ export class OrdersByService implements OnInit, OnDestroy {
   getDuration(order: any): string {
     if (!order.fecha_creacion) return '...';
     
-    // Al usar this.currentTime(), Angular reactivará este cálculo cada segundo
     const current = this.currentTime();
     const start = new Date(order.fecha_creacion).getTime();
     const end = order.fecha_cierre ? new Date(order.fecha_cierre).getTime() : current;

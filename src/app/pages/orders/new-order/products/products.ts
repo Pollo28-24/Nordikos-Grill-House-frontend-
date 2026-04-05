@@ -56,6 +56,7 @@ export class NewOrderProducts {
         category: c,
         items: prods
           .filter((p: any) => String(p.categoria_id ?? '') === String(c.id))
+          .filter((p: any) => p.disponible !== false)
           .filter((p: any) => {
             if (!term) return true;
 
@@ -95,7 +96,9 @@ export class NewOrderProducts {
       const matchCategory =
         !category || String(p.categoria_id) === String(category);
 
-      if (!term) return matchCategory;
+      const isAvailable = p.disponible !== false;
+
+      if (!term) return matchCategory && isAvailable;
 
       const name = this.normalize(p.nombre);
       const desc = this.normalize(p.descripcion);
@@ -103,7 +106,7 @@ export class NewOrderProducts {
       const matchSearch =
         name.includes(term) || desc.includes(term);
 
-      return matchCategory && matchSearch;
+      return matchCategory && isAvailable && matchSearch;
 
     });
 
@@ -166,12 +169,10 @@ export class NewOrderProducts {
   }
 
   addProduct(product: any) {
-    console.log('Adding product to cart:', product.nombre, 'Editing order ID:', this.ordersService.editingOrderId());
     this.ordersService.addProduct(product);
   }
 
   addVariant(variant: any, product: any) {
-    console.log('Adding variant to cart:', product.nombre, '-', variant.nombre, 'Editing order ID:', this.ordersService.editingOrderId());
     this.ordersService.addVariant(variant, product);
   }
 

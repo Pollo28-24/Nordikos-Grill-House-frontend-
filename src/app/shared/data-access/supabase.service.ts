@@ -13,11 +13,14 @@ export class SupabaseService {
   constructor() {
     const isBrowser = isPlatformBrowser(this.platformId);
     
-    // Check for environment variables injected by the server
     const env = isBrowser ? (window as any).__ENV__ : process.env;
     
     const supabaseUrl = env?.supabaseUrl || env?.SUPABASE_URL || environment.supabaseUrl;
     const supabaseKey = env?.supabaseKey || env?.SUPABASE_KEY || environment.supabaseKey;
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('[SupabaseService] Missing Supabase configuration. Set SUPABASE_URL and SUPABASE_KEY environment variables.');
+    }
 
     this.supabaseClient = createClient(
       supabaseUrl, 

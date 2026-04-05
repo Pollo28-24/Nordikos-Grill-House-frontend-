@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SupabaseService } from '../../../shared/data-access/supabase.service';
 import { OrdersService } from '../../../core/services/orders.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { Navbar } from '../../../componentes/shared/navbar/navbar';
 import { TicketPrintComponent } from '../../../features/tickets/components/ticket-print.component';
 
@@ -21,6 +22,7 @@ export class OrderDetail implements OnInit, OnDestroy {
   private supabase = inject(SupabaseService).client;
   private ordersService = inject(OrdersService);
   private toastService = inject(ToastService);
+  private logger = inject(LoggerService);
 
   orderId = signal<string | null>(null);
   orderIdNumber = computed(() => {
@@ -42,27 +44,22 @@ export class OrderDetail implements OnInit, OnDestroy {
     window.print();
   }
 
-  // Señal para actualizar el tiempo real
   private currentTime = signal(Date.now());
-  private timer: any;
+  private timer: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     
-    // Validar que el ID sea numérico para evitar errores PGRST (22P02)
     if (id && !isNaN(Number(id))) {
       this.orderId.set(id);
       this.loadOrder(id);
     } else if (id === 'new') {
-      // Caso especial si por error cae aquí
       this.router.navigate(['/orders/new']);
     } else {
-      // Si el ID no es válido (ej: "by-service"), redirigir a la lista
-      console.warn('ID de orden no válido:', id);
+      this.logger.warn('ID de orden no válido', { id }, 'OrderDetail');
       this.router.navigate(['/orders']);
     }
 
-    // Actualizar tiempo cada segundo
     this.timer = setInterval(() => {
       this.currentTime.set(Date.now());
     }, 1000);
@@ -97,7 +94,6 @@ export class OrderDetail implements OnInit, OnDestroy {
     try {
       this.loading.set(true);
       
-      // Load order info
       const { data: orderData, error: orderError } = await this.supabase
         .from('orders')
         .select(`
@@ -112,7 +108,6 @@ export class OrderDetail implements OnInit, OnDestroy {
       if (orderError) throw orderError;
       this.order.set(orderData);
 
-      // Load items
       const { data: itemsData, error: itemsError } = await this.supabase
         .from('order_items')
         .select(`
@@ -126,7 +121,7 @@ export class OrderDetail implements OnInit, OnDestroy {
 
     } catch (e: any) {
       this.toastService.show('Error al cargar la orden', 'error');
-      console.error(e);
+      this.logger.error('Error loading order', e, 'OrderDetail');
     } finally {
       this.loading.set(false);
     }
@@ -139,8 +134,7 @@ export class OrderDetail implements OnInit, OnDestroy {
   addMoreProducts() {
     const id = this.orderId();
     if (id) {
-      console.log('OrderDetail.addMoreProducts - setting editingOrderId:', id);
-      this.ordersService.clearCart(); // Empezar con carrito vacío para la edición
+      this.ordersService.clearCart();
       this.ordersService.editingOrderId.set(id);
       this.router.navigate(['/orders/new/browse']);
     }

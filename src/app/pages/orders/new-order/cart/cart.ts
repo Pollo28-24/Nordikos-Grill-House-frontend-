@@ -8,6 +8,8 @@ import { ProductsService } from '../../../../core/services/products.service';
 import { SupabaseService } from '../../../../shared/data-access/supabase.service';
 import { OrderCreateDto } from '../../../../core/models/order.model';
 import { ToastService } from '../../../../core/services/toast.service';
+import { LoggerService } from '../../../../core/services/logger.service';
+
 interface PaymentMethod {
   id: number;
   nombre: string;
@@ -17,13 +19,6 @@ interface PaymentMethod {
 interface ServiceType {
   id: number;
   nombre: string;
-}
-
-interface Shift {
-  id: number;
-  nombre: string;
-  hora_inicio?: string;
-  hora_fin?: string;
 }
 
 interface Client {
@@ -47,15 +42,14 @@ export class NewOrderCart {
   private toastService = inject(ToastService);
   private productsService = inject(ProductsService);
   private router = inject(Router);
+  private logger = inject(LoggerService);
 
   cart = this.ordersService.cart;
   creating = this.ordersService.creating;
 
-  // propina reactiva
   propina = signal(0);
 
   total = computed(() => {
-
     const prods = this.productsService.products();
     const itemsTotal = this.cart().reduce((acc: number, item: any) => {
       const unit = this.getUnitPrice(item, prods);
@@ -80,7 +74,6 @@ export class NewOrderCart {
   });
 
   constructor() {
-    console.log('NewOrderCart.constructor - editingOrderId:', this.ordersService.editingOrderId());
     this.loadCatalogs().then(() => {
       this.loadExistingOrderData();
     });
@@ -109,7 +102,7 @@ export class NewOrderCart {
         this.propina.set(order.propina || 0);
       }
     } catch (e) {
-      console.error('Error loading existing order data:', e);
+      this.logger.error('Error loading existing order data', e, 'NewOrderCart');
     }
   }
 
@@ -124,9 +117,7 @@ export class NewOrderCart {
   }
 
   async loadCatalogs() {
-
     try {
-
       const [
         { data: pagos },
         { data: servicios },
@@ -151,7 +142,6 @@ export class NewOrderCart {
     } catch {
       this.toastService.show('Error al cargar catálogos', 'error');
     }
-
   }
 
   increment(item: any) {
@@ -190,7 +180,6 @@ export class NewOrderCart {
       if (p) basePrice = Number(p.precio ?? 0);
     }
 
-    // Add modifiers price
     const modsPrice = (item.modificadores || []).reduce((acc: number, m: any) => {
       return acc + (Number(m.precio_unitario || 0) * Number(m.cantidad || 1));
     }, 0);
@@ -211,9 +200,6 @@ export class NewOrderCart {
   isEditingOrder = computed(() => this.ordersService.editingOrderId() !== null);
 
   async submit() {
-    console.log('Cart.submit - isEditingOrder:', this.isEditingOrder());
-    console.log('Cart.submit - editingOrderId:', this.ordersService.editingOrderId());
-
     if (this.form.invalid || this.cart().length === 0) {
       this.toastService.show('Formulario inválido o carrito vacío', 'error');
       return;
@@ -231,7 +217,7 @@ export class NewOrderCart {
       cliente_id: this.form.value.cliente_id || null,
       metodo_pago_id: Number(this.form.value.metodo_pago_id),
       tipo_servicio_id: Number(this.form.value.tipo_servicio_id),
-      turno_id: null as any, // Por ahora irrelevante
+      turno_id: null,
       propina: this.propina(),
       nota_general: this.form.value.nota_general || null,
       items: this.cart(),
@@ -241,7 +227,6 @@ export class NewOrderCart {
     const res = await this.ordersService.createOrder(dto);
     if (res.status === 'success') {
       this.toastService.show(`Orden #${res.order_id} creada`, 'success');
-      // Después de crear con éxito, redirigimos al detalle para imprimir ticket
       this.ordersService.clearCart();
       this.ordersService.editingOrderId.set(null);
       this.propina.set(0);
@@ -256,30 +241,27 @@ export class NewOrderCart {
     
     try {
       let addedTotal = 0;
-      // Para cada item del carrito, insertamos en order_items
       for (const item of this.cart()) {
         const lineTotal = this.lineTotal(item);
         addedTotal += lineTotal;
 
-        // 1. Insertar el item
         const { data: newItem, error: itemError } = await this.supabase
           .from('order_items')
           .insert({
             order_id: orderId,
             producto_id: item.producto_id,
             variante_id: item.variante_id,
-            nombre_producto: item.nombre_producto, // Campo obligatorio corregido
+            nombre_producto: item.nombre_producto,
             cantidad: item.cantidad,
             nota: item.nota,
             precio_unitario: this.unitPrice(item),
-            total: lineTotal // Campo obligatorio corregido
+            total: lineTotal
           })
           .select()
           .single();
 
         if (itemError) throw itemError;
 
-        // 2. Insertar modificadores si existen
         if (item.modificadores && item.modificadores.length > 0) {
           const modsToInsert = item.modificadores.map(m => ({
             order_item_id: newItem.id,
@@ -296,7 +278,6 @@ export class NewOrderCart {
         }
       }
 
-      // 3. Obtener el total actual directamente de la DB para evitar desincronización
       const { data: orderData, error: fetchError } = await this.supabase
         .from('orders')
         .select('total')
@@ -305,7 +286,6 @@ export class NewOrderCart {
       
       if (fetchError) throw fetchError;
 
-      // 4. Actualizar el total de la orden sumando lo nuevo al total anterior
       const newTotal = Number(orderData.total || 0) + addedTotal;
       const { error: updateError } = await this.supabase
         .from('orders')
@@ -320,14 +300,14 @@ export class NewOrderCart {
       this.toastService.show('Orden actualizada correctamente', 'success');
       this.finalizeSubmit();
     } catch (e) {
-      console.error('Error updating order:', e);
+      this.logger.error('Error updating order', e, 'NewOrderCart');
       this.toastService.show('Error al actualizar la orden', 'error');
     }
   }
 
   finalizeSubmit() {
     this.ordersService.clearCart();
-    this.ordersService.editingOrderId.set(null); // Limpiar modo edición
+    this.ordersService.editingOrderId.set(null);
     this.propina.set(0);
     this.router.navigate(['/orders/by-service']);
   }
