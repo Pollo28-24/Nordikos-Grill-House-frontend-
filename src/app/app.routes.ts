@@ -21,6 +21,11 @@ export const routes: Routes = [
     canActivate: [privateGuard],
   },
   {
+    path: 'manageProducts/createProducts',
+    loadComponent: () => import('./pages/manageProducts/createProducts/createProducts').then((m) => m.CreateProducts),
+    canActivate: [privateGuard],
+  },
+  {
     path: 'categories',
     loadComponent: () => import('./pages/manageCategories/manageCategories').then((m) => m.ManageCategories),
     canActivate: [privateGuard],
@@ -28,11 +33,6 @@ export const routes: Routes = [
   { 
     path: 'manage-products/edit/:id',
     loadComponent: () => import('./pages/manageProducts/editProducts/editProducts').then((m) => m.EditProducts),
-    canActivate: [privateGuard],
-  },
-  {
-    path: 'manage-products/createProducts',
-    loadComponent: () => import('./pages/manageProducts/createProducts/createProducts').then((m) => m.CreateProducts),
     canActivate: [privateGuard],
   },
   {
@@ -87,4 +87,8 @@ export const routes: Routes = [
     redirectTo: 'home',
     pathMatch: 'full',
   },
+  {
+    path: '**',
+    redirectTo: 'home',
+  }
 ];

@@ -10,6 +10,7 @@ import { LoggerService } from '../../../core/services/logger.service';
 import { OrderStatus, PaymentStatus } from '../../../core/models/order.model';
 import { ToastService } from '../../../core/services/toast.service';
 import { TicketPrintComponent } from '../../../features/tickets/components/ticket-print.component';
+import { TicketService } from '../../../features/tickets/services/ticket.service';
 
 interface ServiceType {
   id: number;
@@ -29,6 +30,7 @@ export class OrdersByService implements OnInit, OnDestroy {
   private toastService = inject(ToastService);
   private router = inject(Router);
   private logger = inject(LoggerService);
+  private ticketService = inject(TicketService);
 
   orders = this.ordersService.orders;
   loading = this.ordersService.loadingOrders;
@@ -225,8 +227,14 @@ export class OrdersByService implements OnInit, OnDestroy {
     this.showQuickPrintModal.set(true);
   }
 
-  onTicketReady() {
-    window.print();
+  async onTicketReady() {
+    const id = this.quickPrintOrderId();
+    if (id) {
+      const data = await this.ticketService.getTicketData(Number(id));
+      if (data) {
+        this.ticketService.printTicket(data);
+      }
+    }
   }
 
   async bulkUpdateStatus(type: 'pedido' | 'pago', status: OrderStatus | PaymentStatus) {

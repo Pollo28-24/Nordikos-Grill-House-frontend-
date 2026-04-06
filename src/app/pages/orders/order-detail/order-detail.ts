@@ -8,6 +8,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { LoggerService } from '../../../core/services/logger.service';
 import { Navbar } from '../../../componentes/shared/navbar/navbar';
 import { TicketPrintComponent } from '../../../features/tickets/components/ticket-print.component';
+import { TicketService } from '../../../features/tickets/services/ticket.service';
 
 @Component({
   selector: 'app-order-detail',
@@ -23,6 +24,7 @@ export class OrderDetail implements OnInit, OnDestroy {
   private ordersService = inject(OrdersService);
   private toastService = inject(ToastService);
   private logger = inject(LoggerService);
+  private ticketService = inject(TicketService);
 
   orderId = signal<string | null>(null);
   orderIdNumber = computed(() => {
@@ -40,8 +42,18 @@ export class OrderDetail implements OnInit, OnDestroy {
     this.showTicket.set(true);
   }
 
-  onTicketReady() {
-    window.print();
+  async shareTicketPDF() {
+    this.openTicket('account');
+  }
+
+  async onTicketReady() {
+    const id = this.orderId();
+    if (id) {
+      const data = await this.ticketService.getTicketData(Number(id));
+      if (data) {
+        this.ticketService.printTicket(data);
+      }
+    }
   }
 
   private currentTime = signal(Date.now());
@@ -94,20 +106,29 @@ export class OrderDetail implements OnInit, OnDestroy {
     try {
       this.loading.set(true);
       
-      const { data: orderData, error: orderError } = await this.supabase
+      const { data, error } = await this.supabase
         .from('orders')
         .select(`
           *,
-          clientes(nombre, telefono),
-          tipos_servicio(nombre),
-          metodos_pago(nombre)
+          clientes (nombre, telefono),
+          tipos_servicio (nombre),
+          metodos_pago (nombre),
+          turnos (nombre)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
-      if (orderError) throw orderError;
-      this.order.set(orderData);
+      if (error) throw error;
+      
+      if (!data) {
+        this.logger.warn('No se encontró la orden', { id }, 'OrderDetail');
+        this.toastService.show('La orden no existe', 'error');
+        this.router.navigate(['/orders']);
+        return;
+      }
 
+      this.order.set(data);
+      
       const { data: itemsData, error: itemsError } = await this.supabase
         .from('order_items')
         .select(`
@@ -118,10 +139,9 @@ export class OrderDetail implements OnInit, OnDestroy {
 
       if (itemsError) throw itemsError;
       this.items.set(itemsData || []);
-
-    } catch (e: any) {
+    } catch (error: any) {
+      this.logger.error('Error loading order', error, 'OrderDetail');
       this.toastService.show('Error al cargar la orden', 'error');
-      this.logger.error('Error loading order', e, 'OrderDetail');
     } finally {
       this.loading.set(false);
     }

@@ -3,40 +3,51 @@ import { isPlatformBrowser } from '@angular/common';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../../auth/data-access/auth.services';
 
-const routerInjection = () => inject(Router);
-
-const authService = () => inject(AuthService);
-
-export const privateGuard: CanActivateFn = async () => {
-  const router = routerInjection();
+/**
+ * Guard for private routes.
+ * Uses AuthService signal to check authentication state.
+ */
+export const privateGuard: CanActivateFn = () => {
+  const router = inject(Router);
+  const authService = inject(AuthService);
   const platformId = inject(PLATFORM_ID);
 
   if (!isPlatformBrowser(platformId)) {
-    return true; // Allow rendering on server to avoid redirect loop
+    return true;
   }
 
-  const { data } = await authService().session();
+  const isAuthenticated = authService.isAuthenticated();
 
-  if (!data.session) {
+  // If not authenticated, redirect to login
+  if (isAuthenticated === false) {
     router.navigateByUrl('/auth/log-in');
+    return false;
   }
 
-  return !!data.session;
+  // If null, it means APP_INITIALIZER hasn't finished (shouldn't happen with APP_INITIALIZER)
+  // but as a fallback we allow it or handle it.
+  return isAuthenticated === true;
 };
 
-export const publicGuard: CanActivateFn = async () => {
-  const router = routerInjection();
+/**
+ * Guard for public routes (like Login).
+ * Redirects to home if already authenticated.
+ */
+export const publicGuard: CanActivateFn = () => {
+  const router = inject(Router);
+  const authService = inject(AuthService);
   const platformId = inject(PLATFORM_ID);
 
   if (!isPlatformBrowser(platformId)) {
-    return true; // Allow rendering on server
+    return true;
   }
 
-  const { data } = await authService().session();
+  const isAuthenticated = authService.isAuthenticated();
 
-  if (data.session) {
+  if (isAuthenticated === true) {
     router.navigateByUrl('/');
+    return false;
   }
 
-  return !data.session;
+  return true;
 };

@@ -1,15 +1,17 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { LucideAngularModule } from 'lucide-angular';
 import { CategoriesService } from '../../core/services/categories.service';
 import { ProductsService } from '../../core/services/products.service';
-import { Product } from '../../core/models/product.model';
-import { Category } from '../../core/services/categories.service';
+import { PublicCartService } from '../../core/services/public-cart.service';
+import { PublicCart } from './components/public-cart/public-cart';
+import { Product, ProductVariant } from '../../core/models/product.model';
 
 @Component({
   selector: 'app-public-menu',
   standalone: true,
-  imports: [LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, PublicCart],
   templateUrl: './public-menu.html',
   styles: [`
     .hide-scrollbar::-webkit-scrollbar {
@@ -22,8 +24,9 @@ import { Category } from '../../core/services/categories.service';
   `]
 })
 export class PublicMenu implements OnInit {
-  private categoriesService = inject(CategoriesService);
-  private productsService = inject(ProductsService);
+  public categoriesService = inject(CategoriesService);
+  public productsService = inject(ProductsService);
+  public cartService = inject(PublicCartService);
   private meta = inject(Meta);
   private title = inject(Title);
 
@@ -32,9 +35,26 @@ export class PublicMenu implements OnInit {
   products = this.productsService.products;
   loading = computed(() => this.categoriesService.loading() || this.productsService.loading());
 
+  // Error handling for debugging
+  error = computed(() => this.categoriesService.error() || this.productsService.error());
+
   // Local state
   selectedCategoryId = signal<string | null>(null);
   searchQuery = signal('');
+  isCartOpen = signal(false);
+
+  // Selection modal state
+  selectedProductForDetail = signal<Product | null>(null);
+  selectedVariantId = signal<string | null>(null);
+
+  // Computed for selected product details
+  selectedProductVariants = computed(() => this.selectedProductForDetail()?.variants ?? []);
+  
+  selectedVariant = computed(() => {
+    const variants = this.selectedProductVariants();
+    const id = this.selectedVariantId();
+    return variants.find(v => v.id === id) ?? null;
+  });
 
   // Computed filtered products
   filteredProducts = computed(() => {
@@ -59,6 +79,9 @@ export class PublicMenu implements OnInit {
 
   ngOnInit() {
     this.setMetaTags();
+    // Force a reload when visiting the public menu to ensure fresh data
+    this.categoriesService.reload();
+    this.productsService.reload();
   }
 
   private setMetaTags() {
@@ -93,5 +116,39 @@ export class PublicMenu implements OnInit {
 
   getProductsByCategory(categoryId: string | number): Product[] {
     return this.filteredProducts().filter(p => p.categoria_id === categoryId);
+  }
+
+  addToCart(product: Product, variant?: ProductVariant) {
+    this.cartService.addToCart(product, variant);
+    if (this.selectedProductForDetail()) {
+      this.closeProductDetail();
+    }
+  }
+
+  openProductDetail(product: Product) {
+    this.selectedProductForDetail.set(product);
+    if (product.variants?.length) {
+      this.selectedVariantId.set(product.variants[0].id);
+    }
+  }
+
+  closeProductDetail() {
+    this.selectedProductForDetail.set(null);
+    this.selectedVariantId.set(null);
+  }
+
+  selectVariant(variantId: string) {
+    this.selectedVariantId.set(variantId);
+  }
+
+  toggleCart() {
+    this.isCartOpen.update(v => !v);
+  }
+
+  checkout() {
+    const url = this.cartService.generateWhatsAppMessage();
+    if (url) {
+      window.open(url, '_blank');
+    }
   }
 }

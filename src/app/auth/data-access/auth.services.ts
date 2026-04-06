@@ -18,22 +18,44 @@ export class AuthService {
   private supabase = inject(SupabaseService).supabaseClient;
   private logger = inject(LoggerService);
 
-  readonly user = signal<User | null>(null);
+  private readonly _user = signal<User | null>(null);
+  private readonly _isAuthenticated = signal<boolean | null>(null); // null means "not checked yet"
+
+  readonly user = this._user.asReadonly();
+  readonly isAuthenticated = this._isAuthenticated.asReadonly();
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
-      this.init();
+      this.setupAuthListener();
     }
   }
 
-  private async init() {
-    const {
-      data: { session },
-    } = await this.supabase.auth.getSession();
-    this.user.set(session?.user ?? null);
+  /**
+   * Initializes auth state. Used in APP_INITIALIZER to prevent flicker.
+   */
+  async init(): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      this._isAuthenticated.set(false);
+      return;
+    }
 
+    try {
+      const { data: { session }, error } = await this.supabase.auth.getSession();
+      if (error) throw error;
+      
+      this._user.set(session?.user ?? null);
+      this._isAuthenticated.set(!!session?.user);
+    } catch (error) {
+      this.logger.error('Error during auth initialization', error, 'AuthService');
+      this._user.set(null);
+      this._isAuthenticated.set(false);
+    }
+  }
+
+  private setupAuthListener() {
     this.supabase.auth.onAuthStateChange((_event, session) => {
-      this.user.set(session?.user ?? null);
+      this._user.set(session?.user ?? null);
+      this._isAuthenticated.set(!!session?.user);
     });
   }
 
@@ -46,6 +68,13 @@ export class AuthService {
   }
 
   async getUser() {
+    if (this._isAuthenticated() !== null) {
+      return { data: { user: this._user() }, error: null };
+    }
+    return this.getUserFromServer();
+  }
+
+  private async getUserFromServer() {
     const {
       data: { session },
       error: sessionError,

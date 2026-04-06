@@ -56,7 +56,6 @@ export class NewOrderProducts {
         category: c,
         items: prods
           .filter((p: any) => String(p.categoria_id ?? '') === String(c.id))
-          .filter((p: any) => p.disponible !== false)
           .filter((p: any) => {
             if (!term) return true;
 
@@ -96,9 +95,7 @@ export class NewOrderProducts {
       const matchCategory =
         !category || String(p.categoria_id) === String(category);
 
-      const isAvailable = p.disponible !== false;
-
-      if (!term) return matchCategory && isAvailable;
+      if (!term) return matchCategory;
 
       const name = this.normalize(p.nombre);
       const desc = this.normalize(p.descripcion);
@@ -106,7 +103,7 @@ export class NewOrderProducts {
       const matchSearch =
         name.includes(term) || desc.includes(term);
 
-      return matchCategory && isAvailable && matchSearch;
+      return matchCategory && matchSearch;
 
     });
 

@@ -184,6 +184,11 @@ export class EditProducts {
     }
   }
 
+  toggleField(field: 'disponible' | 'visible') {
+    const currentValue = this.productForm.get(field)?.value;
+    this.productForm.get(field)?.patchValue(!currentValue);
+  }
+
   async onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {

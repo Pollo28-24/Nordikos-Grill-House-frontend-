@@ -1,0 +1,121 @@
+<div class="fixed inset-0 z-[60] flex justify-end">
+  
+  <!-- Backdrop -->
+  <div 
+    class="absolute inset-0 cart-backdrop"
+    (click)="onClose()"
+  ></div>
+
+  <!-- Content -->
+  <div class="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+    
+    <!-- Header -->
+    <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <lucide-icon name="shopping-cart" class="h-5 w-5 text-orange-500"></lucide-icon>
+        <h2 class="text-lg font-bold">Tu Carrito</h2>
+      </div>
+      <button (click)="onClose()" class="p-2 hover:bg-gray-100 rounded-full transition">
+        <lucide-icon name="x" class="h-6 w-6 text-gray-500"></lucide-icon>
+      </button>
+    </div>
+
+    <!-- Items -->
+    <div class="flex-grow overflow-y-auto p-5 space-y-4">
+      @if (cartService.items().length === 0) {
+        <div class="h-full flex flex-col items-center justify-center text-center opacity-50">
+          <lucide-icon name="shopping-bag" class="h-16 w-16 mb-4"></lucide-icon>
+          <p class="text-gray-500">Tu carrito está vacío</p>
+          <button 
+            (click)="onClose()"
+            class="mt-4 text-orange-500 font-semibold"
+          >
+            Seguir explorando
+          </button>
+        </div>
+      } @else {
+        @for (item of cartService.items(); track item.id) {
+          <div class="flex gap-4 bg-gray-50 p-3 rounded-2xl border border-gray-100">
+            <div class="h-20 w-20 rounded-xl overflow-hidden bg-white shrink-0">
+              @if (item.imagen_url) {
+                <img [src]="item.imagen_url" class="w-full h-full object-cover">
+              } @else {
+                <div class="w-full h-full flex items-center justify-center text-gray-300">
+                  <lucide-icon name="image" class="h-6 w-6"></lucide-icon>
+                </div>
+              }
+            </div>
+            
+            <div class="flex-grow flex flex-col justify-between py-1">
+              <div>
+                <h4 class="text-sm font-bold text-gray-900">{{ item.nombre }}</h4>
+                @if (item.variante) {
+                  <p class="text-[10px] text-gray-400 font-medium italic mb-1 uppercase tracking-wide">
+                    {{ item.variante.nombre }}
+                  </p>
+                }
+                <p class="text-xs text-orange-600 font-semibold">{{ formatPrice(item.precio) }}</p>
+              </div>
+              
+              <div class="flex items-center justify-between">
+                <!-- Qty Controls -->
+                <div class="flex items-center bg-white rounded-lg border border-gray-200 p-1">
+                  <button 
+                    (click)="cartService.updateQuantity(item.id, -1)"
+                    class="p-1 hover:bg-gray-50 rounded"
+                  >
+                    <lucide-icon name="minus" class="h-3 w-3"></lucide-icon>
+                  </button>
+                  <span class="w-8 text-center text-xs font-bold">{{ item.cantidad }}</span>
+                  <button 
+                    (click)="cartService.updateQuantity(item.id, 1)"
+                    class="p-1 hover:bg-gray-50 rounded"
+                  >
+                    <lucide-icon name="plus" class="h-3 w-3"></lucide-icon>
+                  </button>
+                </div>
+
+                <button 
+                  (click)="cartService.removeFromCart(item.id)"
+                  class="text-red-500 p-2 hover:bg-red-50 rounded-full transition"
+                >
+                  <lucide-icon name="trash-2" class="h-4 w-4"></lucide-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Footer -->
+    @if (cartService.items().length > 0) {
+      <div class="p-6 border-t border-gray-100 space-y-4">
+        <div class="flex items-center justify-between text-gray-500 text-sm">
+          <span>Subtotal</span>
+          <span>{{ formatPrice(cartService.totalAmount()) }}</span>
+        </div>
+        <div class="flex items-center justify-between text-lg font-bold">
+          <span>Total</span>
+          <span class="text-orange-600">{{ formatPrice(cartService.totalAmount()) }}</span>
+        </div>
+        
+        <button 
+          (click)="checkout()"
+          class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg transition active:scale-95 flex items-center justify-center gap-3"
+        >
+          <lucide-icon name="message-circle" class="h-5 w-5"></lucide-icon>
+          Pedir por WhatsApp
+        </button>
+
+        <button 
+          (click)="cartService.clearCart()"
+          class="w-full py-2 text-gray-400 text-xs font-medium hover:text-red-500 transition"
+        >
+          Vaciar carrito
+        </button>
+      </div>
+    }
+
+  </div>
+</div>

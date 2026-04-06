@@ -35,17 +35,32 @@ export class CategoriesService {
 
   private categoriesResource = resource({
     loader: async () => {
-      const { data, error } = await this.supabase
-        .from('categorias')
-        .select('*, productos(count)')
-        .order('nombre');
+      if (!isPlatformBrowser(this.platformId)) return [];
+      try {
+        const { data, error } = await this.supabase
+          .from('categorias')
+          .select('*, productos(count)')
+          .order('nombre');
 
-      if (error) throw error;
-      
-      return (data || []).map((row: any) => ({
-        ...row,
-        products_count: row.productos?.[0]?.count ?? 0,
-      })) as Category[];
+        if (error) {
+          this.logger.error('Error loading categories', error, 'CategoriesService');
+          throw error;
+        }
+        
+        const mapped = (data || []).map((row: any) => ({
+          ...row,
+          products_count: row.productos?.[0]?.count ?? 0,
+        })) as Category[];
+
+        if (mapped.length === 0) {
+          this.logger.warn('No categories found', 'CategoriesService');
+        }
+
+        return mapped;
+      } catch (e) {
+        this.logger.error('Critical error in categoriesResource', e, 'CategoriesService');
+        throw e;
+      }
     }
   });
   

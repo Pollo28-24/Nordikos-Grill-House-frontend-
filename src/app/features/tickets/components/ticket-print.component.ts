@@ -1,12 +1,13 @@
 import { Component, inject, signal, input, effect, output, ViewEncapsulation } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { LucideAngularModule } from 'lucide-angular';
 import { TicketService } from '../services/ticket.service';
 import { TicketData } from '../models/ticket.model';
 
 @Component({
   selector: 'app-ticket-print',
   standalone: true,
-  imports: [DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe, LucideAngularModule],
   templateUrl: './ticket-print.component.html',
   styleUrls: ['./ticket-print.component.css'],
   encapsulation: ViewEncapsulation.None
@@ -19,6 +20,7 @@ export class TicketPrintComponent {
   ticketData = signal<TicketData | null>(null);
   loading = signal(false);
   readyToPrint = output<void>();
+  close = output<void>();
 
   constructor() {
     effect(() => {
@@ -47,8 +49,9 @@ export class TicketPrintComponent {
   }
 
   print() {
-    if (this.ticketData()) {
-      this.ticketService.printTicket();
+    const data = this.ticketData();
+    if (data) {
+      this.ticketService.printTicket(data);
     }
   }
 }

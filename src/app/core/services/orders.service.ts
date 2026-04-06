@@ -257,25 +257,6 @@ export class OrdersService {
     return data; 
   }
 
-  async updateOrderRpc(orderId: number | string, items: any[], notaGeneral?: string | null): Promise<any> {
-    try {
-      this.creating.set(true);
-      const { data, error } = await this.supabase.rpc('orders_update_items_v1', {
-        p_order_id: orderId,
-        p_items: items,
-        p_nota_general: notaGeneral ?? null
-      });
-
-      if (error) throw error;
-      return data;
-    } catch (e: any) {
-      console.error('Error in updateOrderRpc:', e);
-      throw e;
-    } finally {
-      this.creating.set(false);
-    }
-  }
-
   addProduct(product: { id: string | number; nombre: string }) { 
     this.cart.update(items => { 
       const i = items.findIndex(x => x.producto_id === product.id && !x.variante_id); 

@@ -89,28 +89,58 @@
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-              <div class="flex items-center gap-3 p-3 rounded-xl bg-[#1A1A1A] border border-[#2A2A2A]">
-                <input
-                  type="checkbox"
-                  id="disponible"
-                  formControlName="disponible"
-                  class="w-5 h-5 rounded border-[#2A2A2A] text-[#FFB300] focus:ring-[#FFB300]/20 bg-[#121212]"
-                />
-                <label for="disponible" class="text-sm font-medium text-[#F5F5F5] cursor-pointer">
-                  Disponible para orden
-                </label>
-              </div>
-              <div class="flex items-center gap-3 p-3 rounded-xl bg-[#1A1A1A] border border-[#2A2A2A]">
-                <input
-                  type="checkbox"
-                  id="visible"
-                  formControlName="visible"
-                  class="w-5 h-5 rounded border-[#2A2A2A] text-[#FFB300] focus:ring-[#FFB300]/20 bg-[#121212]"
-                />
-                <label for="visible" class="text-sm font-medium text-[#F5F5F5] cursor-pointer">
-                  Visible en menú público
-                </label>
-              </div>
+              <button 
+                type="button"
+                (click)="toggleField('disponible')"
+                class="flex items-center gap-3 p-4 rounded-2xl border transition-all duration-300"
+                [class.bg-[#FFB300]/10]="productForm.get('disponible')?.value"
+                [class.border-[#FFB300]/40]="productForm.get('disponible')?.value"
+                [class.bg-[#1A1A1A]]="!productForm.get('disponible')?.value"
+                [class.border-[#2A2A2A]]="!productForm.get('disponible')?.value"
+              >
+                <div 
+                  class="flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors"
+                  [class.border-[#FFB300]]="productForm.get('disponible')?.value"
+                  [class.bg-[#FFB300]]="productForm.get('disponible')?.value"
+                  [class.border-[#3A3A3A]]="!productForm.get('disponible')?.value"
+                >
+                  @if (productForm.get('disponible')?.value) {
+                    <lucide-icon name="check" class="h-4 w-4 text-[#1E1E1E]" />
+                  }
+                </div>
+                <div class="text-left">
+                  <p class="text-sm font-bold text-[#F5F5F5]">Disponible</p>
+                  <p class="text-[10px] text-[#9CA3AF]">Venta habilitada</p>
+                </div>
+              </button>
+
+              <button 
+                type="button"
+                (click)="toggleField('visible')"
+                class="flex items-center gap-3 p-4 rounded-2xl border transition-all duration-300"
+                [class.bg-blue-500/10]="productForm.get('visible')?.value"
+                [class.border-blue-500/40]="productForm.get('visible')?.value"
+                [class.bg-[#1A1A1A]]="!productForm.get('visible')?.value"
+                [class.border-[#2A2A2A]]="!productForm.get('visible')?.value"
+              >
+                <div 
+                  class="flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors"
+                  [class.border-blue-500]="productForm.get('visible')?.value"
+                  [class.bg-blue-500]="productForm.get('visible')?.value"
+                  [class.border-[#3A3A3A]]="!productForm.get('visible')?.value"
+                >
+                  <lucide-icon 
+                    [name]="productForm.get('visible')?.value ? 'eye' : 'eye-off'" 
+                    class="h-3.5 w-3.5"
+                    [class.text-white]="productForm.get('visible')?.value"
+                    [class.text-[#9CA3AF]]="!productForm.get('visible')?.value"
+                  />
+                </div>
+                <div class="text-left">
+                  <p class="text-sm font-bold text-[#F5F5F5]">Visible</p>
+                  <p class="text-[10px] text-[#9CA3AF]">Menú público</p>
+                </div>
+              </button>
             </div>
           </div>
         </div>

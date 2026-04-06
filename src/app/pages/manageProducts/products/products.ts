@@ -117,7 +117,7 @@ export class Products {
   }
 
   addProductToCategory(categoryId: string | null) {
-    this.router.navigate(['/manage-products/createProducts'], {
+    this.router.navigate(['/manageProducts/createProducts'], {
       queryParams: categoryId ? { categoria_id: categoryId } : {},
     });
   }

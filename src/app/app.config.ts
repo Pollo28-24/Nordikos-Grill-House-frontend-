@@ -4,6 +4,7 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
   LOCALE_ID,
+  APP_INITIALIZER,
 } from '@angular/core';
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
@@ -13,6 +14,7 @@ registerLocaleData(localeEs);
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { AuthService } from './auth/data-access/auth.services';
 import {
   LucideAngularModule,
   User,
@@ -70,9 +72,16 @@ import {
   ChefHat,
   MessageSquare,
   ArrowLeft,
+  MessageCircle,
+  Settings2,
+  ShoppingBag,
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
+
+function initializeApp(authService: AuthService) {
+  return () => authService.init();
+}
 
 export const appConfig: ApplicationConfig = {
 providers: [
@@ -82,6 +91,12 @@ providers: [
   provideClientHydration(withEventReplay()),
   provideRouter(routes, withComponentInputBinding()),
   { provide: LOCALE_ID, useValue: 'es' },
+  {
+    provide: APP_INITIALIZER,
+    useFactory: initializeApp,
+    deps: [AuthService],
+    multi: true,
+  },
   importProvidersFrom(
     LucideAngularModule.pick({
         User,
@@ -139,7 +154,9 @@ providers: [
         ChefHat,
         MessageSquare,
         ArrowLeft,
-
+        MessageCircle,
+        Settings2,
+        ShoppingBag,
       }),
     ),
   ],

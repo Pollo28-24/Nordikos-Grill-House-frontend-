@@ -1,7 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from '../../../shared/data-access/supabase.service';
 import { LoggerService } from '../../../core/services/logger.service';
 import { TicketData } from '../models/ticket.model';
+import { Share } from '@capacitor/share';
+import { Capacitor } from '@capacitor/core';
 
 @Injectable({
   providedIn: 'root'
@@ -9,6 +12,7 @@ import { TicketData } from '../models/ticket.model';
 export class TicketService {
   private supabase = inject(SupabaseService).client;
   private logger = inject(LoggerService);
+  private platformId = inject(PLATFORM_ID);
 
   async getTicketData(orderId: number): Promise<TicketData | null> {
     try {
@@ -22,7 +26,7 @@ export class TicketService {
             estado_pedido,
             estado_pago,
             total,
-            provincia,
+            propina,
             nota_general,
             clientes (nombre, telefono),
             tipos_servicio (nombre)
@@ -78,7 +82,49 @@ export class TicketService {
     }
   }
 
-  printTicket() {
-    window.print();
+  async printTicket(data?: TicketData) {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    // Si es cuenta y queremos PDF, usamos window.print() que permite guardar como PDF
+    // En móviles nativos, usamos Share como respaldo si no hay impresora configurada
+    const isNative = Capacitor.isNativePlatform();
+
+    if (isNative && data) {
+      try {
+        let text = `Nordikos Grill House\n`;
+        text += `Orden: #${data.order.numero_orden}\n`;
+        text += `Fecha: ${new Date(data.order.fecha_creacion).toLocaleString()}\n`;
+        text += `--------------------------------\n`;
+        data.items.forEach(item => {
+          text += `${item.cantidad}x ${item.nombre_producto} - $${item.precio_unitario}\n`;
+          if (item.modificadores?.length) {
+            item.modificadores.forEach(m => {
+              text += `  + ${m.nombre_modificador}\n`;
+            });
+          }
+        });
+        text += `--------------------------------\n`;
+        text += `Total: $${data.order.total}\n\n`;
+        text += `¡Gracias por su compra!`;
+
+        await Share.share({
+          title: `Ticket Orden #${data.order.numero_orden}`,
+          text: text,
+          dialogTitle: 'Enviar o Guardar Ticket',
+        });
+        return;
+      } catch (e) {
+        this.logger.error('Error sharing ticket on native', e, 'TicketService');
+      }
+    }
+
+    try {
+      // Pequeño delay para asegurar renderizado antes de imprimir
+      setTimeout(() => {
+        window.print();
+      }, 100);
+    } catch (e) {
+      this.logger.error('Error triggering window.print()', e, 'TicketService');
+    }
   }
 }

@@ -1,7 +1,20 @@
 @if (ticketData(); as data) {
+  <!-- UI para previsualización (No se imprime) -->
+  <div class="ticket-overlay no-print">
+    <div class="ticket-actions">
+      <button (click)="close.emit()" class="action-btn close-btn" title="Cerrar">
+        <lucide-icon name="x" class="w-5 h-5"></lucide-icon>
+      </button>
+      <button (click)="print()" class="action-btn print-btn" title="Imprimir / PDF">
+        <lucide-icon name="printer" class="w-5 h-5"></lucide-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- El Ticket Real -->
   <div class="ticket" [class.kitchen-ticket]="ticketType() === 'kitchen'">
     
-    <!-- Encabezado (Diferente según tipo) -->
+    <!-- Encabezado -->
     @if (data.order; as order) {
       <div class="header">
         @if (ticketType() === 'account') {
@@ -37,9 +50,6 @@
           <p>Tel: {{ cliente.telefono }}</p>
         }
       </div>
-    }
-
-    @if (data.order.cliente) {
       <div class="divider"></div>
     }
 
@@ -84,7 +94,7 @@
 
     <div class="divider"></div>
 
-    <!-- Nota General (Muy importante en cocina) -->
+    <!-- Nota General -->
     @if (data.order.nota_general) {
       <div class="general-note">
         <p class="note-title">--- NOTA GENERAL ---</p>
@@ -100,46 +110,38 @@
           <span>SUBTOTAL</span>
           <span>${{ (order.total - (order.propina || 0)) | number:'1.2-2' }}</span>
         </div>
-        @if (order.propina && order.propina > 0) {
-          <div class="total-line">
-            <span>PROPINA</span>
-            <span>${{ order.propina | number:'1.2-2' }}</span>
-          </div>
-        }
+        <div class="total-line">
+          <span>PROPINA</span>
+          <span>${{ (order.propina || 0) | number:'1.2-2' }}</span>
+        </div>
+        <div class="divider"></div>
         <div class="total-line grand-total">
           <span>TOTAL</span>
           <span>${{ order.total | number:'1.2-2' }}</span>
         </div>
-        <div class="divider"></div>
       </div>
-    }
 
-    <!-- Footer -->
-    @if (ticketType() === 'account') {
       <div class="footer">
-        <p>¡Gracias por su compra!</p>
-        <p>Nordikos Grill House</p>
+        <div class="divider"></div>
+        <p>¡GRACIAS POR SU VISITA!</p>
+        <p class="tagline">Sabor que te transporta al norte</p>
+        <div class="barcode">||||||||||||||||||||||||||||||</div>
       </div>
     }
 
+    <!-- Pie de Cocina -->
     @if (ticketType() === 'kitchen') {
       <div class="footer kitchen-footer">
+        <div class="divider"></div>
         <p>--- FIN DE TICKET COCINA ---</p>
       </div>
     }
   </div>
 } @else {
   @if (loading()) {
-    <div class="loading">
-      Cargando datos del ticket...
+    <div class="loading-state no-print">
+      <lucide-icon name="loader-2" class="animate-spin"></lucide-icon>
+      <p>Cargando datos del ticket...</p>
     </div>
   }
-}
-
-@if (ticketData()) {
-  <div class="print-actions no-print">
-    <button (click)="print()" class="print-btn">
-      Imprimir {{ ticketType() === 'kitchen' ? 'Ticket Cocina' : 'Ticket Cuenta' }}
-    </button>
-  </div>
 }
