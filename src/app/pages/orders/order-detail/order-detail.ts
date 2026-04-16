@@ -1,30 +1,36 @@
-import { Component, ChangeDetectionStrategy, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit, computed } from '@angular/core';
 import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SupabaseService } from '../../../shared/data-access/supabase.service';
-import { OrdersService } from '../../../core/services/orders.service';
-import { ToastService } from '../../../core/services/toast.service';
-import { LoggerService } from '../../../core/services/logger.service';
-import { Navbar } from '../../../componentes/shared/navbar/navbar';
-import { TicketPrintComponent } from '../../../features/tickets/components/ticket-print.component';
-import { TicketService } from '../../../features/tickets/services/ticket.service';
+import { SupabaseService } from '@shared/data-access/supabase.service';
+import { OrdersService } from '@core/services/orders.service';
+import { UserFeedbackService } from '@core/services/user-feedback.service';
+import { LoggerService } from '@core/services/logger.service';
+import { TickService } from '@core/services/tick.service';
+import { Navbar } from '@shared/components/navbar/navbar';
+import { TicketPrintComponent } from '@features/tickets/components/ticket-print.component';
+import { TicketService } from '@features/tickets/services/ticket.service';
+
+import { OrderDetailHeader } from './components/order-detail-header/order-detail-header';
+import { OrderDetailSummary } from './components/order-detail-summary/order-detail-summary';
+import { OrderDetailItems } from './components/order-detail-items/order-detail-items';
+import { OrderDetailTotals } from './components/order-detail-totals/order-detail-totals';
 
 @Component({
   selector: 'app-order-detail',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, NgClass, LucideAngularModule, Navbar, TicketPrintComponent],
+  imports: [LucideAngularModule, Navbar, TicketPrintComponent, OrderDetailHeader, OrderDetailSummary, OrderDetailItems, OrderDetailTotals],
   templateUrl: './order-detail.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrderDetail implements OnInit, OnDestroy {
+export class OrderDetail implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private supabase = inject(SupabaseService).client;
   private ordersService = inject(OrdersService);
-  private toastService = inject(ToastService);
+  private feedback = inject(UserFeedbackService);
   private logger = inject(LoggerService);
   private ticketService = inject(TicketService);
+  private tickService = inject(TickService);
 
   orderId = signal<string | null>(null);
   orderIdNumber = computed(() => {
@@ -56,8 +62,7 @@ export class OrderDetail implements OnInit, OnDestroy {
     }
   }
 
-  private currentTime = signal(Date.now());
-  private timer: ReturnType<typeof setInterval> | null = null;
+  currentTime = this.tickService.currentTime;
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -72,13 +77,6 @@ export class OrderDetail implements OnInit, OnDestroy {
       this.router.navigate(['/orders']);
     }
 
-    this.timer = setInterval(() => {
-      this.currentTime.set(Date.now());
-    }, 1000);
-  }
-
-  ngOnDestroy() {
-    if (this.timer) clearInterval(this.timer);
   }
 
   getDuration(): string {
@@ -106,42 +104,24 @@ export class OrderDetail implements OnInit, OnDestroy {
     try {
       this.loading.set(true);
       
-      const { data, error } = await this.supabase
-        .from('orders')
-        .select(`
-          *,
-          clientes (nombre, telefono),
-          tipos_servicio (nombre),
-          metodos_pago (nombre),
-          turnos (nombre)
-        `)
-        .eq('id', id)
-        .maybeSingle();
+      const { order, orderError, items, itemsError } = await this.ordersService.getOrderById(id);
 
-      if (error) throw error;
+      if (orderError) throw orderError;
       
-      if (!data) {
+      if (!order) {
         this.logger.warn('No se encontró la orden', { id }, 'OrderDetail');
-        this.toastService.show('La orden no existe', 'error');
+        this.feedback.showError('La orden no existe');
         this.router.navigate(['/orders']);
         return;
       }
 
-      this.order.set(data);
+      this.order.set(order);
       
-      const { data: itemsData, error: itemsError } = await this.supabase
-        .from('order_items')
-        .select(`
-          *,
-          modificadores:order_item_modificadores(*)
-        `)
-        .eq('order_id', id);
-
       if (itemsError) throw itemsError;
-      this.items.set(itemsData || []);
+      this.items.set(items || []);
     } catch (error: any) {
       this.logger.error('Error loading order', error, 'OrderDetail');
-      this.toastService.show('Error al cargar la orden', 'error');
+      this.feedback.showError('Error al cargar la orden');
     } finally {
       this.loading.set(false);
     }

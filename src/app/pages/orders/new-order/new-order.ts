@@ -9,8 +9,8 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 
-import { OrdersService } from '../../../core/services/orders.service';
-import { Navbar } from '../../../componentes/shared/navbar/navbar';
+import { OrdersService } from '@core/services/orders.service';
+import { Navbar } from '@shared/components/navbar/navbar';
 
 @Component({
   selector: 'app-new-order',

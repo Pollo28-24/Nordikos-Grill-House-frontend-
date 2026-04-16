@@ -5,7 +5,7 @@ import {
   HostListener
 } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { ConfirmService } from '../../../core/services/confirm.service';
+import { ConfirmService } from '@core/services/confirm.service';
 
 @Component({
   selector: 'app-confirm-dialog',

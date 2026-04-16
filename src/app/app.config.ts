@@ -75,6 +75,7 @@ import {
   MessageCircle,
   Settings2,
   ShoppingBag,
+  
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -157,6 +158,7 @@ providers: [
         MessageCircle,
         Settings2,
         ShoppingBag,
+        
       }),
     ),
   ],

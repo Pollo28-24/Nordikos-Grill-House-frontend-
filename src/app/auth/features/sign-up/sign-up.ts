@@ -10,7 +10,7 @@ import {
 import { RouterLink, Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../data-access/auth.services';
-import { ToastService } from '../../../core/services/toast.service';
+import { ToastService } from '@core/services/toast.service';
 
 interface SignUpForm {
   name: FormControl<string | null>;

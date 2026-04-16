@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { publicGuard } from '../../../shared/guards/auth-guard';
+import { publicGuard } from '@shared/guards/auth-guard';
 
 export default[
   {

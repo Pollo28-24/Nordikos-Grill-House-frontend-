@@ -5,9 +5,9 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
 import { DecimalPipe } from '@angular/common';
-import { ProductsService } from '../../../core/services/products.service';
-import { ToastService } from '../../../core/services/toast.service';
-import { CreateProductDto, ProductVariantCreateDto } from '../../../core/models/product.model';
+import { ProductsService } from '@core/services/products.service';
+import { UserFeedbackService } from '@core/services/user-feedback.service';
+import { CreateProductDto, ProductVariantCreateDto } from '@core/models/product.model';
 
 type PriceMode = 'simple' | 'variant';
 
@@ -24,7 +24,7 @@ type PriceMode = 'simple' | 'variant';
 })
 export class CreateProducts {
   private productsService = inject(ProductsService);
-  private toastService = inject(ToastService);
+  private feedback = inject(UserFeedbackService);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
   private router = inject(Router);
@@ -130,7 +130,7 @@ export class CreateProducts {
     this.removeEmptyVariants();
     if (this.productForm.invalid) {
       this.productForm.markAllAsTouched();
-      this.toastService.show('Formulario inválido. Revisa los campos marcados.', 'warning');
+      this.feedback.showError('Formulario inválido. Revisa los campos marcados.');
       return;
     }
 
@@ -180,19 +180,19 @@ export class CreateProducts {
       const validationError = this.productsService.validateCreateDto(dto);
       if (validationError) {
         console.error('Validation error:', validationError);
-        this.toastService.show(validationError, 'warning');
+        this.feedback.showError(validationError);
         this.isSaving.set(false);
         return;
       }
 
       await this.productsService.createProduct(dto);
-      this.toastService.show('Producto creado correctamente', 'success');
+      this.feedback.showSuccess('Producto creado correctamente');
       this.router.navigate(['/products'], {
         queryParams: { categoria_id: this.categoriaId() ?? null },
       });
     } catch (error) {
       console.error('Error creating product:', error);
-      this.toastService.show('Error al crear el producto', 'error');
+      this.feedback.showError('Error al crear el producto');
     } finally {
       this.isSaving.set(false);
     }

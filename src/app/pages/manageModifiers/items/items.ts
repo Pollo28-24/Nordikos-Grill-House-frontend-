@@ -3,16 +3,17 @@ import { LucideAngularModule } from 'lucide-angular';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {  Navbar } from "../../../componentes/shared/navbar/navbar";
-import { ModifiersService } from '../../../core/services/modifiers/modifiers.service';
-import { ProductsService } from '../../../core/services/products.service';
-import { ToastService } from '../../../core/services/toast.service';
-import { Modifier, Product } from '../../../core/models/product.model';
+import { Navbar } from '@shared/components/navbar/navbar';
+import { ModifiersService } from '@core/services/modifiers/modifiers.service';
+import { ProductsService } from '@core/services/products.service';
+import { UserFeedbackService } from '@core/services/user-feedback.service';
+import { Modifier, Product } from '@core/models/product.model';
+import { ModifierItemCard } from './components/modifier-item-card/modifier-item-card';
 
 @Component({
   selector: 'app-manage-modifiers',
   standalone: true,
-  imports: [LucideAngularModule, ReactiveFormsModule, Navbar, RouterLink, ],
+  imports: [LucideAngularModule, ReactiveFormsModule, Navbar, RouterLink, ModifierItemCard],
   templateUrl: './items.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -20,7 +21,7 @@ export class ManageModifiers implements OnInit {
   private modifiersService = inject(ModifiersService);
   private productsService = inject(ProductsService);
   private fb = inject(FormBuilder);
-  private toast = inject(ToastService);
+  private feedback = inject(UserFeedbackService);
   private route = inject(ActivatedRoute);
 
   modifiers = this.modifiersService.modifiers;
@@ -102,22 +103,29 @@ export class ManageModifiers implements OnInit {
 
     if (id) {
       const { error } = await this.modifiersService.updateModifier(id, val);
-      if (error) this.toast.show('Error al actualizar modificador', 'error');
-      else this.toast.show('Modificador actualizado', 'success');
+      if (error) this.feedback.showError('Error al actualizar modificador');
+      else this.feedback.showSuccess('Modificador actualizado');
     } else {
       const { error } = await this.modifiersService.createModifier(val);
-      if (error) this.toast.show('Error al crear modificador', 'error');
-      else this.toast.show('Modificador creado', 'success');
+      if (error) this.feedback.showError('Error al crear modificador');
+      else this.feedback.showSuccess('Modificador creado');
     }
 
     this.showForm.set(false);
   }
 
-  async delete(id: string | number) {
-    if (!confirm('¿Seguro que quieres eliminar este modificador?')) return;
-    const { error } = await this.modifiersService.deleteModifier(id);
-    if (error) this.toast.show('Error al eliminar modificador', 'error');
-    else this.toast.show('Modificador eliminado', 'success');
+  delete(mod: Modifier) {
+    this.feedback.confirmAndExecute({
+      title: 'Eliminar modificador',
+      message: `¿Seguro que quieres eliminar "${mod.nombre}"?`,
+      confirmText: 'Sí, eliminar',
+      action: async () => {
+        const { error } = await this.modifiersService.deleteModifier(mod.id);
+        if (error) throw new Error();
+      },
+      successMsg: 'Modificador eliminado',
+      errorMsg: 'Error al eliminar modificador'
+    });
   }
 
   // ASSIGNMENT LOGIC

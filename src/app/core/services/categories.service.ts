@@ -4,7 +4,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { SupabaseService } from '../../shared/data-access/supabase.service';
+import { SupabaseService } from '@shared/data-access/supabase.service';
 import { ToastService } from './toast.service';
 import { ProductsService } from './products.service';
 import { LoggerService } from './logger.service';

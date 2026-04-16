@@ -1,0 +1,28 @@
+<div class="group relative rounded-2xl border border-white/5 bg-[#181818] p-5 hover:border-emerald-500/30 transition shadow-xl">
+  <div class="flex items-start justify-between mb-4">
+    <div class="p-3 rounded-xl bg-emerald-500/10 text-emerald-500">
+      <lucide-icon name="plus-circle" class="w-6 h-6" />
+    </div>
+    <div class="flex gap-2">
+      <button (click)="assign.emit()" class="p-2 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition" title="Asignar a Productos">
+        <lucide-icon name="link" class="w-4 h-4" />
+      </button>
+      <button (click)="edit.emit()" class="p-2 rounded-lg bg-zinc-800 text-white hover:bg-zinc-700 transition" title="Editar">
+        <lucide-icon name="edit-3" class="w-4 h-4" />
+      </button>
+      <button (click)="delete.emit()" class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition" title="Eliminar">
+        <lucide-icon name="trash-2" class="w-4 h-4" />
+      </button>
+    </div>
+  </div>
+  
+  <h3 class="text-lg font-bold text-white mb-1">{{ modifier().nombre }}</h3>
+  <p class="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">
+    {{ modifier().modificador_categorias?.nombre || 'Sin Categoría' }}
+  </p>
+  
+  <div class="flex items-center justify-between">
+    <span class="text-emerald-500 font-black text-lg">+${{ modifier().precio }}</span>
+    <span class="text-[10px] bg-white/5 px-2 py-1 rounded text-zinc-400">Max: {{ modifier().cantidad_maxima }}</span>
+  </div>
+</div>

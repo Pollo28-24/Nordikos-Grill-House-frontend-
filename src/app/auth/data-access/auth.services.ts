@@ -1,7 +1,7 @@
 import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { SupabaseService } from '../../shared/data-access/supabase.service';
-import { LoggerService } from '../../core/services/logger.service';
+import { SupabaseService } from '@shared/data-access/supabase.service';
+import { LoggerService } from '@core/services/logger.service';
 import { SignInWithPasswordCredentials, User } from '@supabase/supabase-js';
 
 export interface EmailSignUp {

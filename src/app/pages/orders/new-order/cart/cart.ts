@@ -225,12 +225,12 @@ export class NewOrderCart {
     };
 
     const res = await this.ordersService.createOrder(dto);
-    if (res.status === 'success') {
-      this.toastService.show(`Orden #${res.order_id} creada`, 'success');
-      this.ordersService.clearCart();
-      this.ordersService.editingOrderId.set(null);
-      this.propina.set(0);
-      this.router.navigate(['/orders', res.order_id]);
+    if (res.status === 'success' || res.status === 'conflict') {
+      this.toastService.show(
+        res.status === 'conflict' ? `Orden #${res.order_id} ya existe` : `Orden #${res.order_id} creada`,
+        'success'
+      );
+      this.finalizeSubmit(`/orders/${res.order_id}`);
     } else {
       this.toastService.show('Error al crear la orden', 'error');
     }
@@ -238,6 +238,7 @@ export class NewOrderCart {
 
   async updateExistingOrder() {
     const orderId = this.ordersService.editingOrderId();
+    this.ordersService.creating.set(true);
     
     try {
       let addedTotal = 0;
@@ -302,14 +303,20 @@ export class NewOrderCart {
     } catch (e) {
       this.logger.error('Error updating order', e, 'NewOrderCart');
       this.toastService.show('Error al actualizar la orden', 'error');
+    } finally {
+      this.ordersService.creating.set(false);
     }
   }
 
-  finalizeSubmit() {
+  finalizeSubmit(target?: string) {
     this.ordersService.clearCart();
     this.ordersService.editingOrderId.set(null);
     this.propina.set(0);
-    this.router.navigate(['/orders/by-service']);
+    if (target) {
+      this.router.navigate([target]);
+    } else {
+      this.router.navigate(['/orders/by-service']);
+    }
   }
 
 }

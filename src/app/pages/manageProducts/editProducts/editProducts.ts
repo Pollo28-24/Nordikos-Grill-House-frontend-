@@ -4,11 +4,10 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { LucideAngularModule } from "lucide-angular";
-import { Product, ProductVariant, UpdateProductDto } from '../../../core/models/product.model';
-import { ProductsService } from '../../../core/services/products.service';
-import { ToastService } from '../../../core/services/toast.service';
-import { ConfirmService } from '../../../core/services/confirm.service';
-import { LoggerService } from '../../../core/services/logger.service';
+import { Product, ProductVariant, UpdateProductDto } from '@core/models/product.model';
+import { ProductsService } from '@core/services/products.service';
+import { UserFeedbackService } from '@core/services/user-feedback.service';
+import { LoggerService } from '@core/services/logger.service';
 import { DecimalPipe } from '@angular/common';
 
 type PriceMode = 'simple' | 'variant';
@@ -25,8 +24,7 @@ type PriceMode = 'simple' | 'variant';
 })
 export class EditProducts {
   private productsService = inject(ProductsService);
-  private toastService = inject(ToastService);
-  private confirmService = inject(ConfirmService);
+  private feedback = inject(UserFeedbackService);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
   private logger = inject(LoggerService);
@@ -117,11 +115,11 @@ export class EditProducts {
           this.priceMode.set('simple');
         }
       } else {
-        this.toastService.show('Producto no encontrado', 'error');
+        this.feedback.showError('Producto no encontrado');
       }
     } catch (error) {
       this.logger.error('Error loading product', error, 'EditProducts');
-      this.toastService.show('Error al cargar el producto', 'error');
+      this.feedback.showError('Error al cargar el producto');
     }
   }
 
@@ -137,12 +135,11 @@ export class EditProducts {
   }
 
   removeVariant(index: number) {
-    this.confirmService.open({
+    this.feedback.confirmAndExecute({
       title: 'Eliminar variante',
       message: '¿Estás seguro de que deseas eliminar esta variante?',
       confirmText: 'Eliminar',
-      cancelText: 'Cancelar',
-      onConfirm: () => {
+      action: () => {
         const group = this.variants.at(index);
         const id = group?.get('id')?.value;
 
@@ -214,10 +211,10 @@ export class EditProducts {
     if (imageUrl) {
       try {
         await this.productsService.deleteImage(imageUrl);
-        this.toastService.show('Imagen eliminada correctamente', 'success');
+        this.feedback.showSuccess('Imagen eliminada correctamente');
       } catch (error) {
         this.logger.error('Error deleting image from storage', error, 'EditProducts');
-        this.toastService.show('Error al eliminar la imagen', 'error');
+        this.feedback.showError('Error al eliminar la imagen');
       }
     }
     this.selectedFile.set(null);
@@ -255,7 +252,7 @@ export class EditProducts {
     if (this.productForm.invalid) {
       this.logger.warn('Form is invalid. Cannot save changes.', { form: this.productForm.value }, 'EditProducts');
       this.productForm.markAllAsTouched();
-      this.toastService.show('Por favor, corrige los errores en el formulario', 'error');
+      this.feedback.showError('Por favor, corrige los errores en el formulario');
       this.isSaving.set(false); 
       return;
     }
@@ -263,7 +260,7 @@ export class EditProducts {
     const productId = this.product()?.id;
     if (!productId) {
       this.logger.error('Product ID is missing', null, 'EditProducts');
-      this.toastService.show('Error: ID del producto no encontrado', 'error');
+      this.feedback.showError('Error: ID del producto no encontrado');
       this.isSaving.set(false); 
       return;
     }
@@ -299,10 +296,10 @@ export class EditProducts {
     try {
       const updatedProduct = await this.productsService.updateProduct(productId, updatedProductData);
       this.product.set(updatedProduct);
-      this.toastService.show('Producto actualizado exitosamente', 'success');
+      this.feedback.showSuccess('Producto actualizado exitosamente');
     } catch (err: any) {
       this.logger.error('Error updating product', err, 'EditProducts');
-      this.toastService.show('Error al actualizar el producto', 'error');
+      this.feedback.showError('Error al actualizar el producto');
     } finally {
       this.isSaving.set(false); 
     }

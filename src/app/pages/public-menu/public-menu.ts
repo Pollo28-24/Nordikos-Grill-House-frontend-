@@ -2,11 +2,11 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { LucideAngularModule } from 'lucide-angular';
-import { CategoriesService } from '../../core/services/categories.service';
-import { ProductsService } from '../../core/services/products.service';
-import { PublicCartService } from '../../core/services/public-cart.service';
+import { CategoriesService } from '@core/services/categories.service';
+import { ProductsService } from '@core/services/products.service';
+import { PublicCartService } from '@core/services/public-cart.service';
 import { PublicCart } from './components/public-cart/public-cart';
-import { Product, ProductVariant } from '../../core/models/product.model';
+import { Product, ProductVariant } from '@core/models/product.model';
 
 @Component({
   selector: 'app-public-menu',
@@ -99,6 +99,12 @@ export class PublicMenu implements OnInit {
 
   selectCategory(id: string | null) {
     this.selectedCategoryId.set(id);
+  }
+
+  getProductQuantity(productId: string): number {
+    return this.cartService.items()
+      .filter(item => item.product_id === productId)
+      .reduce((acc, item) => acc + item.cantidad, 0);
   }
 
   onSearch(event: Event) {

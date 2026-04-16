@@ -29,29 +29,30 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  width: 100%;
 }
 
 .ticket-actions {
   display: flex;
-  gap: 12px;
-  background: rgba(0, 0, 0, 0.8);
-  padding: 8px 16px;
+  gap: 20px;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 12px 24px;
   border-radius: 99px;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.5);
 }
 
 .action-btn {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   display: flex;
-  items-center: center;
+  align-items: center;
   justify-content: center;
   border: none;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   color: white;
 }
 
@@ -60,8 +61,9 @@
 }
 
 .close-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
+  background: #ef4444;
+  color: white;
+  transform: scale(1.1);
 }
 
 .print-btn {
@@ -71,19 +73,20 @@
 
 .print-btn:hover {
   background: #fbbf24;
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 
 .ticket {
   width: 58mm;
-  padding: 1mm;
+  padding: 4mm;
   background: white;
   color: black;
   font-family: 'Courier New', Courier, monospace;
-  font-size: 12px;
-  line-height: 1.1;
-  margin: 0 auto;
-  box-shadow: 0 0 20px rgba(0,0,0,0.2);
+  font-size: 13px;
+  line-height: 1.2;
+  margin: 0 auto 40px auto;
+  box-shadow: 0 0 40px rgba(0,0,0,0.4);
+  border-radius: 2px;
 }
 
 /* Ocultar sombras y overlay al imprimir */

@@ -1,12 +1,11 @@
 import { Injectable, inject, signal, computed, PLATFORM_ID, DestroyRef } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { fromEvent, Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { SupabaseService } from '../../shared/data-access/supabase.service';
-import { LoggerService } from './logger.service';
-import { OrderDatabase } from './order-db.service';
-import { OrderCreateDto, OrderCreateResponse, OrderCreateItem } from '../../core/models/order.model';
+import { fromEvent } from 'rxjs';
+import { SupabaseService } from '@shared/data-access/supabase.service';
+import { LoggerService } from '@core/services/logger.service';
+import { OrderDatabase } from '@core/services/order-db.service';
+import { OrderCreateDto, OrderCreateResponse, OrderCreateItem } from '@core/models/order.model';
 
 export interface OrderItemModifier {
   id: number;
@@ -50,49 +49,43 @@ export class OrdersService {
   private platformId = inject(PLATFORM_ID);
   private logger = inject(LoggerService);
   private destroyRef = inject(DestroyRef);
-  private destroy$ = new Subject<void>();
 
-  creating = signal(false); 
-  syncing = signal(false); 
-  error = signal<string | null>(null); 
-  lastOrder = signal<{ order_id: number; total: number } | null>(null); 
-  editingOrderId = signal<number | string | null>(null); 
+  creating = signal(false);
+  syncing = signal(false);
+  error = signal<string | null>(null);
+  lastOrder = signal<{ order_id: number; total: number } | null>(null);
+  editingOrderId = signal<number | string | null>(null);
 
-  orders = signal<OrderListItem[]>([]); 
-  loadingOrders = signal(false); 
+  orders = signal<OrderListItem[]>([]);
+  loadingOrders = signal(false);
 
-  cart = signal<OrderCreateItem[]>([]); 
-  cartCount = computed(() => 
-    this.cart().reduce((acc, i) => acc + i.cantidad, 0) 
-  ); 
+  cart = signal<OrderCreateItem[]>([]);
+  cartCount = computed(() =>
+    this.cart().reduce((acc, i) => acc + i.cantidad, 0)
+  );
 
-  isOnline = signal(true); 
+  isOnline = signal(true);
   private channel: ReturnType<typeof this.supabase.channel> | null = null;
 
-  constructor() { 
-    if (isPlatformBrowser(this.platformId)) { 
+  constructor() {
+    if (isPlatformBrowser(this.platformId)) {
       this.isOnline.set(navigator.onLine);
 
       fromEvent(window, 'online')
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(() => { 
-          this.isOnline.set(true); 
-          this.syncQueue(); 
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          this.isOnline.set(true);
+          this.syncQueue();
         });
 
       fromEvent(window, 'offline')
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(() => { 
-          this.isOnline.set(false); 
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          this.isOnline.set(false);
         });
 
-      this.destroyRef.onDestroy(() => {
-        this.destroy$.next();
-        this.destroy$.complete();
-      });
-
-      setTimeout(() => this.syncQueue(), 3000); 
-    } 
+      setTimeout(() => this.syncQueue(), 3000);
+    }
   }
 
   async loadOrders(dateFilter?: { start: string; end: string }): Promise<void> {
@@ -181,60 +174,65 @@ export class OrdersService {
     this.creating.set(true); 
     this.error.set(null); 
   
-    await this.db.save({ 
-      id: dto.client_request_id, 
-      status: 'pending', 
-      payload: dto, 
-      createdAt: Date.now() 
-    }); 
-  
-    if (this.isOnline()) { 
-      try { 
-        const res = await this.sendToServer(dto); 
-  
-        if (res?.status === 'success' || res?.status === 'conflict') { 
-          await this.db.markSynced(dto.client_request_id); 
-          this.lastOrder.set({ order_id: res.order_id, total: res.total }); 
-          
-          this.supabase.from('tickets').insert({
-            order_id: res.order_id,
-            tipo: dto.tipo_servicio_id === 1 ? 'ticket_llevar' : 'ticket_cocina',
-            impreso: false
-          }).then(({ error: te }) => { 
-            if (te) this.logger.error('Error creating ticket', te, 'OrdersService'); 
-          });
-
+    try {
+      await this.db.save({ 
+        id: dto.client_request_id, 
+        status: 'pending', 
+        payload: dto, 
+        createdAt: Date.now() 
+      }); 
+    
+      if (this.isOnline()) { 
+        try { 
+          const res = await this.sendToServer(dto); 
+    
+          if (res?.status === 'success' || res?.status === 'conflict') { 
+            await this.db.markSynced(dto.client_request_id); 
+            this.lastOrder.set({ order_id: res.order_id, total: res.total }); 
+            
+            this.supabase.from('tickets').insert({
+              order_id: res.order_id,
+              tipo: dto.tipo_servicio_id === 1 ? 'ticket_llevar' : 'ticket_cocina',
+              impreso: false
+            }).then(({ error: te }) => { 
+              if (te) this.logger.error('Error creating ticket', te, 'OrdersService'); 
+            });
+            return res; 
+          } 
+    
           return res; 
+        } catch (e: any) { 
+          this.error.set('Se guardó offline. Se sincronizará automáticamente.'); 
         } 
-  
-        return res; 
-      } catch (e: any) { 
-        this.error.set('Se guardó offline. Se sincronizará automáticamente.'); 
       } 
-    } 
-  
-    return { status: 'success', order_id: 0, total: 0 } as OrderCreateResponse; 
+    
+      return { status: 'success', order_id: 0, total: 0 } as OrderCreateResponse;
+    } finally {
+      this.creating.set(false);
+    }
   }
   
   async syncQueue() {
     if (!this.isOnline() || this.syncing()) return; 
   
     this.syncing.set(true); 
-    const pending = await this.db.getPending(); 
-  
-    for (const order of pending) { 
-      try { 
-        const res = await this.sendToServer(order.payload); 
-  
-        if (res?.status === 'success' || res?.status === 'conflict') { 
-          await this.db.markSynced(order.id); 
+    try {
+      const pending = await this.db.getPending(); 
+    
+      for (const order of pending) { 
+        try { 
+          const res = await this.sendToServer(order.payload); 
+    
+          if (res?.status === 'success' || res?.status === 'conflict') { 
+            await this.db.markSynced(order.id); 
+          } 
+        } catch (e: any) { 
+          await this.db.markFailed(order.id, e.message); 
         } 
-      } catch (e: any) { 
-        await this.db.markFailed(order.id, e.message); 
       } 
-    } 
-  
-    this.syncing.set(false); 
+    } finally {
+      this.syncing.set(false);
+    }
   }
 
   private async sendToServer(dto: OrderCreateDto) {
@@ -318,6 +316,69 @@ export class OrdersService {
   
   clearCart() { 
     this.cart.set([]); 
+  }
+
+  async getServiceTypes() {
+    return await this.supabase
+      .from('tipos_servicio')
+      .select('id,nombre')
+      .order('id');
+  }
+
+  async updateOrderStatus(orderId: number, status: string, closeDate: string | null) {
+    return await this.supabase
+      .from('orders')
+      .update({ estado_pedido: status, fecha_cierre: closeDate })
+      .eq('id', orderId);
+  }
+
+  async updatePaymentStatus(orderId: number, status: string) {
+    return await this.supabase
+      .from('orders')
+      .update({ estado_pago: status })
+      .eq('id', orderId);
+  }
+
+  async bulkUpdateOrderStatus(ids: number[], status: string, closeDate: string | null) {
+    return await this.supabase
+      .from('orders')
+      .update({ estado_pedido: status, fecha_cierre: closeDate })
+      .in('id', ids);
+  }
+
+  async bulkUpdatePaymentStatus(ids: number[], status: string) {
+    return await this.supabase
+      .from('orders')
+      .update({ estado_pago: status })
+      .in('id', ids);
+  }
+
+  async getOrderById(id: string | number) {
+    const { data: order, error: orderError } = await this.supabase
+      .from('orders')
+      .select(`
+        *,
+        clientes (nombre, telefono),
+        tipos_servicio (nombre),
+        metodos_pago (nombre),
+        turnos (nombre)
+      `)
+      .eq('id', id)
+      .maybeSingle();
+
+    if (orderError || !order) {
+      return { order: null, orderError, items: null, itemsError: null };
+    }
+
+    const { data: items, error: itemsError } = await this.supabase
+      .from('order_items')
+      .select(`
+        *,
+        modificadores:order_item_modificadores(*)
+      `)
+      .eq('order_id', id);
+
+    return { order, orderError, items, itemsError };
   }
 
   subscribeRealtime() {

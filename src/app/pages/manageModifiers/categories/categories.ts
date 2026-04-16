@@ -3,23 +3,24 @@ import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Navbar } from '../../../componentes/shared/navbar/navbar';
-import { ModifiersService } from '../../../core/services/modifiers/modifiers.service';
-import { ToastService } from '../../../core/services/toast.service';
-import { ModifierCategory } from '../../../core/models/product.model';
+import { Navbar } from '@shared/components/navbar/navbar';
+import { ModifiersService } from '@core/services/modifiers/modifiers.service';
+import { UserFeedbackService } from '@core/services/user-feedback.service';
+import { ModifierCategory } from '@core/models/product.model';
+import { ModifierCategoryCard } from './components/category-card/category-card';
 
 
 @Component({
   selector: 'app-manage-modifier-categories',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, ReactiveFormsModule, Navbar],
+  imports: [CommonModule, LucideAngularModule, ReactiveFormsModule, Navbar, ModifierCategoryCard],
   templateUrl: './categories.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ManageModifierCategories {
   private modifiersService = inject(ModifiersService);
   private fb = inject(FormBuilder);
-  private toast = inject(ToastService);
+  private feedback = inject(UserFeedbackService);
   private router = inject(Router);
 
   categories = this.modifiersService.categories;
@@ -64,21 +65,28 @@ export class ManageModifierCategories {
 
     if (id) {
       const { error } = await this.modifiersService.updateCategory(id, val);
-      if (error) this.toast.show('Error al actualizar categoría', 'error');
-      else this.toast.show('Categoría actualizada', 'success');
+      if (error) this.feedback.showError('Error al actualizar categoría');
+      else this.feedback.showSuccess('Categoría actualizada');
     } else {
       const { error } = await this.modifiersService.createCategory(val);
-      if (error) this.toast.show('Error al crear categoría', 'error');
-      else this.toast.show('Categoría creada', 'success');
+      if (error) this.feedback.showError('Error al crear categoría');
+      else this.feedback.showSuccess('Categoría creada');
     }
 
     this.showForm.set(false);
   }
 
-  async delete(id: string | number) {
-    if (!confirm('¿Seguro que quieres eliminar esta categoría?')) return;
-    const { error } = await this.modifiersService.deleteCategory(id);
-    if (error) this.toast.show('Error al eliminar categoría', 'error');
-    else this.toast.show('Categoría eliminada', 'success');
+  delete(category: ModifierCategory) {
+    this.feedback.confirmAndExecute({
+      title: 'Eliminar categoría',
+      message: `¿Seguro que quieres eliminar "${category.nombre}"?`,
+      confirmText: 'Sí, eliminar',
+      action: async () => {
+        const { error } = await this.modifiersService.deleteCategory(category.id);
+        if (error) throw new Error();
+      },
+      successMsg: 'Categoría eliminada',
+      errorMsg: 'Error al eliminar categoría'
+    });
   }
 }

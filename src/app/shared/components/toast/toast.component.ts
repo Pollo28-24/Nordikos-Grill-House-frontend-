@@ -1,7 +1,7 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
-import { ToastService } from '../../../core/services/toast.service';
+import { ToastService } from '@core/services/toast.service';
 
 @Component({
   selector: 'app-toast',

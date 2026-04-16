@@ -1,5 +1,6 @@
-<header class="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-50">
+<header class="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-50"> 
   <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+
     <!-- Brand -->
     <a routerLink="/" class="flex items-center gap-3">
       <img src="assets/logo/logo.webp" alt="Logo" class="w-8 h-8 rounded-full" />
@@ -10,49 +11,54 @@
     </a>
 
     <!-- Desktop Navigation -->
-    <nav class="hidden md:flex items-center gap-6">
+    <nav class="hidden md:flex items-center gap-2">
+
       <a 
         routerLink="/home" 
-        routerLinkActive="text-brand"
+        routerLinkActive="bg-zinc-800 text-white"
         [routerLinkActiveOptions]="{exact: true}"
-        class="text-sm font-medium text-zinc-400 hover:text-zinc-100 transition-colors"
+        class="px-3 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all"
       >
         Inicio
       </a>
+
       <a 
         routerLink="/products" 
-        routerLinkActive="text-brand"
-        class="text-sm font-medium text-zinc-400 hover:text-zinc-100 transition-colors"
+        routerLinkActive="bg-zinc-800 text-white"
+        class="px-3 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all"
       >
         Productos
       </a>
+
       <a 
         routerLink="/categories" 
-        routerLinkActive="text-brand"
-        class="text-sm font-medium text-zinc-400 hover:text-zinc-100 transition-colors"
+        routerLinkActive="bg-zinc-800 text-white"
+        class="px-3 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all"
       >
         Categorías
       </a>
+
       <a 
         routerLink="/manageModifiers/categories" 
-        routerLinkActive="text-brand"
-        class="text-sm font-medium text-zinc-400 hover:text-zinc-100 transition-colors"
+        routerLinkActive="bg-zinc-800 text-white"
+        class="px-3 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all"
       >
         Modificadores
       </a>
-     
-      
+
       <a 
         routerLink="/orders" 
-        routerLinkActive="text-brand"
-        class="text-sm font-medium text-zinc-400 hover:text-zinc-100 transition-colors"
+        routerLinkActive="bg-zinc-800 text-white"
+        class="px-3 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all"
       >
         Nueva orden
       </a>
+
     </nav>
 
     <!-- Right Actions -->
     <div class="flex items-center gap-4">
+
       @if (isAuthenticated()) {
         <button
           (click)="logOut()"
@@ -70,56 +76,61 @@
       >
         <lucide-icon [name]="menuOpen() ? 'x' : 'menu'" class="w-6 h-6"></lucide-icon>
       </button>
+
     </div>
   </div>
 
-  <!-- Mobile Menu Overlay -->
+  <!-- Mobile Menu -->
   @if (menuOpen()) {
-    <div class="absolute top-16 left-0 w-full bg-zinc-900 border-b border-zinc-800 md:hidden animate-fade-in shadow-xl">
-      <div class="flex flex-col p-4 space-y-4">
+    <div class="absolute top-16 left-0 w-full bg-zinc-900 border-b border-zinc-800 md:hidden shadow-xl">
+      <div class="flex flex-col p-4 space-y-2">
+
         <a 
           routerLink="/home" 
-          routerLinkActive="text-brand bg-zinc-800/50"
+          routerLinkActive="bg-zinc-800 text-white"
           [routerLinkActiveOptions]="{exact: true}"
           (click)="toggleMenu()"
-          class="px-4 py-3 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-3"
+          class="px-4 py-3 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-3"
         >
           <lucide-icon name="home" class="w-5 h-5"></lucide-icon>
           Inicio
         </a>
+
         <a 
           routerLink="/products" 
-          routerLinkActive="text-brand bg-zinc-800/50"
+          routerLinkActive="bg-zinc-800 text-white"
           (click)="toggleMenu()"
-          class="px-4 py-3 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-3"
+          class="px-4 py-3 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-3"
         >
           <lucide-icon name="shopping-cart" class="w-5 h-5"></lucide-icon>
           Productos
         </a>
+
         <a 
           routerLink="/categories" 
-          routerLinkActive="text-brand bg-zinc-800/50"
+          routerLinkActive="bg-zinc-800 text-white"
           (click)="toggleMenu()"
-          class="px-4 py-3 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-3"
+          class="px-4 py-3 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-3"
         >
           <lucide-icon name="folder-open" class="w-5 h-5"></lucide-icon>
           Categorías
         </a>
-    
+
         <a 
           routerLink="/orders" 
-          routerLinkActive="text-brand bg-zinc-800/50"
+          routerLinkActive="bg-zinc-800 text-white"
           (click)="toggleMenu()"
-          class="px-4 py-3 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-3"
+          class="px-4 py-3 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-3"
         >
           <lucide-icon name="plus-circle" class="w-5 h-5"></lucide-icon>
-          ordenes
+          Órdenes
         </a>
+
         <a 
           routerLink="/manageModifiers/categories" 
-          routerLinkActive="text-brand bg-zinc-800/50"
+          routerLinkActive="bg-zinc-800 text-white"
           (click)="toggleMenu()"
-          class="px-4 py-3 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-3"
+          class="px-4 py-3 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-3"
         >
           <lucide-icon name="plus" class="w-5 h-5"></lucide-icon>
           Modificadores
@@ -127,14 +138,16 @@
 
         @if (isAuthenticated()) {
           <div class="h-px bg-zinc-800 my-2"></div>
+
           <button
             (click)="logOut(); toggleMenu()"
-            class="w-full px-4 py-3 rounded-xl text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-all flex items-center gap-3 text-left"
+            class="w-full px-4 py-3 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-all flex items-center gap-3 text-left"
           >
             <lucide-icon name="log-out" class="w-5 h-5"></lucide-icon>
             Cerrar Sesión
           </button>
         }
+
       </div>
     </div>
   }

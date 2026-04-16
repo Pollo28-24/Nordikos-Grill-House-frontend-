@@ -28,36 +28,12 @@
       <!-- List -->
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         @for (c of categories(); track c.id) {
-          <div 
-            (click)="navigateToItems(c.id)"
-            class="group relative rounded-2xl border border-white/5 bg-[#181818] p-5 hover:border-amber-500/30 transition shadow-xl cursor-pointer"
-          >
-            <div class="flex items-start justify-between mb-4">
-              <div class="p-3 rounded-xl bg-amber-500/10 text-amber-500">
-                <lucide-icon name="layers" class="w-6 h-6" />
-              </div>
-              <div class="flex gap-2" (click)="$event.stopPropagation()">
-                <button (click)="openEdit(c)" class="p-2 rounded-lg bg-zinc-800 text-white hover:bg-zinc-700 transition" title="Editar">
-                  <lucide-icon name="edit-3" class="w-4 h-4" />
-                </button>
-                <button (click)="delete(c.id)" class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition" title="Eliminar">
-                  <lucide-icon name="trash-2" class="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            
-            <h3 class="text-lg font-bold text-white mb-1">{{ c.nombre }}</h3>
-            <p class="text-xs text-zinc-500 line-clamp-2 mb-4 h-8">{{ c.descripcion || 'Sin descripción' }}</p>
-            
-            <div class="flex items-center gap-2">
-              <span 
-                class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"
-                [ngClass]="c.visible ? 'bg-emerald-500/10 text-emerald-500' : 'bg-zinc-500/10 text-zinc-500'"
-              >
-                {{ c.visible ? 'Visible' : 'Oculto' }}
-              </span>
-            </div>
-          </div>
+          <app-modifier-category-card
+            [category]="c"
+            (navigate)="navigateToItems(c.id)"
+            (edit)="openEdit(c)"
+            (delete)="delete(c)"
+          />
         }
       </div>
 

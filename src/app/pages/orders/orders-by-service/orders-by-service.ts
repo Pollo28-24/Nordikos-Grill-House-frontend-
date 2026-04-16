@@ -2,15 +2,19 @@ import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, O
 import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { Router, RouterLink } from '@angular/router';
-import { OrdersService } from '../../../core/services/orders.service';
-import { SupabaseService } from '../../../shared/data-access/supabase.service';
-import { Navbar } from '../../../componentes/shared/navbar/navbar';
-import { LoggerService } from '../../../core/services/logger.service';
+import { OrdersService } from '@core/services/orders.service';
+import { Navbar } from '@shared/components/navbar/navbar';
+import { LoggerService } from '@core/services/logger.service';
+import { OrderStatus, PaymentStatus } from '@core/models/order.model';
+import { UserFeedbackService } from '@core/services/user-feedback.service';
+import { TicketPrintComponent } from '@features/tickets/components/ticket-print.component';
+import { TicketService } from '@features/tickets/services/ticket.service';
+import { TickService } from '@core/services/tick.service';
 
-import { OrderStatus, PaymentStatus } from '../../../core/models/order.model';
-import { ToastService } from '../../../core/services/toast.service';
-import { TicketPrintComponent } from '../../../features/tickets/components/ticket-print.component';
-import { TicketService } from '../../../features/tickets/services/ticket.service';
+import { OrderKpiBar } from './components/order-kpi-bar/order-kpi-bar';
+import { ServiceTabs } from './components/service-tabs/service-tabs';
+import { OrderFilterBar } from './components/order-filter-bar/order-filter-bar';
+import { OrderCard } from './components/order-card/order-card';
 
 interface ServiceType {
   id: number;
@@ -20,17 +24,17 @@ interface ServiceType {
 @Component({
   selector: 'app-orders-by-service',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, NgClass, LucideAngularModule, Navbar, TicketPrintComponent],
+  imports: [LucideAngularModule, Navbar, TicketPrintComponent, OrderKpiBar, ServiceTabs, OrderFilterBar, OrderCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './orders-by-service.html'
 })
 export class OrdersByService implements OnInit, OnDestroy {
   private ordersService = inject(OrdersService);
-  private supabase = inject(SupabaseService).client;
-  private toastService = inject(ToastService);
+  private feedback = inject(UserFeedbackService);
   private router = inject(Router);
   private logger = inject(LoggerService);
   private ticketService = inject(TicketService);
+  private tickService = inject(TickService);
 
   orders = this.ordersService.orders;
   loading = this.ordersService.loadingOrders;
@@ -46,8 +50,7 @@ export class OrdersByService implements OnInit, OnDestroy {
   quickPrintType = signal<'account' | 'kitchen'>('account');
   showQuickPrintModal = signal(false);
 
-  private currentTime = signal(Date.now());
-  private timer: ReturnType<typeof setInterval> | null = null;
+  currentTime = this.tickService.currentTime;
 
   activeOrderIdMobile = signal<number | string | null>(null);
 
@@ -81,22 +84,14 @@ export class OrdersByService implements OnInit, OnDestroy {
     this.loadTypes();
     this.applyDateFilter();
     this.ordersService.subscribeRealtime();
-
-    this.timer = setInterval(() => {
-      this.currentTime.set(Date.now());
-    }, 1000);
   }
 
   ngOnDestroy(): void {
     this.ordersService.unsubscribeRealtime();
-    if (this.timer) clearInterval(this.timer);
   }
 
   async loadTypes() {
-    const { data, error } = await this.supabase
-      .from('tipos_servicio')
-      .select('id,nombre')
-      .order('id');
+    const { data, error } = await this.ordersService.getServiceTypes();
     if (!error) {
       this.serviceTypes.set((data ?? []) as ServiceType[]);
       if (this.serviceTypes().length) {
@@ -165,48 +160,40 @@ export class OrdersByService implements OnInit, OnDestroy {
 
   async updateOrderStatus(order: any, newStatus: OrderStatus) {
     const oldStatus = order.estado_pedido;
-    
+    const oldCloseDate = order.fecha_cierre;
+    const newCloseDate = newStatus === 'entregado' ? new Date().toISOString() : undefined;
+
     order.estado_pedido = newStatus;
-    if (newStatus === 'entregado') order.fecha_cierre = new Date().toISOString();
+    order.fecha_cierre = newCloseDate;
+    
     this.orders.set([...this.orders()]);
 
     try {
-      const { error } = await this.supabase
-        .from('orders')
-        .update({ 
-          estado_pedido: newStatus,
-          fecha_cierre: newStatus === 'entregado' ? new Date().toISOString() : null
-        })
-        .eq('id', order.id);
-
+      const { error } = await this.ordersService.updateOrderStatus(order.id, newStatus, newCloseDate ?? null);
       if (error) throw error;
-      this.toastService.show(`Pedido ${newStatus}`, 'success');
+      this.feedback.showSuccess(`Pedido ${newStatus}`);
     } catch (err: any) {
       order.estado_pedido = oldStatus;
+      order.fecha_cierre = oldCloseDate;
       this.orders.set([...this.orders()]);
-      this.toastService.show('Error al actualizar pedido', 'error');
+      this.feedback.showError('Error al actualizar pedido');
       this.logger.error('Error updating status', err, 'OrdersByService');
     }
   }
 
   async updatePaymentStatus(order: any, newStatus: PaymentStatus) {
     const oldStatus = order.estado_pago;
-    
     order.estado_pago = newStatus;
     this.orders.set([...this.orders()]);
 
     try {
-      const { error } = await this.supabase
-        .from('orders')
-        .update({ estado_pago: newStatus })
-        .eq('id', order.id);
-
+      const { error } = await this.ordersService.updatePaymentStatus(order.id, newStatus);
       if (error) throw error;
-      this.toastService.show(`Pago ${newStatus}`, 'success');
+      this.feedback.showSuccess(`Pago ${newStatus}`);
     } catch (err: any) {
       order.estado_pago = oldStatus;
       this.orders.set([...this.orders()]);
-      this.toastService.show('Error al actualizar pago', 'error');
+      this.feedback.showError('Error al actualizar pago');
       this.logger.error('Error updating payment', err, 'OrdersByService');
     }
   }
@@ -242,51 +229,32 @@ export class OrdersByService implements OnInit, OnDestroy {
     if (filteredOrders.length === 0) return;
 
     const ids = filteredOrders.map(o => o.id);
-    const updateData: any = type === 'pedido' ? { 
-      estado_pedido: status,
-      fecha_cierre: status === 'entregado' ? new Date().toISOString() : null
-    } : { 
-      estado_pago: status 
-    };
+    const oldVal = [...this.orders()];
+
+    const newCloseDate = status === 'entregado' ? new Date().toISOString() : undefined;
 
     this.orders.update(all => all.map(o => {
       if (ids.includes(o.id)) {
-        return { ...o, ...updateData };
+        if (type === 'pedido') {
+          return { ...o, estado_pedido: status as OrderStatus, fecha_cierre: newCloseDate };
+        } else {
+          return { ...o, estado_pago: status as PaymentStatus };
+        }
       }
       return o;
     }));
 
     try {
-      const { error } = await this.supabase
-        .from('orders')
-        .update(updateData)
-        .in('id', ids);
-
+      const error = type === 'pedido'
+        ? (await this.ordersService.bulkUpdateOrderStatus(ids, status as OrderStatus, newCloseDate ?? null)).error
+        : (await this.ordersService.bulkUpdatePaymentStatus(ids, status as PaymentStatus)).error;
+        
       if (error) throw error;
-      this.toastService.show('Actualización masiva completada', 'success');
+      this.feedback.showSuccess('Actualización masiva completada');
     } catch (err: any) {
-      this.applyDateFilter();
-      this.toastService.show('Error en actualización masiva', 'error');
+      this.orders.set(oldVal);
+      this.feedback.showError('Error en actualización masiva');
     }
   }
 
-  getDuration(order: any): string {
-    if (!order.fecha_creacion) return '...';
-    
-    const current = this.currentTime();
-    const start = new Date(order.fecha_creacion).getTime();
-    const end = order.fecha_cierre ? new Date(order.fecha_cierre).getTime() : current;
-    
-    const diffMs = end - start;
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 60) {
-      const diffSecs = Math.floor((diffMs % 60000) / 1000);
-      return `${diffMins}m ${diffSecs}s`;
-    } else {
-      const diffHours = Math.floor(diffMins / 60);
-      const remainingMins = diffMins % 60;
-      return `${diffHours}h ${remainingMins}m`;
-    }
-  }
 }

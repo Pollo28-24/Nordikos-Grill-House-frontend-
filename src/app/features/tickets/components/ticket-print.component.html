@@ -3,10 +3,10 @@
   <div class="ticket-overlay no-print">
     <div class="ticket-actions">
       <button (click)="close.emit()" class="action-btn close-btn" title="Cerrar">
-        <lucide-icon name="x" class="w-5 h-5"></lucide-icon>
+        <lucide-icon name="x" class="w-6 h-6"></lucide-icon>
       </button>
       <button (click)="print()" class="action-btn print-btn" title="Imprimir / PDF">
-        <lucide-icon name="printer" class="w-5 h-5"></lucide-icon>
+        <lucide-icon name="printer" class="w-6 h-6"></lucide-icon>
       </button>
     </div>
   </div>
@@ -75,7 +75,7 @@
                 <div class="modifier-line">
                   <span>+ {{ mod.nombre_modificador }}</span>
                   @if (ticketType() === 'account' && mod.precio_unitario > 0) {
-                    <span>${{ mod.precio_unitario | number:'1.2-2' }}</span>
+                    <span>${{ (mod.precio_unitario * mod.cantidad) | number:'1.2-2' }}</span>
                   }
                 </div>
               }
@@ -94,8 +94,8 @@
 
     <div class="divider"></div>
 
-    <!-- Nota General -->
-    @if (data.order.nota_general) {
+    <!-- Nota General (Solo cocina o si no es cliente) -->
+    @if (data.order.nota_general && ticketType() === 'kitchen') {
       <div class="general-note">
         <p class="note-title">--- NOTA GENERAL ---</p>
         <p class="note-content">{{ data.order.nota_general }}</p>

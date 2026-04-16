@@ -12,24 +12,23 @@ import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 
-import { ProductsService } from '../../../core/services/products.service';
-import { CategoriesService } from '../../../core/services/categories.service';
-import { ConfirmService } from '../../../core/services/confirm.service';
-import { ToastService } from '../../../core/services/toast.service';
-import { Navbar } from '../../../componentes/shared/navbar/navbar';
+import { ProductsService } from '@core/services/products.service';
+import { CategoriesService } from '@core/services/categories.service';
+import { UserFeedbackService } from '@core/services/user-feedback.service';
+import { Navbar } from '@shared/components/navbar/navbar';
+import { ProductGroupCard } from './components/product-group-card/product-group-card';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [Navbar, CurrencyPipe, LucideAngularModule],
+  imports: [Navbar, LucideAngularModule, ProductGroupCard],
   templateUrl: './products.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Products {
   private productsService = inject(ProductsService);
   private categoriesService = inject(CategoriesService);
-  private confirmService = inject(ConfirmService);
-  private toastService = inject(ToastService);
+  private userFeedback = inject(UserFeedbackService);
   private router = inject(Router);
 
   @ViewChild('categoryScroller', { static: true })
@@ -41,8 +40,8 @@ export class Products {
 
   selectedCategoryId = signal<string | null>(null);
   
-  // Visibility cache (non-reactive) to persist state across re-computations
-  private visibilityCache: Record<string, boolean> = {};
+  // Visibility cache (reactive) to persist state across re-computations
+  private visibilityCache = signal<Record<string, boolean>>({});
 
   // Category editing state
   editingCategoryId = signal<string | null>(null);
@@ -62,6 +61,8 @@ export class Products {
     const selectedId = this.selectedCategoryId();
     const categories = this.categories();
     const products = this.products();
+    const overrides = this.categoryNameOverrides();
+    const visibility = this.visibilityCache();
 
     if (!categories.length) return [];
 
@@ -71,9 +72,10 @@ export class Products {
         {
           categoryId: selectedId,
           categoryName: category?.nombre ?? 'Categoría',
+          displayName: overrides[selectedId] || (category?.nombre ?? 'Categoría'),
           categoryDescription: category?.descripcion,
           products: products.filter((p) => p.categoria_id === selectedId),
-          visible: signal(true), // Always visible when selected
+          isVisible: true, // Always visible when selected
         },
       ];
     }
@@ -81,9 +83,10 @@ export class Products {
     return categories.map((category) => ({
       categoryId: category.id,
       categoryName: category.nombre,
+      displayName: overrides[category.id] || category.nombre,
       categoryDescription: category.descripcion,
       products: products.filter((p) => p.categoria_id === category.id),
-      visible: signal(this.visibilityCache[category.id] ?? true),
+      isVisible: visibility[category.id] ?? true,
     }));
   });
 
@@ -122,27 +125,21 @@ export class Products {
     });
   }
 
-  toggleVisibility(group: { categoryId: string, visible: WritableSignal<boolean> }) {
-    const newValue = !group.visible();
-    group.visible.set(newValue);
-    this.visibilityCache[group.categoryId] = newValue;
+  toggleVisibility(categoryId: string) {
+    this.visibilityCache.update(cache => ({
+      ...cache,
+      [categoryId]: !(cache[categoryId] ?? true)
+    }));
   }
 
   deleteProduct(product: any) {
-    this.confirmService.open({
+    this.userFeedback.confirmAndExecute({
       title: 'Eliminar producto',
       message: `¿Eliminar "${product.nombre}"?`,
       confirmText: 'Sí, eliminar',
-      cancelText: 'Cancelar',
-      onConfirm: async () => {
-        const success = await this.productsService.deleteProduct(product.id);
-
-        if (success) {
-          this.toastService.show('Producto eliminado', 'success');
-        } else {
-          this.toastService.show('Error al eliminar', 'error');
-        }
-      },
+      action: () => this.productsService.delete(product.id),
+      successMsg: 'Producto eliminado',
+      errorMsg: 'Error al eliminar',
     });
   }
 
@@ -150,14 +147,10 @@ export class Products {
   // CATEGORY EDITING
   // --------------------------
 
-  getCategoryDisplayName(categoryId: string, originalName: string): string {
-    return this.categoryNameOverrides()[categoryId] || originalName;
-  }
-
   startEditingCategory(categoryId: string, currentName: string) {
     this.editingCategoryId.set(categoryId);
     // Use override if exists, otherwise original
-    this.editingCategoryName.set(this.getCategoryDisplayName(categoryId, currentName));
+    this.editingCategoryName.set(this.categoryNameOverrides()[categoryId] || currentName);
   }
 
   cancelEditingCategory() {
@@ -188,14 +181,14 @@ export class Products {
     const updated = await this.categoriesService.updateCategory(categoryId, { nombre: newName });
     
     if (updated) {
-      this.toastService.show('Categoría actualizada', 'success');
+      this.userFeedback.showSuccess('Categoría actualizada');
       // Clear override since the source signal will update
       this.categoryNameOverrides.update(overrides => {
         const { [categoryId]: removed, ...rest } = overrides;
         return rest;
       });
     } else {
-      this.toastService.show('Error al actualizar categoría', 'error');
+      this.userFeedback.showError('Error al actualizar categoría');
       // Revert override
       this.categoryNameOverrides.update(overrides => {
         const { [categoryId]: removed, ...rest } = overrides;

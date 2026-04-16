@@ -1,0 +1,141 @@
+<section class="mb-6 bg-[#1E1E1E] border border-black/40 rounded-2xl overflow-hidden shadow-md">
+    <!-- HEADER -->
+  <div class="px-4 py-3 border-b border-black/30 flex items-center justify-between">
+    <div class="flex-1 mr-4">
+      <p class="text-xs uppercase tracking-wider text-[#B0B0B0]">Categoría</p>
+      
+      @if (editingCategoryId() === group().categoryId) {
+        <input
+          class="w-full bg-transparent border-b-2 border-[#FFB300] text-base font-bold uppercase text-[#F5F5F5] outline-none focus:border-[#FFC107] transition py-0.5"
+          [value]="editingCategoryName()"
+          (input)="updateCategoryNameInput.emit($any($event.target).value)"
+          (blur)="saveCategoryName.emit({ id: group().categoryId, originalName: group().categoryName })"
+          (keyup.enter)="saveCategoryName.emit({ id: group().categoryId, originalName: group().categoryName })"
+          (keyup.escape)="cancelEditingCategory.emit()"
+          autofocus
+        />
+      } @else {
+        <h3 
+          class="text-base font-bold uppercase cursor-pointer hover:text-[#FFB300] transition select-none truncate"
+          (dblclick)="startEditingCategory.emit({ id: group().categoryId, name: group().categoryName })"
+          title="Doble click para editar nombre"
+        >
+          {{ displayName() }}
+        </h3>
+      }
+
+      @if (group().categoryDescription) {
+        <p class="text-sm text-[#888] mt-1 normal-case font-normal">
+          {{ group().categoryDescription }}
+        </p>
+      }
+    </div>
+
+    <div class="flex items-center gap-3 shrink-0">
+      <!-- Count -->
+      <span class="text-xs px-2 py-1 rounded-full bg-[#121212] font-semibold">
+        {{ group().products.length }}
+      </span>
+
+      <!-- Add -->
+      <button
+        class="p-1.5 rounded-full hover:bg-[#FFB300]/10 transition"
+        (click)="addProduct.emit(group().categoryId)"
+        title="Agregar producto"
+      >
+        <lucide-icon name="plus" class="w-4 h-4 text-[#FFB300]"></lucide-icon>
+      </button>
+
+      <!-- Toggle -->
+      <button
+        class="p-1.5 rounded-full hover:bg-[#FFB300]/10 transition"
+        (click)="toggleVisibility.emit(group().categoryId)"
+        title="Ocultar/Mostrar"
+      >
+        <lucide-icon
+          [name]="group().isVisible ? 'chevron-up' : 'chevron-down'"
+          class="w-4 h-4 text-[#FFB300]"
+        ></lucide-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- PRODUCTS -->
+  @if (group().isVisible) {
+    @if (group().products.length === 0) {
+      <div class="text-center py-8 text-[#B0B0B0]">
+        No hay productos disponibles
+      </div>
+    }
+
+    @for (product of group().products; track product.id) {
+      <div class="px-4 py-3 flex items-center justify-between border-b border-black/20 last:border-none hover:bg-[#1A1A1A] transition">
+        <!-- Info -->
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-[#121212] overflow-hidden flex items-center justify-center shrink-0">
+            @if (product.images?.length) {
+              <img
+                [src]="product.images![0].url"
+                class="w-full h-full object-cover"
+                [alt]="product.nombre"
+              />
+            } @else if (product.imagen_url) {
+              <img
+                [src]="product.imagen_url"
+                class="w-full h-full object-cover"
+                [alt]="product.nombre"
+              />
+            } @else {
+              <lucide-icon name="image" class="w-5 h-5 text-[#B0B0B0]"></lucide-icon>
+            }
+          </div>
+
+          <div class="truncate">
+            <p class="text-sm font-medium truncate text-[#F5F5F5]">
+              {{ product.nombre }}
+            </p>
+            <p class="text-xs text-[#B0B0B0]">
+              ID: {{ product.id }}
+            </p>
+
+            <div class="mt-2 flex flex-wrap gap-2">
+              @if (product.visible === false) {
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20 uppercase tracking-tight">
+                  Oculto en menú
+                </span>
+              }
+              @if (product.disponible === false) {
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-tight">
+                  Agotado
+                </span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-4">
+          <span class="text-sm font-semibold text-[#FFB300]">
+            {{ product.precio | currency }}
+          </span>
+
+          <button
+            class="p-1.5 rounded-full hover:bg-[#FFB300]/10 transition"
+            (click)="editProduct.emit(product.id)"
+            title="Editar"
+          >
+            <lucide-icon name="pencil" class="w-4 h-4 text-[#FFB300]"></lucide-icon>
+          </button>
+
+          <button
+            class="p-1.5 rounded-full hover:bg-[#FFB300]/10 transition"
+            (click)="deleteProduct.emit(product)"
+            title="Eliminar"
+          >
+            <lucide-icon name="trash-2" class="w-4 h-4 text-[#FFB300]"></lucide-icon>
+          </button>
+        </div>
+      </div>
+    }
+  }
+</section>

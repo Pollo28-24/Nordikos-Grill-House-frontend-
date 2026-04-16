@@ -4,10 +4,10 @@ import { isPlatformBrowser } from '@angular/common';
 import { map } from 'rxjs/operators';
 import { from, Observable, throwError, of } from 'rxjs';
 
-import { SupabaseService } from '../../shared/data-access/supabase.service';
-import { SupabaseStorageService } from './supabase-storage.service';
-import { AuthService } from '../../auth/data-access/auth.services';
-import { Product, CreateProductDto, UpdateProductDto, ProductImage, ProductVariant } from '../models/product.model';
+import { SupabaseService } from '@shared/data-access/supabase.service';
+import { SupabaseStorageService } from '@core/services/supabase-storage.service';
+import { AuthService } from '@auth/data-access/auth.services';
+import { Product, CreateProductDto, UpdateProductDto, ProductImage, ProductVariant } from '@core/models/product.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProductsService {

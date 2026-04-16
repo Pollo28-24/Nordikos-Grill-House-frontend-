@@ -2,14 +2,15 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
-import { CategoriesService, Category } from '../../core/services/categories.service';
-import { Navbar } from '../../componentes/shared/navbar/navbar';
-import { ConfirmService } from '../../core/services/confirm.service';
+import { CategoriesService, Category } from '@core/services/categories.service';
+import { UserFeedbackService } from '@core/services/user-feedback.service';
+import { Navbar } from "@app/shared/components/navbar/navbar";
+import { CategoryCard } from './components/category-card/category-card';
 
 @Component({
   selector: 'app-manage-categories',
   standalone: true,
-  imports: [FormsModule, LucideAngularModule, Navbar],
+  imports: [FormsModule, LucideAngularModule, Navbar, CategoryCard],
   templateUrl: './manageCategories.html',
   styles: `
     :host {
@@ -21,7 +22,7 @@ import { ConfirmService } from '../../core/services/confirm.service';
 export class ManageCategories {
   private categoriesService = inject(CategoriesService);
   private router = inject(Router);
-  protected confirmService = inject(ConfirmService);
+  private feedback = inject(UserFeedbackService);
 
   // Service Signals
   categories = this.categoriesService.categories;
@@ -53,21 +54,14 @@ export class ManageCategories {
   }
 
   // Edit Name
-  async updateName(id: string, event: Event) {
-    const input = event.target as HTMLInputElement;
-    const newName = input.value.trim();
-    
-    if (!newName) return; // Prevent empty names
-    
-    await this.categoriesService.updateCategory(id, { nombre: newName });
+  async updateName(id: string, newName: string) {
+    if (!newName.trim()) return; // Prevent empty names
+    await this.categoriesService.updateCategory(id, { nombre: newName.trim() });
   }
 
   // Edit Description
-  async updateDescription(id: string, event: Event) {
-    const input = event.target as HTMLInputElement | HTMLTextAreaElement;
-    const newDescription = input.value.trim();
-    
-    await this.categoriesService.updateCategory(id, { descripcion: newDescription });
+  async updateDescription(id: string, newDescription: string) {
+    await this.categoriesService.updateCategory(id, { descripcion: newDescription.trim() });
   }
 
   // Toggle Visibility
@@ -79,13 +73,13 @@ export class ManageCategories {
 
   // Delete Category
   deleteCategory(category: Category) {
-    this.confirmService.open({
+    this.feedback.confirmAndExecute({
       title: 'Eliminar categoría',
       message: `¿Estás seguro de eliminar "${category.nombre}"? Se eliminarán todos los productos, variantes y fotos relacionados.`,
       confirmText: 'Eliminar todo',
-      onConfirm: async () => {
-        await this.categoriesService.deleteCategory(category.id);
-      }
+      action: () => this.categoriesService.deleteCategory(category.id),
+      successMsg: 'Categoría eliminada con éxito',
+      errorMsg: 'Error al eliminar categoría'
     });
   }
 

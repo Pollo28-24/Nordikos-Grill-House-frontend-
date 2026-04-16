@@ -1,7 +1,7 @@
 import { inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from '../../auth/data-access/auth.services';
+import { AuthService } from '@auth/data-access/auth.services';
 
 /**
  * Guard for private routes.

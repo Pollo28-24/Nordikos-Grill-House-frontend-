@@ -17,17 +17,7 @@
       <div class="flex items-center gap-3">
         <!-- Dashboard de Ventas (Solo filtradas) -->
         @if (filtered().length > 0) {
-          <div class="hidden md:flex items-center gap-4 px-4 py-2 rounded-2xl bg-white/5 border border-white/5 animate-in fade-in slide-in-from-right-2">
-            <div class="flex flex-col">
-              <span class="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Ventas Totales</span>
-              <span class="text-lg font-black text-emerald-500 tabular-nums">${{ totalSales() | number:'1.2-2' }}</span>
-            </div>
-            <div class="w-px h-8 bg-white/10"></div>
-            <div class="flex flex-col">
-              <span class="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Completadas</span>
-              <span class="text-lg font-black text-white tabular-nums">{{ completedOrdersCount() }}</span>
-            </div>
-          </div>
+          <app-order-kpi-bar [layout]="'desktop'" [totalSales]="totalSales()" [completedCount]="completedOrdersCount()" />
         }
 
         <button (click)="refresh()" class="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 transition">
@@ -56,121 +46,29 @@
 
     <!-- DASHBOARD MÓVIL -->
     @if (filtered().length > 0) {
-      <div class="md:hidden grid grid-cols-2 gap-3 mb-8 animate-in fade-in slide-in-from-top-2">
-        <div class="p-4 rounded-2xl bg-white/5 border border-white/5 flex flex-col gap-1">
-          <span class="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Ventas Totales</span>
-          <span class="text-xl font-black text-emerald-500 tabular-nums">${{ totalSales() | number:'1.2-2' }}</span>
-        </div>
-        <div class="p-4 rounded-2xl bg-white/5 border border-white/5 flex flex-col gap-1">
-          <span class="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Completadas</span>
-          <span class="text-xl font-black text-white tabular-nums">{{ completedOrdersCount() }}</span>
-        </div>
-      </div>
+      <app-order-kpi-bar [layout]="'mobile'" [totalSales]="totalSales()" [completedCount]="completedOrdersCount()" />
     }
 
     <!-- FILTROS DE FECHA -->
-    <div class="mb-8 space-y-4">
-      <div class="flex items-center gap-2 overflow-x-auto pb-2">
-        <button (click)="setDateFilter('today')" [class.bg-amber-500]="dateFilterType() === 'today'"
-          [class.text-black]="dateFilterType() === 'today'"
-          class="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-sm font-medium hover:bg-white/10 transition whitespace-nowrap">
-          Hoy
-        </button>
-        <button (click)="setDateFilter('week')" [class.bg-amber-500]="dateFilterType() === 'week'"
-          [class.text-black]="dateFilterType() === 'week'"
-          class="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-sm font-medium hover:bg-white/10 transition whitespace-nowrap">
-          Última semana
-        </button>
-        <button (click)="setDateFilter('month')" [class.bg-amber-500]="dateFilterType() === 'month'"
-          [class.text-black]="dateFilterType() === 'month'"
-          class="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-sm font-medium hover:bg-white/10 transition whitespace-nowrap">
-          Último mes
-        </button>
-        <button (click)="setDateFilter('custom')" [class.bg-amber-500]="dateFilterType() === 'custom'"
-          [class.text-black]="dateFilterType() === 'custom'"
-          class="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-sm font-medium hover:bg-white/10 transition whitespace-nowrap">
-          Personalizado
-        </button>
-      </div>
-
-      @if (dateFilterType() === 'custom') {
-      <div class="flex flex-wrap items-end gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-        <div class="space-y-1.5 flex-1 min-w-37.5">
-          <label class="text-xs text-zinc-500 font-medium">Desde</label>
-          <input type="date" [value]="customStartDate()" (change)="customStartDate.set($any($event.target).value)"
-            class="block w-full bg-[#121212] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-amber-500/50 scheme-dark">
-        </div>
-        <div class="space-y-1.5 flex-1 min-w-37.5">
-          <label class="text-xs text-zinc-500 font-medium">Hasta</label>
-          <input type="date" [value]="customEndDate()" (change)="customEndDate.set($any($event.target).value)"
-            class="block w-full bg-[#121212] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-amber-500/50 scheme-dark">
-        </div>
-        <button 
-            (click)="applyDateFilter()"
-            class="px-6 py-2 h-9 rounded-lg bg-amber-500 text-black font-bold text-sm hover:bg-amber-400 transition active:scale-95"
-          >
-            Filtrar
-          </button>
-        </div>
-      }
-
-      <!-- ACCIONES MASIVAS -->
-      @if (filtered().length > 0) {
-        <div class="flex items-center gap-2 pt-2 animate-in fade-in slide-in-from-left-2">
-          <span class="text-xs text-zinc-500 font-bold uppercase tracking-widest mr-2">Acciones rápidas ({{ filtered().length }}):</span>
-          <button 
-            (click)="bulkUpdateStatus('pedido', 'entregado')"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20 transition text-[10px] font-bold uppercase"
-          >
-            <lucide-icon name="check-circle" class="w-3 h-3"></lucide-icon>
-            Entregar todo
-          </button>
-          <button 
-            (click)="bulkUpdateStatus('pago', 'pagado')"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 hover:bg-amber-500/20 transition text-[10px] font-bold uppercase"
-          >
-            <lucide-icon name="dollar-sign" class="w-3 h-3"></lucide-icon>
-            Pagar todo
-          </button>
-        </div>
-      }
-    </div>
+    <app-order-filter-bar 
+      [dateFilterType]="dateFilterType()"
+      [customStartDate]="customStartDate()"
+      [customEndDate]="customEndDate()"
+      [filteredCount]="filtered().length"
+      (setDateFilter)="setDateFilter($event)"
+      (customStartChange)="customStartDate.set($event)"
+      (customEndChange)="customEndDate.set($event)"
+      (applyFilter)="applyDateFilter()"
+      (bulkUpdate)="bulkUpdateStatus($event.type, $event.status)"
+    />
 
 
     <!-- FILTROS POR SERVICIO -->
-    <div class="mb-6 flex gap-2 flex-wrap">
-
-      <button class="
-        px-4 h-9
-        rounded-full
-        text-sm
-        bg-[#1E1E1E]
-        border border-black/40
-        hover:bg-[#1A1A1A]
-        transition
-        " [class.bg-[#FFB300]]="selectedTypeId() === null" [class.text-[#121212]]="selectedTypeId() === null"
-        (click)="selectType(null)">
-        Todas
-      </button>
-
-      @for (t of serviceTypes(); track t.id) {
-
-      <button class="
-          px-4 h-9
-          rounded-full
-          text-sm
-          bg-[#1E1E1E]
-          border border-black/40
-          hover:bg-[#1A1A1A]
-          transition
-          " [class.bg-[#FFB300]]="selectedTypeId() === t.id" [class.text-[#121212]]="selectedTypeId() === t.id"
-        (click)="selectType(t.id)">
-        {{ t.nombre }}
-      </button>
-
-      }
-
-    </div>
+    <app-service-tabs 
+      [serviceTypes]="serviceTypes()" 
+      [selectedTypeId]="selectedTypeId()"
+      (selectType)="selectType($event)"
+    />
 
 
     <!-- ENCABEZADO -->
@@ -224,162 +122,16 @@
 
       @for (o of filtered(); track o.id) {
 
-      <div
-        (click)="toggleActiveOrderMobile(o.id)"
-        class="
-              group
-              rounded-2xl
-              border border-black/40
-              bg-[#1E1E1E]
-              p-4
-              transition
-              hover:border-[#FFB300]/40
-              hover:shadow-xl
-              hover:-translate-y-1
-              hover:bg-[#1A1A1A]
-              relative
-              cursor-pointer
-              animate-in fade-in zoom-in-95 duration-300
-              "
-        [class.border-amber-500\/50]="activeOrderIdMobile() === o.id"
-        [class.bg-[#1A1A1A]]="activeOrderIdMobile() === o.id"
-      >
-
-        <!-- BOTONES DE ACCIÓN RÁPIDA -->
-        <div 
-          class="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20"
-          [class.opacity-100]="activeOrderIdMobile() === o.id"
-          (click)="$event.stopPropagation()"
-        >
-          <button 
-            (click)="printQuickTicket(o.id, 'kitchen')"
-            class="w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center shadow-lg hover:bg-orange-500 active:scale-95"
-            title="Ticket Cocina"
-          >
-            <lucide-icon name="chef-hat" class="w-4 h-4"></lucide-icon>
-          </button>
-
-          <button 
-            (click)="printQuickTicket(o.id, 'account')"
-            class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg hover:bg-blue-400 active:scale-95"
-            title="Ticket Cuenta"
-          >
-            <lucide-icon name="printer" class="w-4 h-4"></lucide-icon>
-          </button>
-
-          <button 
-            (click)="navigateToOrderDetail(o)"
-            class="w-8 h-8 rounded-full bg-[#FFB300] text-black flex items-center justify-center shadow-lg hover:bg-[#FFC107] active:scale-95"
-            title="Ver detalles"
-          >
-            <lucide-icon name="eye" class="w-4 h-4"></lucide-icon>
-          </button>
-          
-          @if (o.estado_pedido === 'confirmado') {
-            <button 
-              (click)="updateOrderStatus(o, 'entregado')"
-              class="w-8 h-8 rounded-full bg-emerald-500 text-black flex items-center justify-center shadow-lg hover:bg-emerald-400 active:scale-95"
-              title="Marcar como entregado"
-            >
-              <lucide-icon name="check" class="w-4 h-4"></lucide-icon>
-            </button>
-          }
-          @if (o.estado_pago === 'pendiente') {
-            <button 
-              (click)="updatePaymentStatus(o, 'pagado')"
-              class="w-8 h-8 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-lg hover:bg-amber-400 active:scale-95"
-              title="Marcar como pagado"
-            >
-              <lucide-icon name="dollar-sign" class="w-4 h-4"></lucide-icon>
-            </button>
-          }
-        </div>
-
-        <!-- HEADER -->
-        <div class="flex items-center justify-between mb-3">
-
-          <div class="flex flex-col">
-            <span class="text-xl font-black text-white">
-              #{{ o.numero_orden || o.id }}
-            </span>
-            
-          </div>
-
-          <!-- ESTADOS -->
-                <div class="flex flex-col items-end gap-1">
-                  <span
-                    class="px-3 py-1 text-[10px] rounded-full font-bold uppercase tracking-wider"
-                    [ngClass]="{
-                      'bg-zinc-500/20 text-zinc-400': o.estado_pedido === 'pendiente',
-                      'bg-blue-500/20 text-blue-400': o.estado_pedido === 'confirmado',
-                      'bg-emerald-500/20 text-emerald-400': o.estado_pedido === 'entregado',
-                      'bg-red-500/20 text-red-400': o.estado_pedido === 'cancelado'
-                    }"
-                  >
-                    {{ o.estado_pedido }}
-                  </span>
-                  
-                  <span
-                    class="px-2 py-0.5 text-[9px] rounded-md font-medium border"
-                    [ngClass]="{
-                      'bg-zinc-500/5 text-zinc-500 border-zinc-500/20': o.estado_pago === 'pendiente',
-                      'bg-emerald-500/10 text-emerald-500 border-emerald-500/20': o.estado_pago === 'pagado',
-                      'bg-red-500/10 text-red-500 border-red-500/20': o.estado_pago === 'fallido',
-                      'bg-purple-500/10 text-purple-500 border-purple-500/20': o.estado_pago === 'reembolsado'
-                    }"
-                  >
-                    {{ o.estado_pago }}
-                  </span>
-                </div>
-
-        </div>
-
-        <!-- INFO -->
-        <div class="space-y-3 text-sm">
-
-                <div class="flex items-center justify-between">
-                  <div class="text-[#B0B0B0] flex flex-col">
-                    <span class="text-[10px] uppercase tracking-wider font-bold text-zinc-500">
-                      {{ o.fecha_creacion | date:'EEEE':'':'es' }}
-                    </span>
-                    <span class="text-xs">
-                      {{ o.fecha_creacion | date:'dd/MM/yy, hh:mm a' }}
-                    </span>
-                  </div>
-                  
-                  <span class="text-[10px] font-medium bg-white/5 px-2 py-0.5 rounded"
-                    [class.text-zinc-500]="o.fecha_cierre"
-                    [class.text-amber-500]="!o.fecha_cierre"
-                  >
-                    {{ o.fecha_cierre ? 'Duración: ' : 'En curso: ' }} {{ getDuration(o) }}
-                  </span>
-                </div>
-
-          <div class="flex items-center justify-between gap-2">
-            <div class="
-                    inline-flex items-center
-                    px-3 py-1
-                    rounded-md
-                    bg-[#FFB300]/15
-                    text-[#FFB300]
-                    border border-[#FFB300]/30
-                    text-sm
-                    font-semibold
-                    ">
-              ${{ o.total | number:'1.2-2' }}
-            </div>
-
-            @if (o.nota_general) {
-              <div class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-zinc-800 border border-white/5 text-[10px] text-zinc-400 max-w-[60%] overflow-hidden" title="{{ o.nota_general }}">
-                <lucide-icon name="info" class="w-3 h-3 shrink-0 text-amber-500/50"></lucide-icon>
-                <span class="truncate italic">{{ o.nota_general }}</span>
-              </div>
-            }
-          </div>
-
-        </div>
-
-      </div>
+        <app-order-card 
+          [order]="o"
+          [active]="activeOrderIdMobile() === o.id"
+          [currentTime]="currentTime()"
+          (toggleActive)="toggleActiveOrderMobile(o.id)"
+          (printTicket)="printQuickTicket(o.id, $event)"
+          (viewDetail)="navigateToOrderDetail(o)"
+          (updateStatus)="updateOrderStatus(o, $event)"
+          (updatePaymentStatus)="updatePaymentStatus(o, $event)"
+        />
 
       }
 
@@ -394,20 +146,15 @@
 
 <!-- Modal de Ticket Rápido (Overlay) -->
 @if (showQuickPrintModal()) {
-  <div class="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm print:bg-white print:p-0">
-    <div class="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-[#121212] border border-white/10 p-6 animate-in zoom-in-95 print:bg-white print:border-none print:p-0 print:max-w-none print:max-h-none print:overflow-visible">
-      <button 
-        (click)="showQuickPrintModal.set(false)"
-        class="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 transition no-print"
-      >
-        <lucide-icon name="x" class="w-6 h-6" />
-      </button>
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 bg-black/90 backdrop-blur-md print:bg-white print:p-0 no-print">
+    <div class="relative w-full h-full sm:h-auto sm:max-w-lg sm:max-h-[90vh] overflow-y-auto rounded-none sm:rounded-3xl bg-[#121212] border-0 sm:border sm:border-white/10 p-4 sm:p-8 animate-in zoom-in-95 print:bg-white print:border-none print:p-0 print:max-w-none print:max-h-none print:overflow-visible">
       
       @if (quickPrintOrderId(); as id) {
         <app-ticket-print 
           [orderId]="id" 
           [ticketType]="quickPrintType()" 
           (readyToPrint)="onTicketReady()"
+          (close)="showQuickPrintModal.set(false)"
         />
       }
     </div>

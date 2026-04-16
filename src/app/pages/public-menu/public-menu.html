@@ -193,6 +193,13 @@
           </div>
         }
 
+        <!-- BADGE CANTIDAD -->
+        @if (getProductQuantity(product.id); as qty) {
+          <div class="absolute top-2 left-2 bg-orange-500 text-white text-[10px] font-black h-6 w-6 flex items-center justify-center rounded-full shadow-lg border-2 border-white animate-in zoom-in-50 duration-300 z-20">
+            {{ qty }}
+          </div>
+        }
+
         <div class="absolute bottom-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded-lg text-xs font-bold shadow-sm text-orange-600">
           {{ formatPrice(product.precio) }}
         </div>

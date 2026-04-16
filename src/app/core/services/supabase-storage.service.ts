@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { SupabaseService } from '../../shared/data-access/supabase.service';
+import { SupabaseService } from '@shared/data-access/supabase.service';
 
 @Injectable({ providedIn: 'root' })
 export class SupabaseStorageService {

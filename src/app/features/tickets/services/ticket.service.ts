@@ -1,7 +1,7 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { SupabaseService } from '../../../shared/data-access/supabase.service';
-import { LoggerService } from '../../../core/services/logger.service';
+import { SupabaseService } from '@shared/data-access/supabase.service';
+import { LoggerService } from '@core/services/logger.service';
 import { TicketData } from '../models/ticket.model';
 import { Share } from '@capacitor/share';
 import { Capacitor } from '@capacitor/core';
