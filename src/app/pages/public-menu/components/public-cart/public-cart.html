@@ -20,6 +20,14 @@
       </button>
     </div>
 
+    <!-- Info Message -->
+    <div class="px-5 py-3 bg-orange-50/50 border-b border-orange-100 flex items-start gap-3">
+      <lucide-icon name="info" class="h-4 w-4 text-orange-500 mt-0.5 shrink-0"></lucide-icon>
+      <p class="text-[11px] leading-relaxed text-orange-800 font-medium">
+        Puedes usar este carrito para elegir tus productos. En un momento iremos contigo para tomar tu orden.
+      </p>
+    </div>
+
     <!-- Items -->
     <div class="flex-grow overflow-y-auto p-5 space-y-4">
       @if (cartService.items().length === 0) {

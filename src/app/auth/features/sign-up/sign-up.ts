@@ -40,7 +40,7 @@ interface SignUpForm {
       >
         <div class="text-center mb-8">
           <img
-            src="assets/logo/logo.webp"
+            src="assets/logo/logo_Nordicos.webp"
             class="w-20 h-20 mx-auto mb-3"
             alt="logo"
           />

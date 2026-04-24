@@ -75,6 +75,8 @@ import {
   MessageCircle,
   Settings2,
   ShoppingBag,
+  ChevronRight,
+  MinusCircle,
   
 } from 'lucide-angular';
 
@@ -158,7 +160,8 @@ providers: [
         MessageCircle,
         Settings2,
         ShoppingBag,
-        
+        ChevronRight,
+        MinusCircle,
       }),
     ),
   ],

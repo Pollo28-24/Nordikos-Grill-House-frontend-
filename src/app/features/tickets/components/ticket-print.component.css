@@ -1,20 +1,76 @@
 /* Estilos para ocultar todo lo que no sea el ticket al imprimir */
 @media print {
-  body * {
-    visibility: hidden;
+  /* Ocultar elementos con la clase no-print */
+  .no-print, 
+  .ticket-overlay, 
+  .ticket-actions, 
+  .loading-state,
+  app-navbar {
+    display: none !important;
   }
-  .ticket, .ticket * {
-    visibility: visible;
+
+  /* Reset de estilos de página */
+  html, body {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    overflow: visible !important;
   }
+
+  /* El contenedor del modal y sus padres deben ser visibles y sin fondos oscuros */
+  div.fixed.inset-0 {
+    position: absolute !important;
+    display: block !important;
+    background: white !important;
+    width: 58mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  div.relative {
+    position: relative !important;
+    display: block !important;
+    background: white !important;
+    width: 58mm !important;
+    max-width: 58mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
   .ticket {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 58mm;
-    margin: 0;
-    padding: 0;
-    border: none;
+    display: block !important;
+    width: 58mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 4mm 4mm 2mm 4mm !important;
+    background: white !important;
+    color: black !important;
+    border: none !important;
+    box-shadow: none !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
+
+  .ticket * {
+    color: black !important;
+  }
+
   @page {
     size: 58mm auto;
     margin: 0;
@@ -87,16 +143,6 @@
   margin: 0 auto 40px auto;
   box-shadow: 0 0 40px rgba(0,0,0,0.4);
   border-radius: 2px;
-}
-
-/* Ocultar sombras y overlay al imprimir */
-@media print {
-  .ticket-overlay, .ticket-actions, .no-print {
-    display: none !important;
-  }
-  .ticket {
-    box-shadow: none !important;
-  }
 }
 
 .header {

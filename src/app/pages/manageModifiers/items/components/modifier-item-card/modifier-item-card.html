@@ -1,7 +1,11 @@
 <div class="group relative rounded-2xl border border-white/5 bg-[#181818] p-5 hover:border-emerald-500/30 transition shadow-xl">
   <div class="flex items-start justify-between mb-4">
-    <div class="p-3 rounded-xl bg-emerald-500/10 text-emerald-500">
-      <lucide-icon name="plus-circle" class="w-6 h-6" />
+    <div class="p-3 rounded-xl transition-colors"
+      [class.bg-emerald-500\/10]="modifier().tipo !== 'minus'"
+      [class.text-emerald-500]="modifier().tipo !== 'minus'"
+      [class.bg-red-500\/10]="modifier().tipo === 'minus'"
+      [class.text-red-500]="modifier().tipo === 'minus'">
+      <lucide-icon [name]="modifier().tipo === 'minus' ? 'minus-circle' : 'plus-circle'" class="w-6 h-6" />
     </div>
     <div class="flex gap-2">
       <button (click)="assign.emit()" class="p-2 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition" title="Asignar a Productos">
@@ -22,7 +26,11 @@
   </p>
   
   <div class="flex items-center justify-between">
-    <span class="text-emerald-500 font-black text-lg">+${{ modifier().precio }}</span>
+    <span class="font-black text-lg"
+      [class.text-emerald-500]="modifier().tipo !== 'minus'"
+      [class.text-red-500]="modifier().tipo === 'minus'">
+      {{ modifier().tipo === 'minus' ? '-' : '+' }}${{ modifier().precio }}
+    </span>
     <span class="text-[10px] bg-white/5 px-2 py-1 rounded text-zinc-400">Max: {{ modifier().cantidad_maxima }}</span>
   </div>
 </div>

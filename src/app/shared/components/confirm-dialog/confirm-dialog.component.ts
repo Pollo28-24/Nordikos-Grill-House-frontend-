@@ -18,7 +18,7 @@ import { ConfirmService } from '@core/services/confirm.service';
         class="fixed inset-0 z-50
                bg-black/70 backdrop-blur-md
                flex items-center justify-center
-               animate-overlay"
+               animate-overlay no-print"
         (click)="confirmService.close()"
       >
         <div

@@ -39,7 +39,7 @@ interface LogInForm {
         <div class="text-center mb-8">
           <img
             loading="lazy"
-            src="assets/logo/logo.webp"
+            src="assets/logo/logo_Nordicos.webp"
             alt="logo"
             class="w-20 h-20 mx-auto mb-3"
           />

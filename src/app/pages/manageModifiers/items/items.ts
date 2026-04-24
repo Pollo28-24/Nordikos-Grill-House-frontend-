@@ -52,7 +52,8 @@ export class ManageModifiers implements OnInit {
     costo: [0, [Validators.min(0)]],
     cantidad_maxima: [1, [Validators.required, Validators.min(1)]],
     visible: [true],
-    sku: ['']
+    sku: [''],
+    tipo: ['plus' as 'plus' | 'minus', [Validators.required]]
   });
 
   constructor() {
@@ -76,6 +77,7 @@ export class ManageModifiers implements OnInit {
       precio: 0, 
       costo: 0, 
       cantidad_maxima: 1,
+      tipo: 'plus',
       categoria_id: this.categories()[0]?.id || null 
     });
     this.showForm.set(true);
@@ -90,7 +92,8 @@ export class ManageModifiers implements OnInit {
       costo: mod.costo || 0,
       cantidad_maxima: mod.cantidad_maxima,
       visible: mod.visible,
-      sku: mod.sku || ''
+      sku: mod.sku || '',
+      tipo: mod.tipo || 'plus'
     });
     this.showForm.set(true);
   }
@@ -102,11 +105,15 @@ export class ManageModifiers implements OnInit {
     const id = this.editingId();
 
     if (id) {
-      const { error } = await this.modifiersService.updateModifier(id, val);
+      // Eliminamos campos que no existen en la base de datos antes de enviar
+      const { tipo, ...dataToUpdate } = val;
+      const { error } = await this.modifiersService.updateModifier(id, dataToUpdate);
       if (error) this.feedback.showError('Error al actualizar modificador');
       else this.feedback.showSuccess('Modificador actualizado');
     } else {
-      const { error } = await this.modifiersService.createModifier(val);
+      // Eliminamos campos que no existen en la base de datos antes de enviar
+      const { tipo, ...dataToCreate } = val;
+      const { error } = await this.modifiersService.createModifier(dataToCreate);
       if (error) this.feedback.showError('Error al crear modificador');
       else this.feedback.showSuccess('Modificador creado');
     }

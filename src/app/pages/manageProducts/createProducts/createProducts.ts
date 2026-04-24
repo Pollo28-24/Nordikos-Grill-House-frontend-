@@ -46,7 +46,7 @@ export class CreateProducts {
     this.productForm = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(2)]],
       descripcion: [''],
-      precio: [0, [Validators.required, Validators.min(0)]],
+      precio: [null, [Validators.required, Validators.min(0.01)]],
       descuento: [0, [Validators.min(0)]],
       costo: [0, [Validators.min(0)]],
       embalaje: [0, [Validators.min(0)]],

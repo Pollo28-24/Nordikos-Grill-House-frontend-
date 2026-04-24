@@ -17,6 +17,7 @@ export interface Modifier {
   sku?: string;
   visible: boolean;
   cantidad_maxima: number;
+  tipo?: 'plus' | 'minus';
   modificador_categorias?: { nombre: string };
 }
 

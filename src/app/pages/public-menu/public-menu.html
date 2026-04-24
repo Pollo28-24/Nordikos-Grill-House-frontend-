@@ -7,7 +7,7 @@
       <!-- TOP -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <img src="assets/logo/logo.webp" alt="Nordikos Logo" class="h-10 w-auto object-contain">
+          <img src="assets/logo/logo_Nordicos.webp" alt="Nordikos Logo" class="h-10 w-auto object-contain">
           <h1 class="text-lg font-bold tracking-tight text-gray-800">Nordikos</h1>
         </div>
         
@@ -69,11 +69,11 @@
 
   <!-- HERO -->
   <div class="max-w-7xl mx-auto px-5 mt-6">
-    <div class="relative h-52 rounded-3xl overflow-hidden shadow-xl">
-      <img src="assets/logo/header.webp" class="w-full h-full object-cover opacity-80">
-      <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6">
-        <h2 class="text-white text-2xl font-semibold">Nordikos Grill House</h2>
-        <p class="text-orange-200 text-sm font-light">Sabor que te transporta al norte.</p>
+    <div class="relative h-40 sm:h-52 rounded-3xl overflow-hidden shadow-xl bg-zinc-900">
+      <img src="assets/header/headernordicos.webp" class="w-full h-full object-contain sm:object-cover opacity-90 scale-105">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-6">
+        <h2 class="text-white text-2xl font-black tracking-tight drop-shadow-lg">Nordikos Grill House</h2>
+        <p class="text-orange-400 text-sm font-bold drop-shadow-md">Sabor que te transporta al norte.</p>
       </div>
     </div>
   </div>
@@ -169,7 +169,10 @@
 
   <!-- REUSABLE PRODUCT CARD TEMPLATE -->
   <ng-template #productCard let-product>
-    <div class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden relative flex flex-col">
+    <div 
+      (click)="openProductDetail(product)"
+      class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden relative flex flex-col cursor-pointer"
+    >
 
       <!-- DISPONIBILIDAD OVERLAY -->
       @if (product.disponible === false) {
@@ -217,25 +220,24 @@
 
         <!-- ADD TO CART BUTTONS -->
         @if (product.disponible !== false) {
-          <div class="mt-auto flex gap-2">
+          <div class="mt-auto flex gap-2 pt-2">
             @if (product.price_type === 'variants' || (product.variants && product.variants.length > 0)) {
               <button 
-                (click)="openProductDetail(product)"
-                class="flex-1 py-2 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl hover:bg-amber-500/20 transition active:scale-95 flex items-center justify-center"
-                title="Elegir opciones"
+                (click)="openProductDetail(product); $event.stopPropagation()"
+                class="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold rounded-xl transition active:scale-95 flex items-center justify-center gap-2"
               >
-                <lucide-icon name="settings-2" class="h-4 w-4"></lucide-icon>
+                Ver opciones
+                <lucide-icon name="chevron-right" class="h-3 w-3"></lucide-icon>
+              </button>
+            } @else {
+              <button 
+                (click)="addToCart(product); $event.stopPropagation()"
+                class="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold rounded-xl transition active:scale-95 flex items-center justify-center gap-2"
+              >
+                <lucide-icon name="plus" class="h-3 w-3"></lucide-icon>
+                Agregar
               </button>
             }
-            <button 
-              (click)="product.price_type === 'variants' ? openProductDetail(product) : addToCart(product)"
-              [class.w-full]="!(product.price_type === 'variants' || (product.variants && product.variants.length > 0))"
-              [class.flex-1]="product.price_type === 'variants' || (product.variants && product.variants.length > 0)"
-              class="py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition active:scale-95 flex items-center justify-center gap-2"
-            >
-              <lucide-icon name="plus" class="h-3 w-3"></lucide-icon>
-              {{ (product.price_type === 'variants' || (product.variants && product.variants.length > 0)) ? '' : 'Agregar' }}
-            </button>
           </div>
         }
       </div>
@@ -250,71 +252,112 @@
       <div (click)="closeProductDetail()" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
       
       <!-- Content -->
-      <div class="relative w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl animate-slide-up sm:animate-fade-in">
+      <div class="relative w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl animate-slide-up sm:animate-fade-in flex flex-col max-h-[90vh]">
         
         <!-- Header Image -->
-        <div class="relative h-48 sm:h-56 bg-gray-100">
+        <div class="relative h-64 sm:h-72 bg-gray-100 shrink-0">
           @if (product.imagen_url) {
-            <img [src]="product.imagen_url" class="w-full h-full object-cover">
+            <!-- Fondo desenfocado para llenar espacios -->
+            <img [src]="product.imagen_url" class="absolute inset-0 w-full h-full object-cover blur-xl opacity-30 scale-110">
+            <!-- Imagen real con aspect-ratio correcto -->
+            <img [src]="product.imagen_url" class="relative w-full h-full object-contain drop-shadow-2xl">
           } @else {
             <div class="w-full h-full flex items-center justify-center text-gray-300">
               <lucide-icon name="image" class="h-16 w-16"></lucide-icon>
             </div>
           }
-          <button (click)="closeProductDetail()" class="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition">
+          <button (click)="closeProductDetail()" class="absolute top-4 right-4 p-2 bg-black/30 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition z-10">
             <lucide-icon name="x" class="h-5 w-5"></lucide-icon>
           </button>
         </div>
 
-        <div class="p-6 space-y-6">
+        <div class="p-6 space-y-6 overflow-y-auto">
           <!-- Title & Desc -->
           <div>
-            <h3 class="text-xl font-bold text-gray-900">{{ product.nombre }}</h3>
-            <p class="text-sm text-gray-500 mt-1">{{ product.descripcion || 'Sin descripción' }}</p>
+            <h3 class="text-xl font-bold text-gray-900 leading-tight">{{ product.nombre }}</h3>
+            <p class="text-sm text-gray-500 mt-2 leading-relaxed">{{ product.descripcion || 'Sin descripción' }}</p>
           </div>
 
           <!-- Variants Selection -->
           @if (product.variants && product.variants.length > 0) {
-            <div class="space-y-3">
-              <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Elige una opción</p>
-              <div class="grid gap-2">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Elige tus opciones</p>
+                <span class="px-2 py-0.5 rounded-md bg-orange-50 text-orange-600 text-[10px] font-bold uppercase">Personalizable</span>
+              </div>
+              <div class="grid gap-3">
                 @for (variant of product.variants; track variant.id) {
-                  <button 
-                    (click)="selectVariant(variant.id)"
+                  <div 
                     class="w-full p-4 rounded-2xl border-2 transition-all flex items-center justify-between"
-                    [class.border-orange-500]="selectedVariantId() === variant.id"
-                    [class.bg-orange-50/50]="selectedVariantId() === variant.id"
-                    [class.border-gray-100]="selectedVariantId() !== variant.id"
-                    [class.hover:border-gray-200]="selectedVariantId() !== variant.id"
+                    [class.border-orange-500]="variantQuantities()[variant.id] > 0"
+                    [class.bg-orange-50/30]="variantQuantities()[variant.id] > 0"
+                    [class.border-gray-100]="variantQuantities()[variant.id] === 0"
                   >
-                    <div class="flex items-center gap-3">
-                      <div class="h-5 w-5 rounded-full border-2 flex items-center justify-center" 
-                        [class.border-orange-500]="selectedVariantId() === variant.id"
-                        [class.border-gray-300]="selectedVariantId() !== variant.id">
-                        @if (selectedVariantId() === variant.id) {
-                          <div class="h-2.5 w-2.5 bg-orange-500 rounded-full"></div>
-                        }
-                      </div>
-                      <span class="font-medium" [class.text-orange-900]="selectedVariantId() === variant.id">
+                    <div class="flex flex-col">
+                      <span class="font-bold text-sm text-gray-900">
                         {{ variant.nombre }}
                       </span>
+                      <span class="font-black text-xs text-orange-600">{{ formatPrice(variant.precio) }}</span>
                     </div>
-                    <span class="font-bold text-gray-900">{{ formatPrice(variant.precio) }}</span>
-                  </button>
+
+                    <div class="flex items-center bg-white rounded-xl p-1 gap-1 border border-gray-100 shadow-sm">
+                      <button 
+                        (click)="updateVariantQuantity(variant.id, -1)"
+                        [disabled]="variantQuantities()[variant.id] <= 0"
+                        class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 active:scale-90 transition disabled:opacity-30"
+                      >
+                        <lucide-icon name="minus" class="h-3.5 w-3.5"></lucide-icon>
+                      </button>
+                      <span class="w-8 text-center font-bold text-gray-900 text-sm">{{ variantQuantities()[variant.id] || 0 }}</span>
+                      <button 
+                        (click)="updateVariantQuantity(variant.id, 1)"
+                        class="w-8 h-8 flex items-center justify-center rounded-lg bg-orange-500 text-white shadow-sm hover:bg-orange-600 active:scale-90 transition"
+                      >
+                        <lucide-icon name="plus" class="h-3.5 w-3.5"></lucide-icon>
+                      </button>
+                    </div>
+                  </div>
                 }
               </div>
             </div>
           }
 
+          <!-- Quantity Selector (Solo para productos simples) -->
+          @if (!(product.variants && product.variants.length > 0)) {
+            <div class="flex items-center justify-between py-4 border-t border-gray-100">
+              <div>
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Cantidad</p>
+                <p class="text-xs text-gray-500">¿Cuántos deseas llevar?</p>
+              </div>
+              
+              <div class="flex items-center bg-gray-100 rounded-2xl p-1 gap-1">
+                <button 
+                  (click)="updateSelectedQuantity(-1)"
+                  [disabled]="selectedQuantity() <= 1"
+                  class="w-10 h-10 flex items-center justify-center rounded-xl bg-white shadow-sm text-gray-600 hover:bg-gray-50 active:scale-90 transition disabled:opacity-50"
+                >
+                  <lucide-icon name="minus" class="h-4 w-4"></lucide-icon>
+                </button>
+                <span class="w-12 text-center font-black text-gray-900 text-lg">{{ selectedQuantity() }}</span>
+                <button 
+                  (click)="updateSelectedQuantity(1)"
+                  class="w-10 h-10 flex items-center justify-center rounded-xl bg-white shadow-sm text-gray-600 hover:bg-gray-50 active:scale-90 transition"
+                >
+                  <lucide-icon name="plus" class="h-4 w-4"></lucide-icon>
+                </button>
+              </div>
+            </div>
+          }
+
           <!-- Footer Action -->
-          <div class="pt-2">
+          <div class="pt-2 shrink-0">
             <button 
-              (click)="addToCart(product, selectedVariant()!)"
-              [disabled]="product.price_type === 'variants' && !selectedVariantId()"
-              class="w-full h-14 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold rounded-2xl shadow-lg shadow-orange-500/30 transition active:scale-95 flex items-center justify-center gap-3"
+              (click)="addToCart(product)"
+              [disabled]="(product.variants && product.variants.length > 0) && !hasSelectedVariants()"
+              class="w-full h-16 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-black rounded-2xl shadow-xl shadow-orange-500/30 transition active:scale-95 flex items-center justify-center gap-3"
             >
-              <lucide-icon name="shopping-bag" class="h-5 w-5"></lucide-icon>
-              Agregar por {{ formatPrice(selectedVariant()?.precio || product.precio) }}
+              <lucide-icon name="shopping-bag" class="h-6 w-6"></lucide-icon>
+              <span>Agregar por {{ formatPrice(getTotalInModal()) }}</span>
             </button>
           </div>
         </div>

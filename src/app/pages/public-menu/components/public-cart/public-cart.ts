@@ -24,7 +24,8 @@ export class PublicCart {
     if (price == null) return '';
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: 'MXN'
+      currency: 'MXN',
+      currencyDisplay: 'narrowSymbol'
     }).format(price);
   }
 

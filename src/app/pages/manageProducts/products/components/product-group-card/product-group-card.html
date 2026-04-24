@@ -116,7 +116,7 @@
         <!-- Actions -->
         <div class="flex items-center gap-4">
           <span class="text-sm font-semibold text-[#FFB300]">
-            {{ product.precio | currency }}
+            {{ product.precio | currency:'MXN':'symbol-narrow':'1.2-2' }}
           </span>
 
           <button

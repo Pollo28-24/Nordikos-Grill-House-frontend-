@@ -9,7 +9,7 @@ import { ToastService } from '@core/services/toast.service';
   imports: [NgClass, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="fixed top-6 right-6 z-50 flex flex-col gap-3 w-85 max-w-[90vw]">
+    <div class="fixed top-6 right-6 z-50 flex flex-col gap-3 w-85 max-w-[90vw] no-print">
 
       @for (toast of toastService.toasts(); track toast.id) {
         <div

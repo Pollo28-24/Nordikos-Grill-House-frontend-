@@ -173,6 +173,21 @@ export class EditProducts {
   }
 
   setPriceMode(mode: PriceMode) {
+    if (mode === 'variant' && this.priceMode() === 'simple') {
+      this.feedback.confirmAndExecute({
+        title: 'Cambiar a variantes',
+        message: `El producto "${this.productForm.get('nombre')?.value}" tiene precio simple. ¿Estás seguro de que deseas agregarle variantes?`,
+        confirmText: 'Sí, cambiar',
+        action: () => {
+          this.priceMode.set('variant');
+          if (this.variants.length === 0) {
+            this.addVariant();
+          }
+        }
+      });
+      return;
+    }
+
     this.priceMode.set(mode);
     
     if (mode === 'simple') {

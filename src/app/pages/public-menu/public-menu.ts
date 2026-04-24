@@ -46,6 +46,8 @@ export class PublicMenu implements OnInit {
   // Selection modal state
   selectedProductForDetail = signal<Product | null>(null);
   selectedVariantId = signal<string | null>(null);
+  selectedQuantity = signal<number>(1);
+  variantQuantities = signal<Record<string, number>>({});
 
   // Computed for selected product details
   selectedProductVariants = computed(() => this.selectedProductForDetail()?.variants ?? []);
@@ -116,7 +118,8 @@ export class PublicMenu implements OnInit {
     if (price == null) return '';
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: 'MXN'
+      currency: 'MXN',
+      currencyDisplay: 'narrowSymbol'
     }).format(price);
   }
 
@@ -125,22 +128,88 @@ export class PublicMenu implements OnInit {
   }
 
   addToCart(product: Product, variant?: ProductVariant) {
-    this.cartService.addToCart(product, variant);
-    if (this.selectedProductForDetail()) {
+    // Si viene de la card (botón rápido) o es producto simple
+    if (!this.selectedProductForDetail()) {
+      this.cartService.addToCart(product, variant);
+      return;
+    }
+
+    // Si estamos en el modal
+    if (product.price_type === 'variants' || (product.variants && product.variants.length > 0)) {
+      // Agregar cada variante con su cantidad seleccionada
+      const quantities = this.variantQuantities();
+      let addedAny = false;
+
+      product.variants?.forEach(v => {
+        const qty = quantities[v.id] || 0;
+        for (let i = 0; i < qty; i++) {
+          this.cartService.addToCart(product, v);
+          addedAny = true;
+        }
+      });
+
+      if (addedAny) {
+        this.closeProductDetail();
+      }
+    } else {
+      // Producto simple en modal
+      const qty = this.selectedQuantity();
+      for (let i = 0; i < qty; i++) {
+        this.cartService.addToCart(product);
+      }
       this.closeProductDetail();
     }
   }
 
   openProductDetail(product: Product) {
+    this.selectedQuantity.set(1);
     this.selectedProductForDetail.set(product);
+    
+    // Inicializar cantidades de variantes
+    const initialQuantities: Record<string, number> = {};
     if (product.variants?.length) {
-      this.selectedVariantId.set(product.variants[0].id);
+      product.variants.forEach(v => {
+        initialQuantities[v.id] = 0;
+      });
+      // Por defecto, poner 1 en la primera variante para que no esté vacío
+      initialQuantities[product.variants[0].id] = 1;
     }
+    this.variantQuantities.set(initialQuantities);
   }
 
   closeProductDetail() {
     this.selectedProductForDetail.set(null);
     this.selectedVariantId.set(null);
+    this.selectedQuantity.set(1);
+    this.variantQuantities.set({});
+  }
+
+  updateSelectedQuantity(amount: number) {
+    this.selectedQuantity.update(q => Math.max(1, q + amount));
+  }
+
+  updateVariantQuantity(variantId: string, amount: number) {
+    this.variantQuantities.update(qs => ({
+      ...qs,
+      [variantId]: Math.max(0, (qs[variantId] || 0) + amount)
+    }));
+  }
+
+  getTotalInModal(): number {
+    const product = this.selectedProductForDetail();
+    if (!product) return 0;
+
+    if (product.price_type === 'variants' || (product.variants && product.variants.length > 0)) {
+      const quantities = this.variantQuantities();
+      return product.variants?.reduce((acc, v) => acc + (v.precio * (quantities[v.id] || 0)), 0) || 0;
+    }
+
+    return (product.precio || 0) * this.selectedQuantity();
+  }
+
+  hasSelectedVariants(): boolean {
+    const quantities = this.variantQuantities();
+    return Object.values(quantities).some(q => q > 0);
   }
 
   selectVariant(variantId: string) {
