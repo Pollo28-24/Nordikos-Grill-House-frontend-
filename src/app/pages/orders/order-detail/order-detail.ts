@@ -6,7 +6,6 @@ import { OrdersService } from '@core/services/orders.service';
 import { UserFeedbackService } from '@core/services/user-feedback.service';
 import { LoggerService } from '@core/services/logger.service';
 import { TickService } from '@core/services/tick.service';
-import { Navbar } from '@shared/components/navbar/navbar';
 import { TicketPrintComponent } from '@features/tickets/components/ticket-print.component';
 import { TicketService } from '@features/tickets/services/ticket.service';
 

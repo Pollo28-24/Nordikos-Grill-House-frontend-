@@ -260,8 +260,8 @@
                     </span>
                   </td>
                   <td class="px-6 py-4">
-                    <div class="flex flex-col max-w-[200px]">
-                      <span class="text-[#F5F5F5] truncate">{{ order.cliente_nombre }}</span>
+                    <div class="flex flex-col max-w-50">
+                      <span class="text-sm text-[#F5F5F5] font-medium truncate">{{ order.cliente_nombre || 'Consumidor Final' }}</span>
                       @if (order.nota_general) {
                         <span class="text-xs text-[#9CA3AF] truncate">{{ order.nota_general }}</span>
                       }

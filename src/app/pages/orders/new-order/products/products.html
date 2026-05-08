@@ -66,7 +66,7 @@
   <div class="flex-1 overflow-y-auto px-3 py-4 custom-scrollbar">
 
     @if (loadingProducts()) {
-      <div class="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(190px,1fr))]">
+      <div class="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3">
         @for (i of [1,2,3,4,5,6,7,8,9,10,11,12]; track i) {
           <div class="h-56 rounded-2xl bg-zinc-900/50 animate-pulse border border-zinc-800"></div>
         }
@@ -96,96 +96,99 @@
                 </div>
               }
 
-              <!-- GRID FOR THIS CATEGORY -->
-              <div class="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(190px,1fr))]">
+              <!-- DESKTOP GRID / MOBILE LIST -->
+              <div class="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3">
 
                 @for (p of group.items; track p.id) {
                   @defer (on viewport; prefetch on idle) {
+                    
+                    <!-- VISTA DESKTOP (CARDS) -->
                     <div
-                      class="group relative h-full flex flex-col bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 transition-all duration-200 hover:border-amber-500/50 active:scale-[0.98]"
+                      class="hidden sm:flex group relative h-full flex-col bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 transition-all duration-200 hover:border-amber-500/50 active:scale-[0.98]"
                     >
-                      
-                      <!-- PRODUCT IMAGE -->
+                      <!-- Imagen y Clic para Añadir Rápido -->
                       <div 
                         (click)="p.disponible !== false && quickAdd(p)"
                         class="h-32 bg-zinc-800 overflow-hidden relative cursor-pointer shrink-0"
                       >
                         @if (p.imagen_url) {
-                          <img 
-                            [src]="p.imagen_url"
-                            [alt]="p.nombre" 
-                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            [class.grayscale]="p.disponible === false"
-                          />
+                          <img [src]="p.imagen_url" [alt]="p.nombre" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" [class.grayscale]="p.disponible === false" />
                         } @else {
-                          <div class="w-full h-full flex items-center justify-center">
-                            <lucide-icon name="utensils" class="w-6 h-6 text-zinc-600" />
-                          </div>
+                          <div class="w-full h-full flex items-center justify-center"><lucide-icon name="utensils" class="w-6 h-6 text-zinc-600" /></div>
                         }
-
                         @if (p.disponible === false) {
                           <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
-                            <span class="bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">Agotado</span>
+                            <span class="bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">Agotado</span>
                           </div>
                         }
                       </div>
 
-                      <!-- INFO -->
                       <div class="p-3 flex flex-col flex-1">
-                        
                         <div class="flex justify-between items-start gap-2">
-                          <h3 class="text-[13px] font-semibold text-zinc-100 leading-tight line-clamp-2 group-hover:text-amber-400 transition-colors">
-                            {{ p.nombre }}
-                          </h3>
-                          <div class="flex flex-col items-end">
-                            @if (p.descuento && p.descuento > 0 && (!p.variants || p.variants.length === 0)) {
-                              <del class="text-[10px] text-zinc-500 font-medium">{{ getProductPriceOriginal(p) }}</del>
-                              <span class="text-[13px] font-black text-emerald-400 shrink-0">
-                                {{ getProductPrice(p) }}
-                              </span>
-                            } @else {
-                              <span class="text-[13px] font-black text-amber-400 shrink-0">
-                                {{ getProductPrice(p) }}
-                              </span>
-                            }
-                          </div>
+                          <h3 class="text-[13px] font-semibold text-zinc-100 leading-tight line-clamp-2">{{ p.nombre }}</h3>
+                          <span class="text-[13px] font-black text-amber-400 shrink-0">{{ getProductPrice(p) }}</span>
                         </div>
-
-                        <!-- Spacer automático -->
                         <div class="flex-1"></div>
-
-                        <!-- ACTIONS -->
                         <div class="flex items-center gap-2 mt-3">
-                          
-                          <button
-                            (click)="p.disponible !== false && quickAdd(p)"
-                            [disabled]="p.disponible === false"
-                            class="flex-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold h-10 rounded-xl text-xs uppercase tracking-wider transition-all active:scale-95 disabled:opacity-20 disabled:hover:bg-amber-500"
-                          >
-                            AÑADIR
-                          </button>
-
-                          <button 
-                            (click)="p.disponible !== false && openProduct(p, $event)"
-                            [disabled]="p.disponible === false"
-                            class="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all active:scale-95 disabled:opacity-20"
-                          >
+                          <button (click)="p.disponible !== false && quickAdd(p)" [disabled]="p.disponible === false" class="flex-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold h-10 rounded-xl text-xs uppercase tracking-wider transition-all disabled:opacity-20">AÑADIR</button>
+                          <button (click)="p.disponible !== false && openProduct(p, $event)" [disabled]="p.disponible === false" class="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 transition-all">
                             <lucide-icon [name]="(p.variants && p.variants.length > 0) ? 'sliders-horizontal' : 'plus'" class="w-4 h-4"></lucide-icon>
                           </button>
-
                         </div>
                       </div>
-
-                      <!-- QUANTITY BADGE -->
                       @if (getQty(p.id) > 0) {
-                        <div class="absolute top-1.5 left-1.5 bg-white text-black text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border-2 border-amber-500 animate-in zoom-in duration-300">
+                        <div class="absolute top-1.5 left-1.5 bg-white text-black text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border-2 border-amber-500 animate-in zoom-in">
                           {{ getQty(p.id) }}
                         </div>
                       }
-
                     </div>
+
+                    <!-- VISTA MÓVIL (LISTA COMPACTA) -->
+                    <div 
+                      (click)="p.disponible !== false && quickAdd(p)"
+                      class="flex sm:hidden items-center gap-3 p-3 bg-zinc-900/50 border border-white/5 rounded-2xl active:bg-white/5 transition-colors relative"
+                      [class.opacity-50]="p.disponible === false"
+                    >
+                      <!-- Miniatura -->
+                      <div class="w-12 h-12 rounded-xl bg-zinc-800 overflow-hidden shrink-0 border border-white/5">
+                        @if (p.imagen_url) {
+                          <img [src]="p.imagen_url" class="w-full h-full object-cover" />
+                        } @else {
+                          <div class="w-full h-full flex items-center justify-center"><lucide-icon name="utensils" class="w-4 h-4 text-zinc-700" /></div>
+                        }
+                      </div>
+
+                      <!-- Info Central -->
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                          <h3 class="text-sm font-bold text-zinc-100 truncate">{{ p.nombre }}</h3>
+                          @if (getQty(p.id) > 0) {
+                            <span class="bg-amber-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded-md animate-in zoom-in">
+                              {{ getQty(p.id) }}
+                            </span>
+                          }
+                        </div>
+                        <p class="text-xs font-black text-amber-500/90">{{ getProductPrice(p) }}</p>
+                      </div>
+
+                      <!-- Botón "+" para Modal -->
+                      <button 
+                        (click)="p.disponible !== false && openProduct(p, $event)"
+                        [disabled]="p.disponible === false"
+                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 border border-white/5 text-amber-500 active:scale-90 transition-transform"
+                      >
+                        <lucide-icon [name]="(p.variants && p.variants.length > 0) ? 'sliders-horizontal' : 'plus'" class="w-5 h-5"></lucide-icon>
+                      </button>
+
+                      @if (p.disponible === false) {
+                        <div class="absolute right-14 top-1/2 -translate-y-1/2">
+                          <span class="text-[8px] font-bold text-red-500 uppercase tracking-tighter">Agotado</span>
+                        </div>
+                      }
+                    </div>
+
                   } @placeholder {
-                    <div class="aspect-square rounded-lg bg-white/5 animate-pulse"></div>
+                    <div class="h-20 sm:h-56 rounded-2xl bg-white/5 animate-pulse"></div>
                   }
                 }
               </div>
