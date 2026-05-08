@@ -104,22 +104,54 @@
           </div>
 
           <div class="space-y-2">
-            <label class="text-xs font-black uppercase tracking-widest text-zinc-500">Precio Extra ($)</label>
+            <label class="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-zinc-500">
+              Precio Extra ($)
+              <div class="relative group flex">
+                <lucide-icon name="help-circle" class="w-3.5 h-3.5 hover:text-emerald-500 cursor-help transition-colors" />
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2 bg-[#2A2A2A] text-xs text-[#F5F5F5] rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-xl z-50 pointer-events-none border border-[#3A3A3A] font-normal normal-case tracking-normal">
+                  Monto que se sumará o restará al precio final del producto cuando el cliente elija este modificador.
+                </div>
+              </div>
+            </label>
             <input type="number" formControlName="precio" class="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/5 text-white outline-none focus:border-emerald-500/50 transition">
           </div>
 
           <div class="space-y-2">
-            <label class="text-xs font-black uppercase tracking-widest text-zinc-500">Costo ($)</label>
+            <label class="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-zinc-500">
+              Costo ($)
+              <div class="relative group flex">
+                <lucide-icon name="help-circle" class="w-3.5 h-3.5 hover:text-emerald-500 cursor-help transition-colors" />
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2 bg-[#2A2A2A] text-xs text-[#F5F5F5] rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-xl z-50 pointer-events-none border border-[#3A3A3A] font-normal normal-case tracking-normal">
+                  Costo interno que te genera este extra (ej: el costo del tocino extra). Útil para reportes de rentabilidad.
+                </div>
+              </div>
+            </label>
             <input type="number" formControlName="costo" class="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/5 text-white outline-none focus:border-emerald-500/50 transition">
           </div>
 
           <div class="space-y-2">
-            <label class="text-xs font-black uppercase tracking-widest text-zinc-500">Cant. Máxima</label>
+            <label class="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-zinc-500">
+              Cant. Máxima
+              <div class="relative group flex">
+                <lucide-icon name="help-circle" class="w-3.5 h-3.5 hover:text-emerald-500 cursor-help transition-colors" />
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2 bg-[#2A2A2A] text-xs text-[#F5F5F5] rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-xl z-50 pointer-events-none border border-[#3A3A3A] font-normal normal-case tracking-normal">
+                  Límite de veces que el cliente puede pedir este mismo modificador en un solo producto (Ej: Máximo 2 extras de queso). Pon 0 o déjalo vacío para sin límite.
+                </div>
+              </div>
+            </label>
             <input type="number" formControlName="cantidad_maxima" class="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/5 text-white outline-none focus:border-emerald-500/50 transition">
           </div>
 
           <div class="sm:col-span-2 space-y-2">
-            <label class="text-xs font-black uppercase tracking-widest text-zinc-500">Tipo de Operación (Icono)</label>
+            <label class="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-zinc-500">
+              Tipo de Operación (Icono)
+              <div class="relative group flex">
+                <lucide-icon name="help-circle" class="w-3.5 h-3.5 hover:text-emerald-500 cursor-help transition-colors" />
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2 bg-[#2A2A2A] text-xs text-[#F5F5F5] rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-xl z-50 pointer-events-none border border-[#3A3A3A] font-normal normal-case tracking-normal text-center">
+                  ¿Este modificador es un agregado (Ej: Con queso) o una remoción (Ej: Sin cebolla)?
+                </div>
+              </div>
+            </label>
             <div class="flex gap-4">
               <label class="flex-1 flex items-center justify-center gap-3 p-4 rounded-2xl border cursor-pointer transition-all duration-300"
                 [class.bg-emerald-500\/10]="form.get('tipo')?.value === 'plus'"

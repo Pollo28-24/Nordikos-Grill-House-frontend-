@@ -50,3 +50,37 @@ export interface Order {
   client_request_id: string;
 }
 
+export interface OrderItemModifier {
+  id: number;
+  nombre: string;
+  cantidad: number;
+  precio_unitario: number;
+}
+
+export interface OrderItemSimple {
+  id: number;
+  cantidad: number;
+  precio_unitario: number;
+  nombre_producto: string;
+  nota?: string;
+  producto_id: number;
+  variante_id?: number;
+  modificadores: OrderItemModifier[];
+}
+
+export interface OrderListItem {
+  id: number;
+  numero_orden?: number;
+  nota_general?: string;
+  fecha_creacion: string;
+  fecha_cierre?: string;
+  total: number;
+  estado_pedido: string;
+  estado_pago: string;
+  metodo_pago_id: number;
+  tipo_servicio_id: number;
+  turno_id: number | null;
+  cliente_nombre: string;
+  tipo_servicio_nombre: string;
+  order_items: OrderItemSimple[];
+}

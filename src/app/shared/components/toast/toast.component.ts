@@ -5,7 +5,6 @@ import { ToastService } from '@core/services/toast.service';
 
 @Component({
   selector: 'app-toast',
-  standalone: true,
   imports: [NgClass, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -13,6 +12,8 @@ import { ToastService } from '@core/services/toast.service';
 
       @for (toast of toastService.toasts(); track toast.id) {
         <div
+          role="alert"
+          aria-live="assertive"
           class="group relative flex items-start gap-3 px-4 py-3
                  rounded-2xl bg-[#181818]
                  border border-white/5
@@ -63,7 +64,7 @@ import { ToastService } from '@core/services/toast.service';
           <!-- Close -->
           <button
             (click)="toastService.remove(toast.id)"
-            class="opacity-0 group-hover:opacity-100
+            class="opacity-0 group-hover:opacity-100 max-sm:opacity-100
                    transition-opacity duration-200
                    text-zinc-400 hover:text-white"
           >
@@ -93,5 +94,5 @@ import { ToastService } from '@core/services/toast.service';
   `]
 })
 export class ToastComponent {
-  toastService = inject(ToastService);
+  protected toastService = inject(ToastService);
 }

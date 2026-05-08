@@ -1,0 +1,94 @@
+<div 
+  (click)="onViewDetails.emit(product())"
+  class="group bg-[#F8F5EE] rounded-2xl border border-[#E2D7B7]/50 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden relative flex flex-col cursor-pointer h-full"
+>
+
+  <!-- DISPONIBILIDAD OVERLAY -->
+  @if (product().disponible === false) {
+    <div class="absolute inset-0 z-10 bg-[#F8F5EE]/60 backdrop-blur-[1px] flex items-center justify-center p-4">
+      <span class="bg-zinc-900/90 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-xl">
+        Agotado
+      </span>
+    </div>
+  }
+
+  @if ((product().descuento || 0) > 0) {
+    <div class="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-widest shadow-xl z-20">
+      -{{ formatPrice(product().descuento) }}
+    </div>
+  }
+
+  <!-- IMAGE -->
+  <div class="relative aspect-square bg-gray-100 overflow-hidden" [class.grayscale]="product().disponible === false">
+    @if (product().imagen_url) {
+      <img 
+        [src]="product().imagen_url" 
+        class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+      >
+    } @else {
+      <div class="w-full h-full flex items-center justify-center text-gray-300">
+        <lucide-icon name="image" class="h-10 w-10"></lucide-icon>
+      </div>
+    }
+
+    <!-- BADGE CANTIDAD -->
+    @if (cartQuantity() > 0) {
+      <div class="absolute top-2 left-2 bg-orange-500 text-white text-[10px] font-black h-6 w-6 flex items-center justify-center rounded-full shadow-lg border-2 border-[#F8F5EE] animate-in zoom-in-50 duration-300 z-20">
+        {{ cartQuantity() }}
+      </div>
+    }
+
+    <div class="absolute bottom-2 right-2 bg-[#F8F5EE]/90 backdrop-blur px-2 py-1 rounded-lg shadow-sm flex items-center gap-1.5">
+      @if ((product().descuento || 0) > 0) {
+        <del class="text-[10px] text-gray-500 font-medium">{{ formatPrice(product().precio) }}</del>
+        <span class="text-xs font-bold text-orange-600">{{ formatPrice((product().precio || 0) - (product().descuento || 0)) }}</span>
+      } @else {
+        <span class="text-xs font-bold text-orange-600">{{ formatPrice(product().precio) }}</span>
+      }
+    </div>
+  </div>
+
+  <!-- INFO -->
+  <div class="px-3 py-2 flex flex-col gap-1 text-center flex-grow">
+    <h3 class="text-sm font-semibold text-gray-900 line-clamp-1">
+      {{ product().nombre }}
+    </h3>
+
+    <p class="text-[11px] text-gray-500 line-clamp-2 font-light mb-2">
+      {{ product().descripcion || 'Sin descripción' }}
+    </p>
+
+    <!-- ADD TO CART BUTTONS -->
+    @if (product().disponible !== false) {
+      <div class="mt-auto flex gap-2 pt-2">
+        @if (product().price_type === 'variants' || (product().variants && product().variants!.length > 0)) {
+          <button 
+            (click)="onViewDetails.emit(product()); $event.stopPropagation()"
+            class="w-full py-2 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold rounded-xl transition active:scale-95 flex items-center justify-center gap-2"
+          >
+            Ver opciones
+            <lucide-icon name="chevron-right" class="h-3 w-3"></lucide-icon>
+          </button>
+        } @else {
+          <button 
+            (click)="onAdd.emit(product()); $event.stopPropagation()"
+            class="flex-1 py-2 text-white text-[11px] font-bold rounded-xl transition active:scale-95 flex items-center justify-center gap-2"
+            [class.bg-green-500]="isAdded()"
+            [class.hover:bg-green-600]="isAdded()"
+            [class.bg-orange-500]="!isAdded()"
+            [class.hover:bg-orange-600]="!isAdded()"
+          >
+            @if (isAdded()) {
+              <lucide-icon name="check" class="h-3 w-3"></lucide-icon>
+              Agregado
+            } @else {
+              <lucide-icon name="plus" class="h-3 w-3"></lucide-icon>
+              Agregar
+            }
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+</div>

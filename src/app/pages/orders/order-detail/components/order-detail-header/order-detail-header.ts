@@ -19,6 +19,17 @@ import { LucideAngularModule } from 'lucide-angular';
       <div class="flex flex-wrap items-center gap-3">
         @if (order()) {
           <div class="flex gap-2 w-full sm:w-auto">
+            @if (order()?.estado_pedido !== 'cancelado') {
+              <button 
+                (click)="cancelOrder.emit()"
+                class="flex-1 sm:flex-none p-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition flex items-center justify-center gap-2 px-4 shadow-lg shadow-red-600/20"
+                title="Cancelar orden"
+              >
+                <lucide-icon name="ban" class="w-5 h-5" />
+                <span class="text-[10px] sm:text-xs font-bold uppercase">Cancelar</span>
+              </button>
+            }
+
             <button 
               (click)="openTicket.emit('kitchen')"
               class="flex-1 sm:flex-none p-2 rounded-xl bg-orange-600/10 text-orange-500 hover:bg-orange-600/20 transition flex items-center justify-center gap-2 px-4"
@@ -83,4 +94,5 @@ export class OrderDetailHeader {
   goBack = output<void>();
   openTicket = output<'kitchen' | 'account'>();
   shareTicketPDF = output<void>();
+  cancelOrder = output<void>();
 }

@@ -8,7 +8,10 @@ export interface ConfirmExecuteOptions {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  action: () => Promise<any> | Observable<any> | any;
+  showInput?: boolean;
+  inputPlaceholder?: string;
+  isDanger?: boolean;
+  action: (inputValue?: string) => Promise<any> | Observable<any> | any;
   successMsg?: string;
   errorMsg?: string;
 }
@@ -24,10 +27,13 @@ export class UserFeedbackService {
       message: options.message,
       confirmText: options.confirmText ?? 'Confirmar',
       cancelText: options.cancelText ?? 'Cancelar',
-      onConfirm: async () => {
+      showInput: options.showInput,
+      inputPlaceholder: options.inputPlaceholder,
+      isDanger: options.isDanger,
+      onConfirm: async (inputValue?: string) => {
         try {
           // Ejecutamos la acción (soporta Promesas, Observables y Sync)
-          let result = options.action();
+          let result = options.action(inputValue);
           
           if (isObservable(result)) {
             result = await firstValueFrom(result);

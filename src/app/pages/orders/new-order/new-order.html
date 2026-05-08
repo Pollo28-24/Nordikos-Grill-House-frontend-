@@ -1,148 +1,81 @@
-<app-navbar />
+<div class="h-screen bg-[#050505] text-zinc-100 flex flex-col overflow-hidden">
 
-<div class="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
-
-  <div class="max-w-7xl mx-auto w-full px-4 py-6">
-
-    <!-- HEADER -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">
-          {{ editingOrderId() ? 'Agregar a Orden #' + editingOrderId() : 'Nueva Orden' }}
-        </h1>
-        <p class="text-sm text-zinc-500 mt-1">
-          {{ editingOrderId() ? 'Agrega más productos a la orden existente' : 'Agrega productos y confirma la orden' }}
-        </p>
-      </div>
-
-     <div class="flex items-center gap-3">
-
-  <!-- VOLVER -->
-  <a
-    routerLink="/orders"
-    class="
-    inline-flex items-center
-    px-4 h-10
-    rounded-xl
-    bg-[#1E1E1E]
-    border border-black/40
-    text-sm
-    text-[#F5F5F5]
-    hover:bg-[#1A1A1A]
-    transition
-    "
-  >
-    <lucide-icon name="arrow-left" class="w-4 h-4 mr-2" />
-    Volver a Órdenes
-  </a>
-
-  <!-- CART -->
-  <a
-    routerLink="/orders/new/cart"
-    class="
-    relative
-    inline-flex items-center gap-2
-    px-4 h-10
-    rounded-xl
-    bg-[#FFB300]
-    text-[#121212]
-    font-semibold
-    text-sm
-    hover:bg-[#FFC107]
-    transition
-    active:scale-95
-    shadow-lg
-    "
-  >
-
-    <lucide-icon name="shopping-cart" class="w-4 h-4" />
-
-    Ver carrito
-
-    @if (cartCount() > 0) {
-
-      <span
-        class="
-        absolute -top-2 -right-2
-min-w-5         flex items-center justify-center
-        text-[11px]
-        font-bold
-        rounded-full
-        bg-[#1E1E1E]
-        text-[#FFB300]
-        border border-black/40
-        "
+  <!-- TOP BAR (ULTRA COMPACT) -->
+  <header class="h-12 shrink-0 bg-[#0A0A0A] border-b border-white/5 px-4 flex items-center justify-between z-40">
+    <div class="flex items-center gap-3">
+      <a
+        routerLink="/orders"
+        class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 flex items-center justify-center transition"
+        title="Volver"
       >
-        {{ cartCount() }}
-      </span>
-
-    }
-
-  </a>
-
-</div>
-
+        <lucide-icon name="arrow-left" class="w-4 h-4" />
+      </a>
+      <div class="h-4 w-px bg-white/10 mx-1"></div>
+      <h1 class="text-xs font-black tracking-widest text-white uppercase">
+        {{ editingOrderId() ? 'Editando #' + editingOrderId() : 'Nueva Orden' }}
+      </h1>
     </div>
 
-    <!-- STEP NAVIGATION -->
-    <div class="mb-8">
+    <div class="flex items-center gap-3">
+      <div class="hidden md:flex items-center gap-2 px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-[9px] text-emerald-500 font-black uppercase tracking-widest">POS Activo</span>
+      </div>
 
-      <div class="flex items-center gap-6 border-b border-white/5 pb-4 overflow-x-auto hide-scrollbar">
+      <!-- MOBILE CART BUTTON -->
+      <a 
+        routerLink="/orders/new/cart"
+        class="lg:hidden relative flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-xl bg-amber-500 text-zinc-950 shadow-lg"
+      >
+        <span class="text-xs font-black tracking-tighter">${{ cartTotal() | number:'1.2-2' }}</span>
+        <div class="h-3.5 w-px bg-black/20"></div>
+        <lucide-icon name="shopping-cart" class="w-4 h-4" />
+        @if (cartCount() > 0) {
+          <span class="absolute -top-1 -right-1 min-w-4 h-4 px-1 flex items-center justify-center text-[9px] font-black rounded-full bg-white text-amber-600 border border-amber-500 shadow-sm">
+            {{ cartCount() }}
+          </span>
+        }
+      </a>
+    </div>
+  </header>
 
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- LEFT PANEL (PRODUCTS) -->
+    <main class="flex-1 flex flex-col relative overflow-hidden">
+      
+      <!-- MOBILE STEP TABS -->
+      <div class="lg:hidden flex bg-[#0A0A0A] border-b border-white/5 p-1 mx-4 mt-3 rounded-xl">
         <a
           routerLink="/orders/new/browse"
-          routerLinkActive="text-amber-400 border-amber-400"
-          class="flex items-center gap-2 pb-2 border-b-2 border-transparent text-sm font-medium text-zinc-400 hover:text-white transition whitespace-nowrap"
+          routerLinkActive="bg-white/5 text-amber-500"
+          class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-zinc-500 transition"
         >
-
-          <span
-            class="w-6 h-6 flex items-center justify-center rounded-full bg-zinc-800 text-xs"
-          >
-            1
-          </span>
-
-          Productos
-
+          <lucide-icon name="layout-grid" class="w-3.5 h-3.5" />
+          Menú
         </a>
-
         <a
           routerLink="/orders/new/cart"
-          routerLinkActive="text-amber-400 border-amber-400"
+          routerLinkActive="bg-white/5 text-amber-500"
           #cartLink="routerLinkActive"
-          [routerLinkActiveOptions]="{ exact: true }"
-          class="flex items-center gap-2 pb-2 border-b-2 border-transparent text-sm font-medium text-zinc-400 hover:text-white transition whitespace-nowrap"
+          class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-zinc-500 transition"
         >
-
-          <span
-            class="w-6 h-6 flex items-center justify-center rounded-full bg-zinc-800 text-xs"
-          >
-            2
-          </span>
-
+          <lucide-icon name="shopping-bag" class="w-3.5 h-3.5" />
           Carrito
-
         </a>
-
       </div>
 
-    </div>
+      <div class="flex-1 overflow-hidden">
+        <router-outlet />
+      </div>
 
-    <!-- CONTENT -->
-    <div class="animate-in fade-in duration-500 flex-1 flex flex-col">
-      <router-outlet />
-    </div>
+    </main>
+
+    <!-- RIGHT PANEL (CART - DESKTOP ONLY) -->
+    <aside class="hidden lg:flex w-[416px] shrink-0 border-l border-white/5 bg-[#0A0A0A] flex-col overflow-hidden">
+      <app-new-order-cart class="h-full" />
+    </aside>
 
   </div>
-
-  @if (cartLink.isActive) {
-    <a
-      routerLink="/orders/new/browse"
-      class="fixed bottom-6 left-6 z-20 inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-amber-500 text-zinc-900 font-semibold shadow-lg hover:bg-amber-400"
-    >
-      <lucide-icon name="folder-open" class="w-4 h-4" />
-      <span>Catálogo</span>
-    </a>
-  }
 
 </div>

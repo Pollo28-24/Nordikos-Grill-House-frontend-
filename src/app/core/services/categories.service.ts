@@ -4,43 +4,29 @@ import { isPlatformBrowser } from '@angular/common';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { SupabaseService } from '@shared/data-access/supabase.service';
 import { ToastService } from './toast.service';
 import { ProductsService } from './products.service';
 import { LoggerService } from './logger.service';
-
-export interface Category {
-  id: string;
-  nombre: string;
-  descripcion?: string;
-  visible?: boolean;
-  created_at: string;
-  updated_at: string;
-  products_count?: number;
-}
-
-export type CategoryWithCount = Category & {
-  productos?: { count: number }[];
-};
+import { CategoriesApi } from '@core/api/categories.api';
+import { Category } from '@core/models/category.model';
+import { SupabaseService } from '@shared/data-access/supabase.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class CategoriesService {
-  private supabase = inject(SupabaseService).client;
-  private toastService = inject(ToastService);
-  private productsService = inject(ProductsService);
-  private platformId = inject(PLATFORM_ID);
-  private logger = inject(LoggerService);
+export class CategoriesService { // Actúa como el STATE / FACADE
+  private readonly api = inject(CategoriesApi);
+  private readonly supabase = inject(SupabaseService).client; // temporalmente para queries cross-domain
+  private readonly toastService = inject(ToastService);
+  private readonly productsService = inject(ProductsService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly logger = inject(LoggerService);
 
-  private categoriesResource = resource({
+  private readonly categoriesResource = resource({
     loader: async () => {
       if (!isPlatformBrowser(this.platformId)) return [];
       try {
-        const { data, error } = await this.supabase
-          .from('categorias')
-          .select('*, productos(count)')
-          .order('nombre');
+        const { data, error } = await this.api.getAll();
 
         if (error) {
           this.logger.error('Error loading categories', error, 'CategoriesService');
@@ -64,18 +50,13 @@ export class CategoriesService {
     }
   });
   
-  private _updatingId = signal<string | null>(null);
-  private _creating = signal(false);
+  private readonly _updatingId = signal<string | null>(null);
+  private readonly _creating = signal(false);
   
+  // PUBLIC STATE (Signals & Computeds)
   readonly categories = computed(() => this.categoriesResource.value() ?? []);
-  
-  readonly visibleCategories = computed(() => 
-    this.categories().filter(c => c.visible !== false)
-  );
-
-  readonly totalCategories = computed(() => 
-    this.categories().length
-  );
+  readonly visibleCategories = computed(() => this.categories().filter(c => c.visible !== false));
+  readonly totalCategories = computed(() => this.categories().length);
 
   readonly loading = this.categoriesResource.isLoading;
   readonly updatingId = this._updatingId.asReadonly();
@@ -86,6 +67,7 @@ export class CategoriesService {
   readonly loading$ = toObservable(this.loading);
   readonly error$ = toObservable(this.error);
 
+  // ACTIONS
   reload() {
     this.categoriesResource.reload();
   }
@@ -94,12 +76,7 @@ export class CategoriesService {
     try {
       this._creating.set(true);
 
-      const { data, error } = await this.supabase
-        .from('categorias')
-        .insert({ nombre, descripcion })
-        .select()
-        .single();
-
+      const { data, error } = await this.api.create(nombre, descripcion);
       if (error) throw error;
 
       this.toastService.show('Categoría creada correctamente', 'success');
@@ -119,13 +96,7 @@ export class CategoriesService {
     try {
       this._updatingId.set(id);
 
-      const { data, error } = await this.supabase
-        .from('categorias')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select('*')
-        .single();
-
+      const { data, error } = await this.api.update(id, updates);
       if (error) throw error;
 
       this.toastService.show('Categoría actualizada', 'success');
@@ -141,35 +112,59 @@ export class CategoriesService {
     }
   }
 
+  async updateCategoriesOrder(categories: Category[]): Promise<void> {
+    try {
+      this._creating.set(true);
+
+      // Preparamos los datos mínimos para el UPSERT masivo
+      const itemsToUpsert = categories.map((c, i) => ({
+        id: !isNaN(Number(c.id)) ? Number(c.id) : c.id,
+        orden: i + 1,
+        updated_at: new Date().toISOString()
+      }));
+
+      // Optimistic update: mutamos la caché local inmediatamente para que la UI se sienta instantánea
+      this.categoriesResource.update(current => {
+        if (!current) return current;
+        const currentMapped = new Map(current.map(c => [String(c.id), c]));
+        return itemsToUpsert.map(u => ({ ...currentMapped.get(String(u.id)), ...u })) as Category[];
+      });
+
+      // 1 solo llamado a BD mediante UPSERT masivo en vez de 20 updates concurrentes
+      try {
+        await this.api.upsertOrder(itemsToUpsert as Partial<Category>[]);
+      } catch (error) {
+        this.reload(); // Rollback en caso de error
+        throw error;
+      }
+
+    } catch (err: any) {
+      this.logger.error('Error updating categories order', err, 'CategoriesService');
+      this.toastService.show('Error al guardar el orden', 'error');
+    } finally {
+      this._creating.set(false);
+    }
+  }
+
   async deleteCategory(id: string): Promise<boolean> {
     try {
       this._updatingId.set(id);
 
+      // Cross-domain fetch para borrar productos en cascada si no hay triggers en BD
       const { data: products, error: productsError } = await this.supabase
         .from('productos')
-        .select('id, producto_fotos(url)')
+        .select('id')
         .eq('categoria_id', id);
 
       if (productsError) throw productsError;
 
       if (products && products.length > 0) {
-        const allImages = products.flatMap((p: any) => p.producto_fotos || []);
-        const deleteImagePromises = allImages.map((foto: any) => 
-          this.productsService.deleteImage(foto.url).catch(err => this.logger.error('Error deleting image', err, 'CategoriesService'))
-        );
-        
-        await Promise.allSettled(deleteImagePromises);
-
-        for (const product of products) {
-           await this.productsService.delete(product.id);
-        }
+        const deletePromises = products.map((product: any) => this.productsService.delete(product.id));
+        await Promise.all(deletePromises);
       }
 
-      const { error } = await this.supabase
-        .from('categorias')
-        .delete()
-        .eq('id', id);
-
+      // 1 solo llamado a BD para borrar categoría
+      const { error } = await this.api.delete(id);
       if (error) throw error;
 
       this.toastService.show('Categoría eliminada correctamente', 'success');
@@ -193,7 +188,7 @@ export class CategoriesService {
   updateCategoryName(id: string, nombre: string): Observable<Category> {
     return from(this.updateCategory(id, { nombre })).pipe(
       map(res => {
-        if (!res) throw new Error(this.error() || 'Error updating category');
+        if (!res) throw new Error((this.categoriesResource.error() as any)?.message || 'Error updating category');
         return res;
       })
     );

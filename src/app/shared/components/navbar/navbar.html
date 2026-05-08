@@ -54,6 +54,15 @@
         Nueva orden
       </a>
 
+      <a 
+        routerLink="/sales" 
+        routerLinkActive="bg-zinc-800 text-white"
+        class="px-3 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-2"
+      >
+        <lucide-icon name="trending-up" class="w-4 h-4"></lucide-icon>
+        Ventas
+      </a>
+
     </nav>
 
     <!-- Right Actions -->
@@ -127,12 +136,22 @@
         </a>
 
         <a 
+          routerLink="/sales" 
+          routerLinkActive="bg-zinc-800 text-white"
+          (click)="toggleMenu()"
+          class="px-4 py-3 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-3"
+        >
+          <lucide-icon name="trending-up" class="w-5 h-5"></lucide-icon>
+          Ventas
+        </a>
+
+        <a 
           routerLink="/manageModifiers/categories" 
           routerLinkActive="bg-zinc-800 text-white"
           (click)="toggleMenu()"
           class="px-4 py-3 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-3"
         >
-          <lucide-icon name="plus" class="w-5 h-5"></lucide-icon>
+          <lucide-icon name="sliders-horizontal" class="w-5 h-5"></lucide-icon>
           Modificadores
         </a>
 
@@ -140,7 +159,7 @@
           <div class="h-px bg-zinc-800 my-2"></div>
 
           <button
-            (click)="logOut(); toggleMenu()"
+            (click)="logOut()"
             class="w-full px-4 py-3 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-all flex items-center gap-3 text-left"
           >
             <lucide-icon name="log-out" class="w-5 h-5"></lucide-icon>

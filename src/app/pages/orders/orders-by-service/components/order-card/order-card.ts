@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { CommonModule, DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { OrderStatus, PaymentStatus } from '@core/models/order.model';
-import { OrderListItem } from '@core/services/orders.service';
+import { OrderListItem } from '@core/models/order.model';
 
 @Component({
   selector: 'app-order-card',

@@ -6,6 +6,8 @@ export interface CartItem {
   product_id: string;
   nombre: string;
   precio: number;
+  precio_original?: number;
+  descuento?: number;
   cantidad: number;
   imagen_url?: string;
   variante?: {
@@ -74,7 +76,9 @@ export class PublicCartService {
         id: crypto.randomUUID(),
         product_id: product.id,
         nombre: product.nombre,
-        precio: variant ? variant.precio : (product.precio || 0),
+        precio_original: variant ? variant.precio : (product.precio || 0),
+        descuento: variant ? (variant.descuento || 0) : (product.descuento || 0),
+        precio: variant ? (variant.precio - (variant.descuento || 0)) : ((product.precio || 0) - (product.descuento || 0)),
         cantidad: cantidad,
         imagen_url: product.imagen_url,
         variante: variant ? {

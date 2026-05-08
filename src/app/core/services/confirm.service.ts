@@ -5,7 +5,10 @@ export interface ConfirmOptions {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  onConfirm?: () => void;
+  showInput?: boolean;
+  inputPlaceholder?: string;
+  isDanger?: boolean;
+  onConfirm?: (inputValue?: string) => void;
 }
 
 @Injectable({
@@ -14,20 +17,30 @@ export interface ConfirmOptions {
 export class ConfirmService {
 
   private _state = signal<ConfirmOptions | null>(null);
+  private _inputValue = signal<string>('');
 
   readonly state = this._state.asReadonly();
+  readonly inputValue = this._inputValue.asReadonly();
 
   open(options: ConfirmOptions) {
+    this._inputValue.set('');
     this._state.set({
-      confirmText: 'Eliminar',
+      confirmText: 'Confirmar',
       cancelText: 'Cancelar',
+      showInput: false,
+      isDanger: false,
       ...options
     });
   }
 
+  setInputValue(value: string) {
+    this._inputValue.set(value);
+  }
+
   confirm() {
     const current = this._state();
-    current?.onConfirm?.();
+    const value = this._inputValue();
+    current?.onConfirm?.(value);
     this.close();
   }
 

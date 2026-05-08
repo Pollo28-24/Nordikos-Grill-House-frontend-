@@ -6,12 +6,24 @@ import { CategoriesService } from '@core/services/categories.service';
 import { ProductsService } from '@core/services/products.service';
 import { PublicCartService } from '@core/services/public-cart.service';
 import { PublicCart } from './components/public-cart/public-cart';
+import { PublicHeader } from './components/public-header/public-header';
+import { CategoryNav } from './components/category-nav/category-nav';
+import { ProductCard } from './components/product-card/product-card';
+import { ProductDetailModal } from './components/product-detail-modal/product-detail-modal';
 import { Product, ProductVariant } from '@core/models/product.model';
 
 @Component({
   selector: 'app-public-menu',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, PublicCart],
+  imports: [
+    CommonModule, 
+    LucideAngularModule, 
+    PublicCart, 
+    PublicHeader, 
+    CategoryNav, 
+    ProductCard, 
+    ProductDetailModal
+  ],
   templateUrl: './public-menu.html',
   styles: [`
     .hide-scrollbar::-webkit-scrollbar {
@@ -42,37 +54,29 @@ export class PublicMenu implements OnInit {
   selectedCategoryId = signal<string | null>(null);
   searchQuery = signal('');
   isCartOpen = signal(false);
+  cartBumping = signal(false);
+  addedProducts = signal<Record<string, boolean>>({});
 
   // Selection modal state
   selectedProductForDetail = signal<Product | null>(null);
-  selectedVariantId = signal<string | null>(null);
-  selectedQuantity = signal<number>(1);
-  variantQuantities = signal<Record<string, number>>({});
-
-  // Computed for selected product details
-  selectedProductVariants = computed(() => this.selectedProductForDetail()?.variants ?? []);
-  
-  selectedVariant = computed(() => {
-    const variants = this.selectedProductVariants();
-    const id = this.selectedVariantId();
-    return variants.find(v => v.id === id) ?? null;
-  });
 
   // Computed filtered products
   filteredProducts = computed(() => {
     let items = this.products();
     const categoryId = this.selectedCategoryId();
-    const query = this.searchQuery().toLowerCase();
+    const query = (this.searchQuery() || '').toLowerCase().trim();
 
     if (categoryId) {
       items = items.filter(p => p.categoria_id === categoryId);
     }
 
     if (query) {
-      items = items.filter(p => 
-        p.nombre.toLowerCase().includes(query) || 
-        p.descripcion?.toLowerCase().includes(query)
-      );
+      const normalizedQuery = query.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+      items = items.filter(p => {
+        const name = (p.nombre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+        const desc = (p.descripcion || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+        return name.includes(normalizedQuery) || desc.includes(normalizedQuery);
+      });
     }
 
     // Only show visible products
@@ -127,93 +131,55 @@ export class PublicMenu implements OnInit {
     return this.filteredProducts().filter(p => p.categoria_id === categoryId);
   }
 
-  addToCart(product: Product, variant?: ProductVariant) {
-    // Si viene de la card (botón rápido) o es producto simple
-    if (!this.selectedProductForDetail()) {
-      this.cartService.addToCart(product, variant);
-      return;
-    }
+  addFromCard(product: Product) {
+    this.cartService.addToCart(product);
+    this.triggerCartAnimation(product.id);
+  }
 
-    // Si estamos en el modal
+  addFromModal(event: { product: Product, quantity: number, variants: Record<string, number> }) {
+    const { product, quantity, variants } = event;
+    let addedAny = false;
+
     if (product.price_type === 'variants' || (product.variants && product.variants.length > 0)) {
-      // Agregar cada variante con su cantidad seleccionada
-      const quantities = this.variantQuantities();
-      let addedAny = false;
-
       product.variants?.forEach(v => {
-        const qty = quantities[v.id] || 0;
+        const qty = variants[v.id] || 0;
         for (let i = 0; i < qty; i++) {
           this.cartService.addToCart(product, v);
           addedAny = true;
         }
       });
-
-      if (addedAny) {
-        this.closeProductDetail();
-      }
     } else {
-      // Producto simple en modal
-      const qty = this.selectedQuantity();
-      for (let i = 0; i < qty; i++) {
+      for (let i = 0; i < quantity; i++) {
         this.cartService.addToCart(product);
+        addedAny = true;
       }
-      this.closeProductDetail();
+    }
+
+    if (addedAny) {
+      this.triggerCartAnimation(product.id);
+      setTimeout(() => this.closeProductDetail(), 500);
     }
   }
 
+  triggerCartAnimation(productId: string) {
+    // Animación del carrito
+    this.cartBumping.set(false); // reset if clicked fast
+    setTimeout(() => this.cartBumping.set(true), 10);
+    setTimeout(() => this.cartBumping.set(false), 400);
+
+    // Feedback en la tarjeta del producto
+    this.addedProducts.update(s => ({ ...s, [productId]: true }));
+    setTimeout(() => {
+      this.addedProducts.update(s => ({ ...s, [productId]: false }));
+    }, 1000);
+  }
+
   openProductDetail(product: Product) {
-    this.selectedQuantity.set(1);
     this.selectedProductForDetail.set(product);
-    
-    // Inicializar cantidades de variantes
-    const initialQuantities: Record<string, number> = {};
-    if (product.variants?.length) {
-      product.variants.forEach(v => {
-        initialQuantities[v.id] = 0;
-      });
-      // Por defecto, poner 1 en la primera variante para que no esté vacío
-      initialQuantities[product.variants[0].id] = 1;
-    }
-    this.variantQuantities.set(initialQuantities);
   }
 
   closeProductDetail() {
     this.selectedProductForDetail.set(null);
-    this.selectedVariantId.set(null);
-    this.selectedQuantity.set(1);
-    this.variantQuantities.set({});
-  }
-
-  updateSelectedQuantity(amount: number) {
-    this.selectedQuantity.update(q => Math.max(1, q + amount));
-  }
-
-  updateVariantQuantity(variantId: string, amount: number) {
-    this.variantQuantities.update(qs => ({
-      ...qs,
-      [variantId]: Math.max(0, (qs[variantId] || 0) + amount)
-    }));
-  }
-
-  getTotalInModal(): number {
-    const product = this.selectedProductForDetail();
-    if (!product) return 0;
-
-    if (product.price_type === 'variants' || (product.variants && product.variants.length > 0)) {
-      const quantities = this.variantQuantities();
-      return product.variants?.reduce((acc, v) => acc + (v.precio * (quantities[v.id] || 0)), 0) || 0;
-    }
-
-    return (product.precio || 0) * this.selectedQuantity();
-  }
-
-  hasSelectedVariants(): boolean {
-    const quantities = this.variantQuantities();
-    return Object.values(quantities).some(q => q > 0);
-  }
-
-  selectVariant(variantId: string) {
-    this.selectedVariantId.set(variantId);
   }
 
   toggleCart() {

@@ -46,6 +46,17 @@
         <lucide-icon name="plus" class="w-4 h-4 text-[#FFB300]"></lucide-icon>
       </button>
 
+      <!-- Reorder -->
+      <button
+        class="p-1.5 rounded-full transition"
+        [class.bg-[#FFB300]/20]="isOrdering()"
+        [class.hover:bg-[#FFB300]/10]="!isOrdering()"
+        (click)="toggleOrdering()"
+        title="Reordenar productos"
+      >
+        <lucide-icon name="list-ordered" class="w-4 h-4 text-[#FFB300]"></lucide-icon>
+      </button>
+
       <!-- Toggle -->
       <button
         class="p-1.5 rounded-full hover:bg-[#FFB300]/10 transition"
@@ -62,80 +73,109 @@
 
   <!-- PRODUCTS -->
   @if (group().isVisible) {
-    @if (group().products.length === 0) {
-      <div class="text-center py-8 text-[#B0B0B0]">
-        No hay productos disponibles
-      </div>
-    }
+    <div cdkDropList (cdkDropListDropped)="onDrop($event)" [cdkDropListDisabled]="!isOrdering()" class="min-h-[20px]">
+      @if (localProducts().length === 0) {
+        <div class="text-center py-8 text-[#B0B0B0]">
+          No hay productos disponibles
+        </div>
+      }
 
-    @for (product of group().products; track product.id) {
-      <div class="px-4 py-3 flex items-center justify-between border-b border-black/20 last:border-none hover:bg-[#1A1A1A] transition">
-        <!-- Info -->
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="w-10 h-10 rounded-xl bg-[#121212] overflow-hidden flex items-center justify-center shrink-0">
-            @if (product.images?.length) {
-              <img
-                [src]="product.images![0].url"
-                class="w-full h-full object-cover"
-                [alt]="product.nombre"
-              />
-            } @else if (product.imagen_url) {
-              <img
-                [src]="product.imagen_url"
-                class="w-full h-full object-cover"
-                [alt]="product.nombre"
-              />
-            } @else {
-              <lucide-icon name="image" class="w-5 h-5 text-[#B0B0B0]"></lucide-icon>
-            }
+      @for (product of localProducts(); track product.id; let i = $index) {
+        <div cdkDrag class="px-4 py-3 flex items-center justify-between border-b border-black/20 last:border-none hover:bg-[#1A1A1A] transition-colors relative">
+          
+          <!-- Grip for ordering (only visible when isOrdering) -->
+          @if (isOrdering()) {
+            <div cdkDragHandle class="absolute left-1 cursor-grab active:cursor-grabbing text-[#FFB300] p-1">
+              <lucide-icon name="grip-vertical" class="w-4 h-4"></lucide-icon>
+            </div>
+          }
+
+          <!-- Info -->
+          <div class="flex items-center gap-3 min-w-0" [class.ml-6]="isOrdering()">
+            <!-- Order Number -->
+            <div class="hidden sm:flex shrink-0 w-6 h-6 items-center justify-center rounded-md bg-[#121212] border border-white/5 text-[10px] font-bold text-[#FFB300]/60">
+              {{ product.orden || (i + 1) }}
+            </div>
+
+            <div class="w-10 h-10 rounded-xl bg-[#121212] overflow-hidden flex items-center justify-center shrink-0">
+              @if (product.images?.length) {
+                <img
+                  [src]="product.images![0].url"
+                  class="w-full h-full object-cover"
+                  [alt]="product.nombre"
+                />
+              } @else if (product.imagen_url) {
+                <img
+                  [src]="product.imagen_url"
+                  class="w-full h-full object-cover"
+                  [alt]="product.nombre"
+                />
+              } @else {
+                <lucide-icon name="image" class="w-5 h-5 text-[#B0B0B0]"></lucide-icon>
+              }
+            </div>
+
+            <div class="truncate">
+              <p class="text-sm font-medium truncate text-[#F5F5F5]">
+                {{ product.nombre }}
+              </p>
+              <p class="text-xs text-[#B0B0B0]">
+                ID: {{ product.id }}
+              </p>
+
+              <div class="mt-2 flex flex-wrap gap-2">
+                @if (product.visible === false) {
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20 uppercase tracking-tight">
+                    Oculto en menú
+                  </span>
+                }
+                @if (product.disponible === false) {
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-tight">
+                    Agotado
+                  </span>
+                }
+              </div>
+            </div>
           </div>
 
-          <div class="truncate">
-            <p class="text-sm font-medium truncate text-[#F5F5F5]">
-              {{ product.nombre }}
-            </p>
-            <p class="text-xs text-[#B0B0B0]">
-              ID: {{ product.id }}
-            </p>
-
-            <div class="mt-2 flex flex-wrap gap-2">
-              @if (product.visible === false) {
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20 uppercase tracking-tight">
-                  Oculto en menú
+          <!-- Actions -->
+          <div class="flex items-center gap-4">
+            <div class="flex flex-col items-end mr-2">
+              @if (product.descuento && product.descuento > 0) {
+                <span class="text-[10px] font-medium text-zinc-500 line-through">
+                  {{ product.precio | currency:'MXN':'symbol-narrow':'1.2-2' }}
                 </span>
-              }
-              @if (product.disponible === false) {
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-tight">
-                  Agotado
+                <span class="text-sm font-bold text-emerald-500">
+                  {{ ((product.precio || 0) - (product.descuento || 0)) | currency:'MXN':'symbol-narrow':'1.2-2' }}
+                </span>
+              } @else {
+                <span class="text-sm font-semibold text-[#FFB300]">
+                  {{ product.precio | currency:'MXN':'symbol-narrow':'1.2-2' }}
                 </span>
               }
             </div>
+
+            <button
+              class="p-1.5 rounded-full hover:bg-[#FFB300]/10 transition"
+              (click)="editProduct.emit(product.id)"
+              title="Editar"
+            >
+              <lucide-icon name="pencil" class="w-4 h-4 text-[#FFB300]"></lucide-icon>
+            </button>
+
+            <button
+              class="p-1.5 rounded-full hover:bg-[#FFB300]/10 transition"
+              (click)="deleteProduct.emit(product)"
+              title="Eliminar"
+            >
+              <lucide-icon name="trash-2" class="w-4 h-4 text-[#FFB300]"></lucide-icon>
+            </button>
           </div>
+
+          <!-- Placeholder -->
+          <div *cdkDragPlaceholder class="bg-[#FFB300]/5 border-2 border-dashed border-[#FFB300]/20 rounded-xl h-[64px] mb-2"></div>
         </div>
-
-        <!-- Actions -->
-        <div class="flex items-center gap-4">
-          <span class="text-sm font-semibold text-[#FFB300]">
-            {{ product.precio | currency:'MXN':'symbol-narrow':'1.2-2' }}
-          </span>
-
-          <button
-            class="p-1.5 rounded-full hover:bg-[#FFB300]/10 transition"
-            (click)="editProduct.emit(product.id)"
-            title="Editar"
-          >
-            <lucide-icon name="pencil" class="w-4 h-4 text-[#FFB300]"></lucide-icon>
-          </button>
-
-          <button
-            class="p-1.5 rounded-full hover:bg-[#FFB300]/10 transition"
-            (click)="deleteProduct.emit(product)"
-            title="Eliminar"
-          >
-            <lucide-icon name="trash-2" class="w-4 h-4 text-[#FFB300]"></lucide-icon>
-          </button>
-        </div>
-      </div>
-    }
+      }
+    </div>
   }
 </section>

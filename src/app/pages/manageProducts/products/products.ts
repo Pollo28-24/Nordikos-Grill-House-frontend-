@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
+import { Dialog } from '@angular/cdk/dialog';
 import { LucideAngularModule } from 'lucide-angular';
 
 import { ProductsService } from '@core/services/products.service';
@@ -17,6 +18,7 @@ import { CategoriesService } from '@core/services/categories.service';
 import { UserFeedbackService } from '@core/services/user-feedback.service';
 import { Navbar } from '@shared/components/navbar/navbar';
 import { ProductGroupCard } from './components/product-group-card/product-group-card';
+import { ProductFormModal } from '../product-form-modal/product-form-modal';
 
 @Component({
   selector: 'app-products',
@@ -30,6 +32,7 @@ export class Products {
   private categoriesService = inject(CategoriesService);
   private userFeedback = inject(UserFeedbackService);
   private router = inject(Router);
+  private dialog = inject(Dialog);
 
   @ViewChild('categoryScroller', { static: true })
   private categoryScroller!: ElementRef<HTMLDivElement>;
@@ -116,12 +119,20 @@ export class Products {
   }
 
   editProduct(id: string) {
-    this.router.navigate(['/manage-products/edit', id]);
+    this.dialog.open(ProductFormModal, {
+      data: { productId: id },
+      panelClass: ['bg-transparent', 'w-full', 'h-full', 'max-w-none', 'md:w-[90vw]', 'md:h-auto', 'md:max-w-[1000px]'],
+      backdropClass: 'custom-modal-backdrop',
+      disableClose: true
+    });
   }
 
   addProductToCategory(categoryId: string | null) {
-    this.router.navigate(['/manageProducts/createProducts'], {
-      queryParams: categoryId ? { categoria_id: categoryId } : {},
+    this.dialog.open(ProductFormModal, {
+      data: { categoria_id: categoryId },
+      panelClass: ['bg-transparent', 'w-full', 'h-full', 'max-w-none', 'md:w-[90vw]', 'md:h-auto', 'md:max-w-[1000px]'],
+      backdropClass: 'custom-modal-backdrop',
+      disableClose: true
     });
   }
 

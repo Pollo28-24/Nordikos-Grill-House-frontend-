@@ -20,19 +20,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/manageProducts/products/products').then((m) => m.Products),
     canActivate: [privateGuard],
   },
-  {
-    path: 'manageProducts/createProducts',
-    loadComponent: () => import('./pages/manageProducts/createProducts/createProducts').then((m) => m.CreateProducts),
-    canActivate: [privateGuard],
-  },
+
   {
     path: 'categories',
     loadComponent: () => import('./pages/manageCategories/manageCategories').then((m) => m.ManageCategories),
-    canActivate: [privateGuard],
-  },
-  { 
-    path: 'manage-products/edit/:id',
-    loadComponent: () => import('./pages/manageProducts/editProducts/editProducts').then((m) => m.EditProducts),
     canActivate: [privateGuard],
   },
   {
@@ -75,6 +66,11 @@ export const routes: Routes = [
   {
     path: 'orders/:id',
     loadComponent: () => import('./pages/orders/order-detail/order-detail').then(m => m.OrderDetail),
+    canActivate: [privateGuard],
+  },
+  {
+    path: 'sales',
+    loadComponent: () => import('./pages/sales-dashboard/sales-dashboard').then((m) => m.SalesDashboard),
     canActivate: [privateGuard],
   },
   {

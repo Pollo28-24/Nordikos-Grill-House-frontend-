@@ -1,8 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject, signal, OnInit, computed } from '@angular/core';
-import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SupabaseService } from '@shared/data-access/supabase.service';
 import { OrdersService } from '@core/services/orders.service';
 import { UserFeedbackService } from '@core/services/user-feedback.service';
 import { LoggerService } from '@core/services/logger.service';
@@ -19,7 +18,15 @@ import { OrderDetailTotals } from './components/order-detail-totals/order-detail
 @Component({
   selector: 'app-order-detail',
   standalone: true,
-  imports: [LucideAngularModule, Navbar, TicketPrintComponent, OrderDetailHeader, OrderDetailSummary, OrderDetailItems, OrderDetailTotals],
+  imports: [
+    CommonModule,
+    LucideAngularModule,
+    TicketPrintComponent,
+    OrderDetailHeader,
+    OrderDetailSummary,
+    OrderDetailItems,
+    OrderDetailTotals
+  ],
   templateUrl: './order-detail.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -76,7 +83,6 @@ export class OrderDetail implements OnInit {
       this.logger.warn('ID de orden no válido', { id }, 'OrderDetail');
       this.router.navigate(['/orders']);
     }
-
   }
 
   getDuration(): string {
@@ -129,6 +135,32 @@ export class OrderDetail implements OnInit {
 
   goBack() {
     this.router.navigate(['/orders']);
+  }
+
+  async cancelOrder() {
+    const id = this.orderId();
+    const order = this.order();
+    
+    if (!id || !order) return;
+
+    this.feedback.confirmAndExecute({
+      title: '¿Cancelar orden?',
+      message: 'Ingresa el motivo de la cancelación. Esta acción cambiará el estado de la orden y no se podrá revertir.',
+      confirmText: 'Sí, cancelar orden',
+      showInput: true,
+      inputPlaceholder: 'Ej. Error de captura, El cliente se retiró...',
+      isDanger: true,
+      action: async (reason?: string) => {
+        const result = await this.ordersService.cancelOrder(Number(id), reason?.trim() || '');
+        if (result.success) {
+          await this.loadOrder(id);
+        } else {
+          throw new Error(result.error || 'No se pudo cancelar la orden');
+        }
+      },
+      successMsg: 'Orden cancelada con éxito',
+      errorMsg: 'Error al cancelar la orden'
+    });
   }
 
   addMoreProducts() {

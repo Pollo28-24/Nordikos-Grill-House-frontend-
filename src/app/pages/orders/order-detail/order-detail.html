@@ -1,4 +1,4 @@
-<app-navbar />
+
 
 <div class="min-h-screen bg-[#121212] text-[#F5F5F5] pb-24 no-print">
   <div class="max-w-4xl mx-auto px-4 sm:px-5 py-6">
@@ -10,6 +10,7 @@
       (goBack)="goBack()"
       (openTicket)="openTicket($event)"
       (shareTicketPDF)="shareTicketPDF()"
+      (cancelOrder)="cancelOrder()"
     />
 
     @if (loading()) {

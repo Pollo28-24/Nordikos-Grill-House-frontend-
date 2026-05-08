@@ -4,13 +4,15 @@ import {
   ChangeDetectionStrategy,
   HostListener
 } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { ConfirmService } from '@core/services/confirm.service';
 
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  imports: [LucideAngularModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (confirmService.state(); as confirm) {
@@ -36,13 +38,13 @@ import { ConfirmService } from '@core/services/confirm.service';
           <div class="flex justify-center mb-5">
             <div
               class="w-14 h-14 flex items-center justify-center
-                     rounded-2xl
-                     bg-red-500/10
-                     border border-red-500/20"
+                     rounded-2xl"
+              [ngClass]="confirm.isDanger ? 'bg-red-500/10 border border-red-500/20' : 'bg-amber-500/10 border border-amber-500/20'"
             >
               <i-lucide
-                name="alert-triangle"
-                class="w-6 h-6 text-red-500"
+                [name]="confirm.isDanger ? 'alert-triangle' : 'info'"
+                class="w-6 h-6"
+                [ngClass]="confirm.isDanger ? 'text-red-500' : 'text-amber-500'"
               />
             </div>
           </div>
@@ -56,6 +58,19 @@ import { ConfirmService } from '@core/services/confirm.service';
           <p class="text-sm text-zinc-400 mt-3 leading-relaxed">
             {{ confirm.message }}
           </p>
+
+          <!-- Input Field -->
+          @if (confirm.showInput) {
+            <div class="mt-6">
+              <textarea
+                [placeholder]="confirm.inputPlaceholder || 'Escribe aquí...'"
+                class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors resize-none h-24"
+                [ngModel]="confirmService.inputValue()"
+                (ngModelChange)="confirmService.setInputValue($event)"
+                autofocus
+              ></textarea>
+            </div>
+          }
 
           <!-- Buttons -->
           <div class="flex gap-4 mt-8">
@@ -75,11 +90,9 @@ import { ConfirmService } from '@core/services/confirm.service';
               (click)="confirmService.confirm()"
               class="flex-1 px-4 py-2.5
                      rounded-xl
-                     bg-red-600
-                     text-white
-                     hover:bg-red-500
                      transition
                      font-medium"
+              [ngClass]="confirm.isDanger ? 'bg-red-600 text-white hover:bg-red-500' : 'bg-amber-500 text-black hover:bg-amber-400'"
             >
               {{ confirm.confirmText }}
             </button>

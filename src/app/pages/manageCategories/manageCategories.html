@@ -22,97 +22,92 @@
 
     <!-- CREATE FORM -->
     @if (showCreateForm()) {
+      <div
+        class="mb-8 p-5 bg-[#1E1E1E] rounded-2xl border border-[#2A2A2A] animate-in fade-in slide-in-from-top-2"
+      >
+        <div class="flex flex-col gap-3">
+          <input
+            type="text"
+            [(ngModel)]="newCategoryName"
+            (keydown.enter)="createCategory()"
+            placeholder="Nombre de la nueva categoría..."
+            class="w-full bg-[#121212] border border-[#333] rounded-xl px-4 py-3 text-[#F5F5F5] placeholder-[#666] focus:outline-none focus:border-[#FFB300] transition"
+            autofocus
+          />
 
-    <div
-      class="mb-8 p-5 bg-[#1E1E1E] rounded-2xl border border-[#2A2A2A] animate-in fade-in slide-in-from-top-2"
-    >
-      <div class="flex flex-col gap-3">
-        <input
-          type="text"
-          [(ngModel)]="newCategoryName"
-          (keydown.enter)="createCategory()"
-          placeholder="Nombre de la nueva categoría..."
-          class="w-full bg-[#121212] border border-[#333] rounded-xl px-4 py-3 text-[#F5F5F5] placeholder-[#666] focus:outline-none focus:border-[#FFB300] transition"
-          autofocus
-        />
+          <div class="flex gap-3">
+            <div class="flex-1 relative">
+              <lucide-icon
+                name="file-text"
+                class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666]"
+              />
 
-        <div class="flex gap-3">
-          <div class="flex-1 relative">
-            <lucide-icon
-              name="file-text"
-              class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666]"
-            />
+              <input
+                type="text"
+                [(ngModel)]="newCategoryDescription"
+                (keydown.enter)="createCategory()"
+                placeholder="Descripción (opcional)..."
+                class="w-full bg-[#121212] border border-[#333] rounded-xl pl-10 pr-4 py-3 text-[#F5F5F5] placeholder-[#666] focus:outline-none focus:border-[#FFB300] transition"
+              />
+            </div>
 
-            <input
-              type="text"
-              [(ngModel)]="newCategoryDescription"
-              (keydown.enter)="createCategory()"
-              placeholder="Descripción (opcional)..."
-              class="w-full bg-[#121212] border border-[#333] rounded-xl pl-10 pr-4 py-3 text-[#F5F5F5] placeholder-[#666] focus:outline-none focus:border-[#FFB300] transition"
-            />
+            <button
+              (click)="toggleCreateForm()"
+              class="bg-[#2A2A2A] text-[#9CA3AF] hover:text-[#F5F5F5] hover:bg-[#333] px-6 rounded-xl font-semibold transition flex items-center whitespace-nowrap"
+            >
+              Cancelar
+            </button>
+
+            <button
+              (click)="createCategory()"
+              [disabled]="!newCategoryName().trim() || creating()"
+              class="bg-[#FFB300] text-[#1E1E1E] px-6 rounded-xl font-semibold hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2 whitespace-nowrap"
+            >
+              @if (creating()) {
+                <lucide-icon name="loader-2" class="w-5 h-5 animate-spin" />
+              } @else {
+                <span>Crear</span>
+              }
+            </button>
           </div>
-
-          <button
-            (click)="createCategory()"
-            [disabled]="!newCategoryName().trim() || creating()"
-            class="bg-[#FFB300] text-[#1E1E1E] px-6 rounded-xl font-semibold hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2 whitespace-nowrap"
-          >
-            @if (creating()) {
-
-            <lucide-icon name="loader-2" class="w-5 h-5 animate-spin" />
-
-            } @else {
-
-            <span>Crear</span>
-
-            }
-          </button>
         </div>
       </div>
-    </div>
-
     }
 
     <!-- LOADING -->
-    @if (loading() && categories().length === 0) {
-
-    <div class="flex flex-col items-center justify-center py-20 text-[#666]">
-      <lucide-icon name="loader-2" class="w-8 h-8 animate-spin mb-4" />
-
-      <p>Cargando categorías...</p>
-    </div>
-
+    @if (loading() && localCategories().length === 0) {
+      <div class="flex flex-col items-center justify-center py-20 text-[#666]">
+        <lucide-icon name="loader-2" class="w-8 h-8 animate-spin mb-4" />
+        <p>Cargando categorías...</p>
+      </div>
     }
 
-    <!-- LIST -->
-    <div class="space-y-6">
-      @for (category of categories(); track category.id) {
-        <app-category-card
-          [category]="category"
-          [isUpdating]="updatingId() === category.id"
-          (nameChanged)="updateName(category.id, $event)"
-          (descriptionChanged)="updateDescription(category.id, $event)"
-          (toggleVisibility)="toggleVisibility(category)"
-          (delete)="deleteCategory(category)"
-          (addProduct)="addProduct(category.id)"
-        />
-
-      } @empty { @if (!loading()) {
-
-      <div class="text-center py-20 text-[#666]">
-        <lucide-icon
-          name="folder-open"
-          class="w-12 h-12 mx-auto mb-4 opacity-50"
-        />
-
-        <p class="text-lg">No hay categorías aún</p>
-
-        <p class="text-sm mt-2">
-          Crea la primera para empezar a organizar tu menú
-        </p>
-      </div>
-
-      } }
+    <!-- LIST MODE WITH DRAG & DROP -->
+    <div cdkDropList (cdkDropListDropped)="onDrop($event)" class="space-y-4">
+      @for (category of localCategories(); track category.id) {
+        <div cdkDrag>
+          <app-category-card
+            [category]="category"
+            [isUpdating]="updatingId() === category.id"
+            (nameChanged)="updateName(category.id, $event)"
+            (descriptionChanged)="updateDescription(category.id, $event)"
+            (toggleVisibility)="toggleVisibility(category)"
+            (delete)="deleteCategory(category)"
+            (addProduct)="addProduct(category.id)"
+          />
+          
+          <!-- Drag Preview Personalizado (Opcional, CDK ya clona el elemento) -->
+          <div *cdkDragPlaceholder class="bg-[#FFB300]/5 border-2 border-dashed border-[#FFB300]/20 rounded-2xl h-[100px] mb-4"></div>
+        </div>
+      } @empty { 
+        @if (!loading()) {
+          <div class="text-center py-20 text-gray-500">
+            <lucide-icon name="folder-open" class="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p class="text-lg">No hay categorías aún</p>
+            <p class="text-sm mt-2">Crea la primera para empezar a organizar tu menú</p>
+          </div>
+        }
+      }
     </div>
   </div>
 </section>

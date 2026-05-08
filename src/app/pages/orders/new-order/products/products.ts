@@ -8,7 +8,6 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
-import { RouterLink } from '@angular/router';
 
 import { ProductsService } from '../../../../core/services/products.service';
 import { OrdersService } from '../../../../core/services/orders.service';
@@ -17,7 +16,7 @@ import { CategoriesService } from '../../../../core/services/categories.service'
 @Component({
   selector: 'app-new-order-products',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, RouterLink],
+  imports: [CommonModule, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './products.html'
 })
@@ -41,7 +40,7 @@ export class NewOrderProducts {
 
   // NORMALIZED SEARCH
   private normalize(input: any) {
-    const s = String(input ?? '').toLowerCase();
+    const s = String(input ?? '').toLowerCase().trim();
     return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
 
@@ -50,8 +49,10 @@ export class NewOrderProducts {
     const cats = this.categories();
     const prods = this.products();
     const term = this.normalize(this.searchTerm());
+    const selectedCat = this.selectedCategory();
 
     return cats
+      .filter(c => !selectedCat || String(c.id) === String(selectedCat))
       .map((c: any) => ({
         category: c,
         items: prods
@@ -140,9 +141,8 @@ export class NewOrderProducts {
     return Object.values(groups);
   });
 
-  getProductPrice(p: any): string {
+  getProductPriceOriginal(p: any): string {
     const hasVariants = p.variants && p.variants.length > 0;
-    
     if (hasVariants && (p.price_type === 'variants' || !p.precio || p.precio === 0)) {
       const prices = p.variants.map((v: any) => Number(v.precio || 0));
       const min = Math.min(...prices);
@@ -150,8 +150,21 @@ export class NewOrderProducts {
       if (min === max) return `$${min}`;
       return `Desde $${min}`;
     }
-    
     return `$${p.precio || 0}`;
+  }
+
+  getProductPrice(p: any): string {
+    const hasVariants = p.variants && p.variants.length > 0;
+    
+    if (hasVariants && (p.price_type === 'variants' || !p.precio || p.precio === 0)) {
+      const prices = p.variants.map((v: any) => Number((v.precio || 0) - (v.descuento || 0)));
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      if (min === max) return `$${min}`;
+      return `Desde $${min}`;
+    }
+    
+    return `$${(p.precio || 0) - (p.descuento || 0)}`;
   }
 
   // ACTIONS

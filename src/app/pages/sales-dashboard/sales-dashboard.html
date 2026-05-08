@@ -1,0 +1,292 @@
+<div class="min-h-screen bg-[#121212] text-[#F5F5F5] pb-20">
+  
+  <!-- Encabezado y Filtros -->
+  <header class="bg-[#1E1E1E] border-b border-[#2A2A2A] sticky top-0 z-30 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        
+        <!-- Izquierda: Título y Regresar -->
+        <div class="flex items-center gap-4 shrink-0">
+          <button (click)="goBack()" class="p-2 rounded-xl bg-[#1A1A1A] border border-[#2A2A2A] hover:bg-[#FFB300]/10 hover:text-[#FFB300] hover:border-[#FFB300]/30 transition-all">
+            <lucide-icon name="arrow-left" class="w-5 h-5"></lucide-icon>
+          </button>
+          <div>
+            <h1 class="text-2xl font-bold text-[#F5F5F5] flex items-center gap-2">
+              <lucide-icon name="trending-up" class="w-6 h-6 text-[#FFB300]"></lucide-icon>
+              Panel de Ventas
+            </h1>
+            <p class="text-sm text-[#9CA3AF] mt-1">Analiza los ingresos y el rendimiento de tu negocio.</p>
+          </div>
+        </div>
+
+        <!-- Derecha: Filtros -->
+        <div class="flex flex-col sm:flex-row items-center gap-4">
+          <div class="flex flex-wrap items-center justify-center gap-2 bg-[#121212] p-1.5 rounded-xl border border-[#2A2A2A]">
+            <button 
+              (click)="setRange('all')"
+              class="px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap"
+              [class.bg-[#FFB300]]="selectedDateRange() === 'all'"
+              [class.text-[#121212]]="selectedDateRange() === 'all'"
+              [class.text-[#9CA3AF]]="selectedDateRange() !== 'all'"
+              [class.hover:text-[#F5F5F5]]="selectedDateRange() !== 'all'">
+              Todos
+            </button>
+            <button 
+              (click)="setRange('today')"
+              class="px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap"
+              [class.bg-[#FFB300]]="selectedDateRange() === 'today'"
+              [class.text-[#121212]]="selectedDateRange() === 'today'"
+              [class.text-[#9CA3AF]]="selectedDateRange() !== 'today'"
+              [class.hover:text-[#F5F5F5]]="selectedDateRange() !== 'today'">
+              Hoy
+            </button>
+            <button 
+              (click)="setRange('week')"
+              class="px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap"
+              [class.bg-[#FFB300]]="selectedDateRange() === 'week'"
+              [class.text-[#121212]]="selectedDateRange() === 'week'"
+              [class.text-[#9CA3AF]]="selectedDateRange() !== 'week'"
+              [class.hover:text-[#F5F5F5]]="selectedDateRange() !== 'week'">
+              Esta Semana
+            </button>
+            <button 
+              (click)="setRange('month')"
+              class="px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap"
+              [class.bg-[#FFB300]]="selectedDateRange() === 'month'"
+              [class.text-[#121212]]="selectedDateRange() === 'month'"
+              [class.text-[#9CA3AF]]="selectedDateRange() !== 'month'"
+              [class.hover:text-[#F5F5F5]]="selectedDateRange() !== 'month'">
+              Este Mes
+            </button>
+            <button 
+              (click)="setRange('custom')"
+              class="px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap"
+              [class.bg-[#FFB300]]="selectedDateRange() === 'custom'"
+              [class.text-[#121212]]="selectedDateRange() === 'custom'"
+              [class.text-[#9CA3AF]]="selectedDateRange() !== 'custom'"
+              [class.hover:text-[#F5F5F5]]="selectedDateRange() !== 'custom'">
+              Personalizado
+            </button>
+          </div>
+
+          @if (selectedDateRange() === 'custom') {
+            <div class="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 bg-[#121212] p-1.5 rounded-xl border border-[#2A2A2A]">
+              <input type="date" [(ngModel)]="customStartDate" (change)="applyCustomDate()" class="bg-[#1A1A1A] border border-[#2A2A2A] text-[#F5F5F5] text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#FFB300]">
+              <span class="text-[#9CA3AF]">-</span>
+              <input type="date" [(ngModel)]="customEndDate" (change)="applyCustomDate()" class="bg-[#1A1A1A] border border-[#2A2A2A] text-[#F5F5F5] text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#FFB300]">
+            </div>
+          }
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    @if (loading()) {
+      <div class="flex flex-col items-center justify-center py-20">
+        <lucide-icon name="loader-2" class="w-10 h-10 text-[#FFB300] animate-spin"></lucide-icon>
+        <p class="mt-4 text-[#9CA3AF]">Calculando métricas...</p>
+      </div>
+    } @else {
+      <!-- KPIs -->
+      <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Ingresos Totales -->
+        <div class="bg-[#1E1E1E] border border-[#2A2A2A] rounded-2xl p-6 relative overflow-hidden group">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-[#FFB300]/5 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div class="flex items-center justify-between relative z-10">
+            <div>
+              <p class="text-sm font-medium text-[#9CA3AF] uppercase tracking-wider">Ingresos Totales</p>
+              <h2 class="text-3xl font-bold text-[#F5F5F5] mt-2">${{ totalRevenue() | number:'1.2-2' }}</h2>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-[#FFB300]/10 flex items-center justify-center border border-[#FFB300]/20">
+              <lucide-icon name="dollar-sign" class="w-6 h-6 text-[#FFB300]"></lucide-icon>
+            </div>
+          </div>
+        </div>
+
+        <!-- Órdenes Completadas -->
+        <div class="bg-[#1E1E1E] border border-[#2A2A2A] rounded-2xl p-6 relative overflow-hidden group">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div class="flex items-center justify-between relative z-10">
+            <div>
+              <p class="text-sm font-medium text-[#9CA3AF] uppercase tracking-wider">Órdenes Pagadas</p>
+              <h2 class="text-3xl font-bold text-[#F5F5F5] mt-2">{{ totalOrdersCount() }}</h2>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+              <lucide-icon name="check-circle-2" class="w-6 h-6 text-blue-400"></lucide-icon>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ticket Promedio -->
+        <div class="bg-[#1E1E1E] border border-[#2A2A2A] rounded-2xl p-6 relative overflow-hidden group">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div class="flex items-center justify-between relative z-10">
+            <div>
+              <p class="text-sm font-medium text-[#9CA3AF] uppercase tracking-wider">Ticket Promedio</p>
+              <h2 class="text-3xl font-bold text-[#F5F5F5] mt-2">${{ averageTicket() | number:'1.2-2' }}</h2>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+              <lucide-icon name="receipt" class="w-6 h-6 text-emerald-400"></lucide-icon>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Desglose por Servicio -->
+      <section class="bg-[#1E1E1E] border border-[#2A2A2A] rounded-2xl p-6">
+        <h3 class="text-lg font-bold text-[#F5F5F5] mb-6 flex items-center gap-2">
+          <lucide-icon name="pie-chart" class="w-5 h-5 text-[#9CA3AF]"></lucide-icon>
+          Desglose de Ingresos por Servicio
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          <!-- Mesa -->
+          <div>
+            <div class="flex justify-between items-end mb-2">
+              <div class="flex items-center gap-2">
+                <lucide-icon name="utensils" class="w-4 h-4 text-orange-400"></lucide-icon>
+                <span class="font-medium text-[#F5F5F5]">Mesas</span>
+              </div>
+              <span class="text-xl font-bold">${{ serviceBreakdown().mesa.total | number:'1.0-0' }}</span>
+            </div>
+            <div class="w-full h-3 bg-[#121212] rounded-full overflow-hidden">
+              <div class="h-full bg-orange-400 rounded-full transition-all duration-1000" [style.width.%]="serviceBreakdown().mesa.percentage"></div>
+            </div>
+            <p class="text-xs text-[#9CA3AF] mt-2 text-right">{{ serviceBreakdown().mesa.percentage }}% ({{ serviceBreakdown().mesa.count }} órdenes)</p>
+          </div>
+
+          <!-- Llevar -->
+          <div>
+            <div class="flex justify-between items-end mb-2">
+              <div class="flex items-center gap-2">
+                <lucide-icon name="shopping-bag" class="w-4 h-4 text-purple-400"></lucide-icon>
+                <span class="font-medium text-[#F5F5F5]">Para Llevar</span>
+              </div>
+              <span class="text-xl font-bold">${{ serviceBreakdown().llevar.total | number:'1.0-0' }}</span>
+            </div>
+            <div class="w-full h-3 bg-[#121212] rounded-full overflow-hidden">
+              <div class="h-full bg-purple-400 rounded-full transition-all duration-1000" [style.width.%]="serviceBreakdown().llevar.percentage"></div>
+            </div>
+            <p class="text-xs text-[#9CA3AF] mt-2 text-right">{{ serviceBreakdown().llevar.percentage }}% ({{ serviceBreakdown().llevar.count }} órdenes)</p>
+          </div>
+
+          <!-- Delivery -->
+          <div>
+            <div class="flex justify-between items-end mb-2">
+              <div class="flex items-center gap-2">
+                <lucide-icon name="bike" class="w-4 h-4 text-cyan-400"></lucide-icon>
+                <span class="font-medium text-[#F5F5F5]">Delivery</span>
+              </div>
+              <span class="text-xl font-bold">${{ serviceBreakdown().delivery.total | number:'1.0-0' }}</span>
+            </div>
+            <div class="w-full h-3 bg-[#121212] rounded-full overflow-hidden">
+              <div class="h-full bg-cyan-400 rounded-full transition-all duration-1000" [style.width.%]="serviceBreakdown().delivery.percentage"></div>
+            </div>
+            <p class="text-xs text-[#9CA3AF] mt-2 text-right">{{ serviceBreakdown().delivery.percentage }}% ({{ serviceBreakdown().delivery.count }} órdenes)</p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Tabla de Transacciones -->
+      <section class="bg-[#1E1E1E] border border-[#2A2A2A] rounded-2xl overflow-hidden">
+        
+        <!-- Header de la tabla -->
+        <div class="p-5 border-b border-[#2A2A2A] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#1A1A1A]">
+          <h3 class="text-lg font-bold text-[#F5F5F5]">Historial de Transacciones</h3>
+          
+          <div class="flex items-center gap-2 bg-[#121212] p-1 rounded-xl border border-[#2A2A2A]">
+            <button (click)="setServiceType('all')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition" [class.bg-[#303030]]="selectedServiceType() === 'all'" [class.text-white]="selectedServiceType() === 'all'">Todos</button>
+            <button (click)="setServiceType('mesa')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition" [class.bg-[#303030]]="selectedServiceType() === 'mesa'" [class.text-white]="selectedServiceType() === 'mesa'">Mesa</button>
+            <button (click)="setServiceType('llevar')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition" [class.bg-[#303030]]="selectedServiceType() === 'llevar'" [class.text-white]="selectedServiceType() === 'llevar'">Llevar</button>
+            <button (click)="setServiceType('delivery')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition" [class.bg-[#303030]]="selectedServiceType() === 'delivery'" [class.text-white]="selectedServiceType() === 'delivery'">Delivery</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead class="bg-[#181818] text-[#9CA3AF] border-b border-[#2A2A2A]">
+              <tr>
+                <th class="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Orden</th>
+                <th class="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Fecha y Hora</th>
+                <th class="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Servicio</th>
+                <th class="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Cliente / Nota</th>
+                <th class="px-6 py-4 font-semibold uppercase tracking-wider text-xs text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#2A2A2A]">
+              @for (order of filteredOrders(); track order.id) {
+                <tr class="hover:bg-[#1A1A1A] transition" [class.opacity-50]="order.estado_pedido === 'cancelado'">
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex items-center justify-center px-2 py-1 rounded-lg bg-[#303030] text-[#F5F5F5] font-mono text-xs">
+                        #{{ order.numero_orden || order.id }}
+                      </span>
+                      @if (order.estado_pedido === 'cancelado') {
+                        <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-red-500/10 text-red-500 border border-red-500/20 uppercase tracking-tighter">
+                          Cancelada
+                        </span>
+                      }
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-[#B0B0B0]">
+                    {{ order.fecha_creacion | date:'dd/MMM hh:mm a' }}
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
+                      [class.bg-orange-500/10]="order.tipo_servicio_nombre.toLowerCase().includes('mesa')"
+                      [class.text-orange-400]="order.tipo_servicio_nombre.toLowerCase().includes('mesa')"
+                      [class.border-orange-500/20]="order.tipo_servicio_nombre.toLowerCase().includes('mesa')"
+                      [class.bg-purple-500/10]="order.tipo_servicio_nombre.toLowerCase().includes('llevar')"
+                      [class.text-purple-400]="order.tipo_servicio_nombre.toLowerCase().includes('llevar')"
+                      [class.border-purple-500/20]="order.tipo_servicio_nombre.toLowerCase().includes('llevar')"
+                      [class.bg-cyan-500/10]="order.tipo_servicio_nombre.toLowerCase().includes('delivery')"
+                      [class.text-cyan-400]="order.tipo_servicio_nombre.toLowerCase().includes('delivery')"
+                      [class.border-cyan-500/20]="order.tipo_servicio_nombre.toLowerCase().includes('delivery')"
+                    >
+                      @if (order.tipo_servicio_nombre.toLowerCase().includes('mesa')) {
+                        <lucide-icon name="utensils" class="w-3 h-3"></lucide-icon>
+                      } @else if (order.tipo_servicio_nombre.toLowerCase().includes('llevar')) {
+                        <lucide-icon name="shopping-bag" class="w-3 h-3"></lucide-icon>
+                      } @else if (order.tipo_servicio_nombre.toLowerCase().includes('delivery')) {
+                        <lucide-icon name="bike" class="w-3 h-3"></lucide-icon>
+                      }
+                      {{ order.tipo_servicio_nombre }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex flex-col max-w-[200px]">
+                      <span class="text-[#F5F5F5] truncate">{{ order.cliente_nombre }}</span>
+                      @if (order.nota_general) {
+                        <span class="text-xs text-[#9CA3AF] truncate">{{ order.nota_general }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-right font-bold text-[#F5F5F5]">
+                    <span [class.line-through]="order.estado_pedido === 'cancelado'" [class.text-[#9CA3AF]]="order.estado_pedido === 'cancelado'">
+                      ${{ order.total | number:'1.2-2' }}
+                    </span>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="px-6 py-12 text-center text-[#9CA3AF]">
+                    <lucide-icon name="inbox" class="w-12 h-12 mx-auto mb-3 opacity-50"></lucide-icon>
+                    <p>No se encontraron transacciones en este periodo.</p>
+                    <p class="text-xs text-[#6B7280] mt-1">Asegúrate de haber marcado las órdenes como "Pagadas" o "Entregadas" para que aparezcan aquí.</p>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+
+  </main>
+</div>

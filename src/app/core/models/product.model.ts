@@ -60,6 +60,7 @@ export interface Product {
   embalaje?: string | null; // character varying en BD
   disponible?: boolean;
   visible?: boolean;
+  orden?: number;
   // Campo calculador - primera foto del producto
   imagen_url?: string; 
   images?: ProductImage[];

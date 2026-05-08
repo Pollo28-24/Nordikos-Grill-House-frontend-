@@ -171,6 +171,35 @@ export class NewOrderCart {
       for (const p of prods) {
         const v = (p?.variants ?? []).find((vv: any) => String(vv.id) === String(varId));
         if (v) {
+          basePrice = Number(v.precio ?? 0) - Number(v.descuento ?? 0);
+          break;
+        }
+      }
+    } else if (prodId != null) {
+      const p = prods.find(pp => String(pp.id) === String(prodId));
+      if (p) basePrice = Number(p.precio ?? 0) - Number(p.descuento ?? 0);
+    }
+
+    const modsPrice = (item.modificadores || []).reduce((acc: number, m: any) => {
+      return acc + (Number(m.precio_unitario || 0) * Number(m.cantidad || 1));
+    }, 0);
+
+    return basePrice + modsPrice;
+  }
+
+  unitPrice(item: any): number {
+    return this.getUnitPrice(item, this.productsService.products());
+  }
+
+  getOriginalUnitPrice(item: any, prods: any[]): number {
+    const varId = item?.variante_id;
+    const prodId = item?.producto_id;
+    let basePrice = 0;
+
+    if (varId != null) {
+      for (const p of prods) {
+        const v = (p?.variants ?? []).find((vv: any) => String(vv.id) === String(varId));
+        if (v) {
           basePrice = Number(v.precio ?? 0);
           break;
         }
@@ -187,8 +216,10 @@ export class NewOrderCart {
     return basePrice + modsPrice;
   }
 
-  unitPrice(item: any): number {
-    return this.getUnitPrice(item, this.productsService.products());
+  originalLineTotal(item: any): number {
+    const unit = this.getOriginalUnitPrice(item, this.productsService.products());
+    const qty = Number(item.cantidad ?? 0);
+    return unit * qty;
   }
 
   lineTotal(item: any): number {
@@ -237,66 +268,22 @@ export class NewOrderCart {
   }
 
   async updateExistingOrder() {
-    const orderId = this.ordersService.editingOrderId();
+    const orderId = Number(this.ordersService.editingOrderId());
     this.ordersService.creating.set(true);
     
     try {
-      let addedTotal = 0;
-      for (const item of this.cart()) {
-        const lineTotal = this.lineTotal(item);
-        addedTotal += lineTotal;
+      const itemsToSave = this.cart().map(item => ({
+        ...item,
+        precio_unitario: this.unitPrice(item),
+        total: this.lineTotal(item)
+      }));
 
-        const { data: newItem, error: itemError } = await this.supabase
-          .from('order_items')
-          .insert({
-            order_id: orderId,
-            producto_id: item.producto_id,
-            variante_id: item.variante_id,
-            nombre_producto: item.nombre_producto,
-            cantidad: item.cantidad,
-            nota: item.nota,
-            precio_unitario: this.unitPrice(item),
-            total: lineTotal
-          })
-          .select()
-          .single();
-
-        if (itemError) throw itemError;
-
-        if (item.modificadores && item.modificadores.length > 0) {
-          const modsToInsert = item.modificadores.map(m => ({
-            order_item_id: newItem.id,
-            nombre_modificador: m.nombre_modificador,
-            cantidad: m.cantidad,
-            precio_unitario: m.precio_unitario || 0
-          }));
-
-          const { error: modsError } = await this.supabase
-            .from('order_item_modificadores')
-            .insert(modsToInsert);
-          
-          if (modsError) throw modsError;
-        }
-      }
-
-      const { data: orderData, error: fetchError } = await this.supabase
-        .from('orders')
-        .select('total')
-        .eq('id', orderId)
-        .single();
-      
-      if (fetchError) throw fetchError;
-
-      const newTotal = Number(orderData.total || 0) + addedTotal;
-      const { error: updateError } = await this.supabase
-        .from('orders')
-        .update({ 
-          total: newTotal,
-          nota_general: this.form.value.nota_general 
-        })
-        .eq('id', orderId);
-      
-      if (updateError) throw updateError;
+      await this.ordersService.addItemsToOrder(
+        orderId, 
+        itemsToSave, 
+        this.form.value.nota_general ?? null, 
+        this.propina()
+      );
 
       this.toastService.show('Orden actualizada correctamente', 'success');
       this.finalizeSubmit();

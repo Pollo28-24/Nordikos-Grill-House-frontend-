@@ -1,0 +1,27 @@
+<div class="flex overflow-x-auto gap-3 pb-1 hide-scrollbar">
+  <button 
+    (click)="onSelect.emit(null)"
+    [class.bg-orange-500]="selectedCategoryId() === null"
+    [class.text-white]="selectedCategoryId() === null"
+    [class.bg-white]="selectedCategoryId() !== null"
+    [class.text-gray-700]="selectedCategoryId() !== null"
+    [class.border-[#E2D7B7]/50]="selectedCategoryId() !== null"
+    class="shrink-0 px-5 h-10 rounded-full text-sm font-bold transition whitespace-nowrap active:scale-95 shadow-sm border border-transparent"
+  >
+    Todos
+  </button>
+
+  @for (category of categories(); track category.id) {
+    <button 
+      (click)="onSelect.emit(category.id)"
+      [class.bg-orange-500]="selectedCategoryId() === category.id"
+      [class.text-white]="selectedCategoryId() === category.id"
+      [class.bg-white]="selectedCategoryId() !== category.id"
+      [class.text-gray-700]="selectedCategoryId() !== category.id"
+      [class.border-[#E2D7B7]/50]="selectedCategoryId() !== category.id"
+      class="shrink-0 px-5 h-10 rounded-full text-sm font-bold transition whitespace-nowrap active:scale-95 shadow-sm border border-transparent"
+    >
+      {{ category.nombre }}
+    </button>
+  }
+</div>
