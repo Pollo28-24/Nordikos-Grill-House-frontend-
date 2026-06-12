@@ -1,0 +1,79 @@
+<section class="relative h-screen w-full flex items-center justify-center overflow-hidden bg-nord-dark">
+  <!-- Background Video with Overlay & Fallback Image -->
+  <div class="absolute inset-0 z-0">
+    <!-- Overlay dark -->
+    <div class="absolute inset-0 bg-black/55 z-10"></div>
+    
+    <!-- Background Image Fallback (underneath) -->
+    <div 
+      class="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-105"
+      style="background-image: url('assets/header/header 2.jpg'); filter: brightness(0.45);"
+    ></div>
+
+    <!-- Video Element -->
+    <video 
+      autoplay 
+      loop 
+      muted 
+      playsinline 
+      class="absolute min-w-full min-h-full w-auto h-auto top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 object-cover transition-opacity duration-1000"
+      style="filter: brightness(0.35);"
+    >
+      <source src="assets/video/grill.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <!-- Hero Content -->
+  <div class="relative z-20 max-w-4xl mx-auto px-6 text-center flex flex-col items-center justify-center">
+    <!-- Logo -->
+    <div class="mb-8 animate-float">
+      <img 
+        src="assets/logo/logo 2 nordicos.jpg" 
+        alt="Nórdicos Logo" 
+        class="h-28 md:h-36 w-auto object-contain rounded-2xl border border-nord-gold/20 shadow-[0_0_32px_rgba(251,191,36,0.18)] drop-shadow-[0_0_20px_rgba(251,191,36,0.25)]"
+      />
+    </div>
+
+    <!-- Title -->
+    <h1 class="font-serif text-4xl md:text-6xl lg:text-7xl font-bold text-nord-cream tracking-tight leading-tight mb-4">
+      El fuego que transforma<br class="hidden md:inline"/>
+      <span class="text-nord-ember text-glow-gold drop-shadow-[0_2px_8px_rgba(217,119,6,0.3)]">el origen en leyenda</span>
+    </h1>
+
+    <!-- Subtitle -->
+    <p class="font-sans text-lg md:text-xl text-nord-cream-muted max-w-2xl mx-auto mb-10 tracking-wide font-light">
+      La verdadera experiencia grill en Oaxaca. Fuego real, cortes de autor y momentos memorables.
+    </p>
+
+    <!-- Buttons -->
+    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center w-full max-w-md">
+      <a 
+        routerLink="/menu"
+        class="w-full sm:w-auto px-8 py-4 bg-nord-ember hover:bg-nord-ember/90 text-nord-cream font-sans font-semibold rounded-lg shadow-lg hover:shadow-nord-ember/25 transition-all duration-300 transform hover:-translate-y-0.5 hover:scale-105 text-center cursor-pointer animate-glow-pulse"
+      >
+        🍽️ Ver Menú
+      </a>
+      <a 
+        href="#ubicacion"
+        (click)="scrollToAbout($event)"
+        class="w-full sm:w-auto px-8 py-4 bg-transparent hover:bg-nord-cream/10 text-nord-cream font-sans font-semibold rounded-lg border border-nord-cream/20 hover:border-nord-cream/50 transition-all duration-300 transform hover:-translate-y-0.5 text-center cursor-pointer"
+      >
+        📍 Visítanos
+      </a>
+    </div>
+  </div>
+
+  <!-- Scroll Down Indicator -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2">
+    <span class="text-nord-cream/40 text-xs tracking-widest uppercase font-light">Deslizar</span>
+    <a 
+      href="#experiencia" 
+      (click)="scrollToAbout($event)"
+      class="text-nord-gold hover:text-nord-ember transition-colors duration-300 animate-bounce-down cursor-pointer"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+      </svg>
+    </a>
+  </div>
+</section>

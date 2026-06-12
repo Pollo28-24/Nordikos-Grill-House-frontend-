@@ -1,0 +1,61 @@
+<section class="py-20 md:py-32 bg-nord-dark text-nord-cream overflow-hidden">
+  <div class="max-w-6xl mx-auto px-6">
+    
+    <!-- Mission & Vision Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
+      
+      <!-- Mission Card -->
+      <div 
+        appRevealOnScroll 
+        class="reveal-left glass-panel p-8 md:p-10 rounded-2xl relative overflow-hidden group hover:border-nord-ember/40 transition-all duration-500"
+      >
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-nord-ember/5 rounded-full filter blur-xl group-hover:bg-nord-ember/15 transition-colors duration-500"></div>
+        <div class="text-3xl mb-6">🎯</div>
+        <h3 class="font-serif text-2xl md:text-3xl font-bold mb-4 text-nord-gold">Nuestra Misión</h3>
+        <div class="h-0.5 w-12 bg-nord-ember mb-6"></div>
+        <p class="font-sans text-sm md:text-base text-nord-cream/80 leading-relaxed">
+          Ofrecer una experiencia gastronómica auténtica a través de hamburguesas artesanales y productos elaborados con ingredientes frescos, locales y de la más alta calidad utilizando carne e ingredientes sustentables de la región de Oaxaca. Nos comprometemos a mantener procesos tradicionales de cocina y un servicio cálido y acogedor a nuestros clientes.
+        </p>
+      </div>
+
+      <!-- Vision Card -->
+      <div 
+        appRevealOnScroll 
+        [revealDelay]="200"
+        class="reveal-right glass-panel p-8 md:p-10 rounded-2xl relative overflow-hidden group hover:border-nord-gold/40 transition-all duration-500"
+      >
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-nord-gold/5 rounded-full filter blur-xl group-hover:bg-nord-gold/15 transition-colors duration-500"></div>
+        <div class="text-3xl mb-6">👁️‍🗨️</div>
+        <h3 class="font-serif text-2xl md:text-3xl font-bold mb-4 text-nord-gold">Nuestra Visión</h3>
+        <div class="h-0.5 w-12 bg-nord-gold mb-6"></div>
+        <p class="font-sans text-sm md:text-base text-nord-cream/80 leading-relaxed">
+          Ser una marca líder y en constante crecimiento a nivel local y en la región posicionando nuestro concepto de hamburguesas y concepto artesanal en los principales puntos del estado sin perder nunca la esencia de la calidez y la lealtad de una comunidad que valora el verdadero sabor de lo hecho a mano.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Values Sub-section -->
+    <div appRevealOnScroll class="reveal-init text-center max-w-2xl mx-auto mb-12">
+      <span class="text-nord-gold uppercase tracking-widest text-sm font-semibold mb-3">Nuestros Cimientos</span>
+      <h2 class="font-serif text-2xl md:text-4xl font-bold mb-4 text-nord-cream">Los Valores que Nos Guían</h2>
+      <div class="h-1 w-12 bg-nord-ember mx-auto rounded-full"></div>
+    </div>
+
+    <!-- Values Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+      @for (val of valores; track val.title; let i = $index) {
+        <div 
+          appRevealOnScroll
+          [revealDelay]="i * 100"
+          class="reveal-scale glass-panel p-6 rounded-xl text-center group hover:bg-nord-charcoal/80 transition-all duration-300"
+        >
+          <div class="text-4xl mb-4 transform group-hover:scale-125 transition-transform duration-300">{{ val.icon }}</div>
+          <h4 class="font-serif text-base font-bold mb-2 text-nord-gold">{{ val.title }}</h4>
+          <p class="font-sans text-xs text-nord-cream/60 leading-relaxed">{{ val.desc }}</p>
+        </div>
+      }
+    </div>
+
+  </div>
+</section>

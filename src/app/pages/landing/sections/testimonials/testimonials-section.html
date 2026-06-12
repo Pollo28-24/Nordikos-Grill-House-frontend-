@@ -1,0 +1,88 @@
+<section class="py-24 bg-nord-dark text-nord-cream border-t border-nord-gold/5 overflow-hidden">
+  <div class="max-w-4xl mx-auto px-6">
+    
+    <!-- Section Header -->
+    <div appRevealOnScroll class="reveal-init text-center mb-16">
+      <span class="text-nord-gold uppercase tracking-widest text-xs font-semibold mb-3 block">Opiniones de los comensales</span>
+      <h2 class="font-serif text-3xl md:text-5xl font-bold mb-4 text-nord-cream">
+        Clientes <span class="text-nord-ember">Satisfechos</span>
+      </h2>
+      <div class="h-0.5 w-16 bg-nord-ember mx-auto rounded-full"></div>
+    </div>
+
+    <!-- Carousel Container -->
+    <div 
+      appRevealOnScroll 
+      class="reveal-scale relative bg-nord-charcoal border border-nord-gold/5 p-8 md:p-12 rounded-2xl max-w-3xl mx-auto hover:border-nord-gold/20 transition-all duration-500 shadow-2xl"
+      (mouseenter)="stopCarousel()"
+      (mouseleave)="startCarousel()"
+    >
+      <!-- Quote Graphic -->
+      <div class="absolute top-4 left-6 text-7xl font-serif text-nord-gold/10 leading-none select-none">“</div>
+      <div class="absolute bottom-4 right-6 text-7xl font-serif text-nord-gold/10 leading-none select-none">”</div>
+
+      <!-- Testimonials Slides -->
+      <div class="relative min-h-[160px] flex items-center justify-center text-center">
+        @for (test of testimonials; track test.author; let i = $index) {
+          @if (activeIndex() === i) {
+            <div class="transition-all duration-500 ease-in-out animate-fade-in">
+              <!-- Rating Stars -->
+              <div class="flex justify-center gap-1 mb-6">
+                @for (star of [1,2,3,4,5]; track star) {
+                  <span class="text-nord-gold text-lg select-none">★</span>
+                }
+              </div>
+
+              <!-- Review Text -->
+              <p class="font-sans text-base md:text-lg text-nord-cream/90 italic leading-relaxed mb-6 px-4">
+                "{{ test.text }}"
+              </p>
+
+              <!-- Author Info -->
+              <h4 class="font-serif text-lg font-bold text-nord-gold mb-1">{{ test.author }}</h4>
+              <span class="font-sans text-xs text-nord-cream-muted tracking-wider uppercase">{{ test.role }}</span>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Arrow Controls -->
+      <button 
+        (click)="prev()"
+        class="absolute left-2 md:-left-16 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full border border-nord-gold/10 hover:border-nord-gold bg-nord-dark/60 text-nord-gold hover:bg-nord-ember hover:text-nord-cream flex items-center justify-center transition-all duration-300 shadow-md cursor-pointer"
+        aria-label="Anterior"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+      </button>
+
+      <button 
+        (click)="next()"
+        class="absolute right-2 md:-right-16 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full border border-nord-gold/10 hover:border-nord-gold bg-nord-dark/60 text-nord-gold hover:bg-nord-ember hover:text-nord-cream flex items-center justify-center transition-all duration-300 shadow-md cursor-pointer"
+        aria-label="Siguiente"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </button>
+
+    </div>
+
+    <!-- Navigation Dots -->
+    <div class="flex justify-center gap-3 mt-8">
+      @for (test of testimonials; track test.author; let i = $index) {
+        <button
+          (click)="setIndex(i)"
+          class="w-2.5 h-2.5 rounded-full transition-all duration-300 cursor-pointer"
+          [class.bg-nord-gold]="activeIndex() === i"
+          [class.w-5]="activeIndex() === i"
+          [class.bg-nord-cream/20]="activeIndex() !== i"
+          [class.hover:bg-nord-cream/40]="activeIndex() !== i"
+          aria-label="Seleccionar testimonio {{ i + 1 }}"
+        ></button>
+      }
+    </div>
+
+  </div>
+</section>

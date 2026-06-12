@@ -2,11 +2,12 @@ import { Component, input, output, signal, computed, effect } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { Product, ProductVariant } from '@core/models/product.model';
+import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
 
 @Component({
   selector: 'app-product-detail-modal',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, CurrencyMxnPipe],
   templateUrl: './product-detail-modal.html',
 })
 export class ProductDetailModal {
@@ -58,15 +59,6 @@ export class ProductDetailModal {
       return p.variants?.reduce((acc, v) => acc + ((v.precio - (v.descuento || 0)) * (quantities[v.id] || 0)), 0) || 0;
     }
     return ((p.precio || 0) - (p.descuento || 0)) * this.selectedQuantity();
-  }
-
-  formatPrice(price: number | null | undefined): string {
-    if (price == null) return '';
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-      currencyDisplay: 'narrowSymbol'
-    }).format(price);
   }
 
   handleAdd() {

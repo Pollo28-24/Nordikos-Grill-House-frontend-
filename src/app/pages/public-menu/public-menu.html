@@ -62,7 +62,8 @@
 
     @for (category of categories(); track category.id) {
 
-    @if (getProductsByCategory(category.id).length > 0) {
+    @let categoryProducts = getProductsByCategory(category.id);
+    @if (categoryProducts.length > 0) {
 
     <div class="mb-12">
       <!-- CATEGORY TITLE -->
@@ -72,7 +73,7 @@
 
       <!-- GRID RESPONSIVO -->
       <div class="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-        @for (product of getProductsByCategory(category.id); track product.id) {
+        @for (product of categoryProducts; track product.id) {
         <app-product-card [product]="product" [cartQuantity]="getProductQuantity(product.id)"
           [isAdded]="addedProducts()[product.id]" (onAdd)="addFromCard($event)"
           (onViewDetails)="openProductDetail($event)"></app-product-card>
@@ -119,14 +120,21 @@
         </div>
         <span class="font-semibold">Ver Carrito</span>
       </div>
-      <span class="font-bold text-orange-400">{{ formatPrice(cartService.totalAmount()) }}</span>
+      <span class="font-bold text-orange-400">{{ cartService.totalAmount() | currencyMxn }}</span>
     </button>
   </div>
   }
 
-  <!-- CART DRAWER (NOW AS COMPONENT) -->
+  <!-- CART DRAWER -->
   @if (isCartOpen()) {
-  <app-public-cart (close)="toggleCart()"></app-public-cart>
+  <app-public-cart
+    [items]="cartService.items()"
+    [total]="cartService.totalAmount()"
+    (close)="toggleCart()"
+    (quantityChange)="cartService.updateQuantity($event.id, $event.delta)"
+    (remove)="cartService.removeFromCart($event)"
+    (clear)="cartService.clearCart()"
+  ></app-public-cart>
   }
 
 </div>

@@ -1,0 +1,70 @@
+<section class="py-24 md:py-32 bg-nord-dark text-nord-cream">
+  <div class="max-w-6xl mx-auto px-6">
+    
+    <!-- Section Header -->
+    <div appRevealOnScroll class="reveal-init text-center max-w-2xl mx-auto mb-16 md:mb-24">
+      <span class="text-nord-gold uppercase tracking-widest text-xs font-semibold mb-3 block">Recomendaciones del Chef</span>
+      <h2 class="font-serif text-3xl md:text-5xl font-bold mb-6 text-nord-cream">
+        Platillos <span class="text-nord-ember">Destacados</span>
+      </h2>
+      <div class="h-0.5 w-16 bg-nord-ember mx-auto mb-6 rounded-full"></div>
+      <p class="font-sans text-sm md:text-base text-nord-cream-muted">
+        Los favoritos absolutos de nuestros clientes. Preparados al instante con fuego real y pasión artesanal.
+      </p>
+    </div>
+
+    <!-- Featured Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+      @for (dish of dishes(); track dish.name; let i = $index) {
+        <div 
+          appRevealOnScroll
+          [revealDelay]="i * 150"
+          class="reveal-scale bg-nord-charcoal border border-nord-gold/5 rounded-2xl overflow-hidden group hover:border-nord-gold/30 hover:shadow-2xl transition-all duration-500 flex flex-col justify-between"
+        >
+          <!-- Image -->
+          <div class="relative overflow-hidden aspect-video sm:aspect-square md:aspect-video">
+            <img 
+              [src]="dish.image" 
+              [alt]="dish.name" 
+              class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <!-- Dark gradient overlay on image -->
+            <div class="absolute inset-0 bg-gradient-to-t from-nord-charcoal via-transparent to-transparent opacity-80"></div>
+            
+            <!-- Price Tag overlay -->
+            <div class="absolute top-4 right-4 px-4 py-1.5 bg-nord-dark/85 backdrop-blur-md rounded-lg border border-nord-gold/20 text-nord-gold font-sans font-bold text-sm">
+              {{ dish.price }}
+            </div>
+          </div>
+
+          <!-- Content -->
+          <div class="p-6 md:p-8 flex flex-col justify-between flex-grow">
+            <div>
+              <h3 class="font-serif text-xl md:text-2xl font-bold text-nord-cream mb-3 group-hover:text-nord-gold transition-colors duration-300">
+                {{ dish.name }}
+              </h3>
+              <p class="font-sans text-sm text-nord-cream-muted leading-relaxed mb-6">
+                {{ dish.desc }}
+              </p>
+            </div>
+            
+            <div class="flex items-center gap-2 text-xs font-semibold text-nord-ember tracking-wider group-hover:translate-x-1 transition-transform duration-300">
+              VER DETALLE DEL MENÚ <span>→</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Bottom CTA Button -->
+    <div appRevealOnScroll class="reveal-init text-center">
+      <a 
+        routerLink="/menu"
+        class="inline-block px-8 py-4 bg-nord-ember hover:bg-nord-ember/90 text-nord-cream font-sans font-semibold text-sm rounded-lg shadow-lg hover:shadow-nord-ember/25 transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer"
+      >
+        🍽️ Ver Menú Completo
+      </a>
+    </div>
+
+  </div>
+</section>

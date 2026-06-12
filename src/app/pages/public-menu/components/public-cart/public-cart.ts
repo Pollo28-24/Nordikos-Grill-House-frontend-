@@ -1,12 +1,13 @@
-import { Component, inject, output, signal } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
-import { PublicCartService } from '../../../../core/services/public-cart.service';
+import { CartItem } from '@core/services/public-cart.service';
+import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
 
 @Component({
   selector: 'app-public-cart',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, CurrencyMxnPipe],
   templateUrl: './public-cart.html',
   styles: [`
     .cart-backdrop {
@@ -16,27 +17,11 @@ import { PublicCartService } from '../../../../core/services/public-cart.service
   `]
 })
 export class PublicCart {
-  public cartService = inject(PublicCartService);
-  
-  close = output<void>();
+  items     = input<CartItem[]>([]);
+  total     = input<number>(0);
 
-  formatPrice(price: number | null | undefined): string {
-    if (price == null) return '';
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-      currencyDisplay: 'narrowSymbol'
-    }).format(price);
-  }
-
-  checkout() {
-    const url = this.cartService.generateWhatsAppMessage();
-    if (url) {
-      window.open(url, '_blank');
-    }
-  }
-
-  onClose() {
-    this.close.emit();
-  }
+  close          = output<void>();
+  quantityChange = output<{ id: string; delta: number }>();
+  remove         = output<string>();
+  clear          = output<void>();
 }

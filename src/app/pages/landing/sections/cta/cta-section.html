@@ -1,0 +1,32 @@
+<section class="relative py-28 md:py-40 bg-nord-dark text-nord-cream text-center overflow-hidden border-t border-nord-gold/5">
+  <!-- Background Image with parallax overlay -->
+  <div 
+    class="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-105"
+    style="background-image: url('assets/header/fondo.jpg'); filter: brightness(0.15);"
+  ></div>
+
+  <!-- Ambient light -->
+  <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-nord-ember/5 rounded-full filter blur-3xl pointer-events-none"></div>
+
+  <div class="relative z-10 max-w-4xl mx-auto px-6 flex flex-col items-center">
+    <span appRevealOnScroll class="reveal-init text-nord-gold uppercase tracking-widest text-xs font-semibold mb-4 block">Te Esperamos</span>
+    
+    <h2 appRevealOnScroll [revealDelay]="100" class="reveal-init font-serif text-3xl md:text-5xl lg:text-6xl font-bold mb-6 max-w-3xl leading-tight">
+      ¿Listo para vivir la <br class="hidden sm:inline"/>
+      <span class="text-nord-ember text-glow-gold drop-shadow-[0_2px_10px_rgba(217,119,6,0.25)]">Experiencia Nórdicos?</span>
+    </h2>
+
+    <p appRevealOnScroll [revealDelay]="200" class="reveal-init font-sans text-sm md:text-base text-nord-cream-muted max-w-xl mx-auto mb-10 leading-relaxed">
+      No dejes que te lo cuenten. Ven a descubrir por qué encendemos las brasas con pasión todos los días.
+    </p>
+
+    <div appRevealOnScroll [revealDelay]="300" class="reveal-init">
+      <a 
+        routerLink="/menu"
+        class="inline-block px-10 py-5 bg-nord-ember hover:bg-nord-ember/90 text-nord-cream font-sans text-base font-bold rounded-lg shadow-lg hover:shadow-nord-ember/35 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 animate-glow-pulse cursor-pointer"
+      >
+        🍽️ Explorar Menú Completo
+      </a>
+    </div>
+  </div>
+</section>

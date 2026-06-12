@@ -119,7 +119,7 @@ export class PublicCartService {
   generateWhatsAppMessage(businessPhone: string = '5219512224034'): string {
     if (this._items().length === 0) return '';
 
-    let message = `*Nuevo pedido - Nordikos Grill House*\n\n`;
+    let message = `*Nuevo pedido - Nórdicos Grill House*\n\n`;
     
     this._items().forEach(item => {
       const variantStr = item.variante ? ` (${item.variante.nombre})` : '';

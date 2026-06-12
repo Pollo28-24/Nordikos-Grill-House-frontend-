@@ -91,7 +91,7 @@ export class TicketService {
 
     if (isNative && data) {
       try {
-        let text = `Nordikos Grill House\n`;
+        let text = `Nórdicos Grill House\n`;
         text += `Orden: #${data.order.numero_orden}\n`;
         text += `Fecha: ${new Date(data.order.fecha_creacion).toLocaleString()}\n`;
         text += `--------------------------------\n`;

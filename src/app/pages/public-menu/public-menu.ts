@@ -11,29 +11,22 @@ import { CategoryNav } from './components/category-nav/category-nav';
 import { ProductCard } from './components/product-card/product-card';
 import { ProductDetailModal } from './components/product-detail-modal/product-detail-modal';
 import { Product, ProductVariant } from '@core/models/product.model';
+import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
 
 @Component({
   selector: 'app-public-menu',
   standalone: true,
   imports: [
-    CommonModule, 
-    LucideAngularModule, 
-    PublicCart, 
-    PublicHeader, 
-    CategoryNav, 
-    ProductCard, 
-    ProductDetailModal
+    CommonModule,
+    LucideAngularModule,
+    PublicCart,
+    PublicHeader,
+    CategoryNav,
+    ProductCard,
+    ProductDetailModal,
+    CurrencyMxnPipe,
   ],
-  templateUrl: './public-menu.html',
-  styles: [`
-    .hide-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .hide-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-  `]
+  templateUrl: './public-menu.html'
 })
 export class PublicMenu implements OnInit {
   public categoriesService = inject(CategoriesService);
@@ -91,11 +84,11 @@ export class PublicMenu implements OnInit {
   }
 
   private setMetaTags() {
-    this.title.setTitle('Menú | Nordikos Grill House');
+    this.title.setTitle('Menú | Nórdicos Grill House');
     
     this.meta.addTags([
-      { name: 'description', content: 'Explora nuestro delicioso menú de Nordikos Grill House. Hamburguesas, cortes y más con el sabor que te transporta al norte.' },
-      { property: 'og:title', content: 'Nordikos Grill House - Menú Digital' },
+      { name: 'description', content: 'Explora nuestro delicioso menú de Nórdicos Grill House. Hamburguesas, cortes y más con el sabor que te transporta al norte.' },
+      { property: 'og:title', content: 'Nórdicos Grill House - Menú Digital' },
       { property: 'og:description', content: 'Sabor que te transporta al norte. Consulta nuestros platillos y precios en línea.' },
       { property: 'og:image', content: 'https://nordikos-grill-house-frontend.vercel.app/assets/logo/header.webp' },
       { property: 'og:url', content: 'https://nordikos-grill-house-frontend.vercel.app/menu' },
@@ -118,14 +111,6 @@ export class PublicMenu implements OnInit {
     this.searchQuery.set(target.value);
   }
 
-  formatPrice(price: number | null | undefined): string {
-    if (price == null) return '';
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-      currencyDisplay: 'narrowSymbol'
-    }).format(price);
-  }
 
   getProductsByCategory(categoryId: string | number): Product[] {
     return this.filteredProducts().filter(p => p.categoria_id === categoryId);

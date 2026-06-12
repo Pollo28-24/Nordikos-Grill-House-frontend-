@@ -1,0 +1,43 @@
+<section class="py-24 md:py-32 bg-radial-dark text-nord-cream relative overflow-hidden">
+  <!-- Ambient glow background decoration -->
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-nord-ember/5 rounded-full filter blur-[120px] pointer-events-none"></div>
+
+  <div class="max-w-6xl mx-auto px-6 relative z-10">
+    <!-- Section Header -->
+    <div appRevealOnScroll class="reveal-init text-center max-w-2xl mx-auto mb-16 md:mb-24">
+      <span class="text-nord-gold uppercase tracking-widest text-xs font-semibold mb-3 block">El Ritual Del Fuego</span>
+      <h2 class="font-serif text-3xl md:text-5xl font-bold mb-6 text-nord-cream leading-tight">
+        La Experiencia <span class="text-nord-ember text-shadow-gold">Nórdicos</span>
+      </h2>
+      <div class="h-0.5 w-16 bg-nord-ember mx-auto mb-6 rounded-full"></div>
+      <p class="font-sans text-sm md:text-base text-nord-cream-muted leading-relaxed">
+        No vendemos solo comida; rendimos tributo al fuego. Creamos una atmósfera donde cada elemento está diseñado para deleitar tus sentidos.
+      </p>
+    </div>
+
+    <!-- Grid Layout -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+      @for (pilar of pilares; track pilar.title; let i = $index) {
+        <div 
+          appRevealOnScroll
+          [revealDelay]="i * 100"
+          class="reveal-scale glass-panel p-8 rounded-2xl flex flex-col sm:flex-row gap-6 items-start hover:border-nord-gold/30 hover:bg-nord-charcoal/50 transition-all duration-500"
+        >
+          <!-- Icon Circle -->
+          <div class="w-16 h-16 rounded-xl bg-nord-charcoal border border-nord-gold/10 flex items-center justify-center text-3xl shrink-0 shadow-lg">
+            {{ pilar.icon }}
+          </div>
+          
+          <!-- Text -->
+          <div>
+            <h3 class="font-serif text-xl font-bold text-nord-gold mb-3">{{ pilar.title }}</h3>
+            <p class="font-sans text-sm text-nord-cream-muted leading-relaxed">
+              {{ pilar.desc }}
+            </p>
+          </div>
+        </div>
+      }
+    </div>
+
+  </div>
+</section>

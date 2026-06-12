@@ -44,7 +44,7 @@ interface LogInForm {
             class="w-20 h-20 mx-auto mb-3"
           />
           <h1 class="text-3xl font-bold tracking-wide">Iniciar Sesión</h1>
-          <p class="text-sm text-zinc-400 mt-1">Nordikos Grill House</p>
+          <p class="text-sm text-zinc-400 mt-1">Nórdicos Grill House</p>
         </div>
 
         <!-- Email -->
@@ -189,7 +189,7 @@ interface LogInForm {
         </p>
 
         <p class="text-xs text-center text-zinc-500 mt-4">
-          Sistema interno Nordikos Grill House
+          Sistema interno Nórdicos Grill House
         </p>
       </form>
     </div>
@@ -358,7 +358,7 @@ export default class LogIn {
 
       if (error) throw error;
 
-      this.toastService.show('🔥 Bienvenido a Nordikos Grill House', 'success');
+      this.toastService.show('🔥 Bienvenido a Nórdicos Grill House', 'success');
 
       this.router.navigateByUrl('/');
       this.resetThrottling();

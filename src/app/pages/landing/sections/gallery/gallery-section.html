@@ -1,0 +1,47 @@
+<section class="py-24 md:py-32 bg-nord-dark text-nord-cream">
+  <div class="max-w-6xl mx-auto px-6">
+    
+    <!-- Header -->
+    <div appRevealOnScroll class="reveal-init text-center max-w-2xl mx-auto mb-16">
+      <span class="text-nord-gold uppercase tracking-widest text-xs font-semibold mb-3 block">Antojo Visual</span>
+      <h2 class="font-serif text-3xl md:text-5xl font-bold mb-6 text-nord-cream">
+        Galería <span class="text-nord-ember">Premium</span>
+      </h2>
+      <div class="h-0.5 w-16 bg-nord-ember mx-auto mb-6 rounded-full"></div>
+      <p class="font-sans text-sm md:text-base text-nord-cream-muted">
+        Una selección de nuestros platos y momentos preferidos alrededor de las brasas. Hacé clic sobre cualquier imagen para ampliarla.
+      </p>
+    </div>
+
+    <!-- Masonry-like Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+      @for (img of images; track img.title; let i = $index) {
+        <div 
+          appRevealOnScroll
+          [revealDelay]="(i % 4) * 100"
+          (click)="onImageClick(i)"
+          class="reveal-scale relative group overflow-hidden rounded-xl bg-nord-charcoal aspect-square sm:aspect-video md:aspect-square cursor-pointer border border-nord-gold/5 hover:border-nord-gold/30 transition-all duration-300"
+          [class.md:col-span-2]="i === 1 || i === 4 || i === 8"
+        >
+          <!-- Image -->
+          <img 
+            [src]="img.url" 
+            [alt]="img.title" 
+            class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            loading="lazy"
+          />
+          
+          <!-- Hover Overlay -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 z-10">
+            <span class="text-nord-gold text-xs uppercase tracking-wider font-semibold mb-1">{{ img.category }}</span>
+            <h3 class="font-serif text-lg font-bold text-nord-cream transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">{{ img.title }}</h3>
+          </div>
+          
+          <!-- Outer border decoration on hover -->
+          <div class="absolute inset-3 border border-nord-gold/0 rounded-lg pointer-events-none transition-all duration-300 group-hover:border-nord-gold/30 group-hover:inset-4 z-20"></div>
+        </div>
+      }
+    </div>
+
+  </div>
+</section>

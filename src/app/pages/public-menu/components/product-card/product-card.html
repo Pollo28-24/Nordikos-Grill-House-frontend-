@@ -14,7 +14,7 @@
 
   @if ((product().descuento || 0) > 0) {
     <div class="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-widest shadow-xl z-20">
-      -{{ formatPrice(product().descuento) }}
+      -{{ product().descuento | currencyMxn }}
     </div>
   }
 
@@ -40,10 +40,10 @@
 
     <div class="absolute bottom-2 right-2 bg-[#F8F5EE]/90 backdrop-blur px-2 py-1 rounded-lg shadow-sm flex items-center gap-1.5">
       @if ((product().descuento || 0) > 0) {
-        <del class="text-[10px] text-gray-500 font-medium">{{ formatPrice(product().precio) }}</del>
-        <span class="text-xs font-bold text-orange-600">{{ formatPrice((product().precio || 0) - (product().descuento || 0)) }}</span>
+        <del class="text-[10px] text-gray-500 font-medium">{{ product().precio | currencyMxn }}</del>
+        <span class="text-xs font-bold text-orange-600">{{ (product().precio || 0) - (product().descuento || 0) | currencyMxn }}</span>
       } @else {
-        <span class="text-xs font-bold text-orange-600">{{ formatPrice(product().precio) }}</span>
+        <span class="text-xs font-bold text-orange-600">{{ product().precio | currencyMxn }}</span>
       }
     </div>
   </div>

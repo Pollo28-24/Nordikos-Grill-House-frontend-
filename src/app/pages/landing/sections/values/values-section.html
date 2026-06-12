@@ -1,0 +1,36 @@
+<section class="py-20 md:py-28 bg-nord-dark text-nord-cream border-t border-nord-gold/5">
+  <div class="max-w-6xl mx-auto px-6">
+    
+    <!-- Header -->
+    <div appRevealOnScroll class="reveal-init text-center max-w-2xl mx-auto mb-16">
+      <span class="text-nord-gold uppercase tracking-widest text-xs font-semibold mb-3 block">Nuestros Cimientos</span>
+      <h2 class="font-serif text-2xl md:text-4xl font-bold mb-4 text-nord-cream">Los Valores que Nos Guían</h2>
+      <div class="h-0.5 w-12 bg-nord-ember mx-auto rounded-full"></div>
+    </div>
+
+    <!-- Values Grid (4 Columns) -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+      @for (val of valores; track val.title; let i = $index) {
+        <div 
+          appRevealOnScroll
+          [revealDelay]="i * 100"
+          class="reveal-scale glass-panel p-8 rounded-xl text-center group hover:bg-nord-charcoal/50 hover:border-nord-gold/20 transition-all duration-300 flex flex-col items-center justify-start h-full"
+        >
+          <!-- Giant Icon -->
+          <div class="text-5xl md:text-6xl mb-6 transform group-hover:scale-110 transition-transform duration-300 select-none">
+            {{ val.icon }}
+          </div>
+          <!-- Title -->
+          <h4 class="font-serif text-lg md:text-xl font-bold mb-3 text-nord-gold group-hover:text-nord-ember transition-colors duration-300">
+            {{ val.title }}
+          </h4>
+          <!-- Description -->
+          <p class="font-sans text-xs md:text-sm text-nord-cream-muted leading-relaxed">
+            {{ val.desc }}
+          </p>
+        </div>
+      }
+    </div>
+
+  </div>
+</section>

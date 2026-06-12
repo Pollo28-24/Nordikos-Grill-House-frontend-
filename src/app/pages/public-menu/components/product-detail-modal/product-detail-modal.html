@@ -48,10 +48,10 @@
                   </span>
                   <div class="flex items-center gap-1.5">
                     @if (variant.descuento && variant.descuento > 0) {
-                      <del class="text-[10px] text-gray-400 font-medium">{{ formatPrice(variant.precio) }}</del>
-                      <span class="font-black text-xs text-orange-600">{{ formatPrice(variant.precio - variant.descuento) }}</span>
+                      <del class="text-[10px] text-gray-400 font-medium">{{ variant.precio | currencyMxn }}</del>
+                      <span class="font-black text-xs text-orange-600">{{ variant.precio - variant.descuento | currencyMxn }}</span>
                     } @else {
-                      <span class="font-black text-xs text-orange-600">{{ formatPrice(variant.precio) }}</span>
+                      <span class="font-black text-xs text-orange-600">{{ variant.precio | currencyMxn }}</span>
                     }
                   </div>
                 </div>
@@ -123,7 +123,7 @@
             <span>¡Agregado al carrito!</span>
           } @else {
             <lucide-icon name="shopping-bag" class="h-6 w-6"></lucide-icon>
-            <span>Agregar por {{ formatPrice(getTotal()) }}</span>
+            <span>Agregar por {{ getTotal() | currencyMxn }}</span>
           }
         </button>
       </div>

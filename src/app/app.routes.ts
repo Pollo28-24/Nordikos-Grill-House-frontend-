@@ -80,11 +80,11 @@ export const routes: Routes = [
   },
   {
     path: '',
-    redirectTo: 'home',
+    loadComponent: () => import('./pages/landing/landing').then((m) => m.LandingPage),
     pathMatch: 'full',
   },
   {
     path: '**',
-    redirectTo: 'home',
+    redirectTo: '',
   }
 ];

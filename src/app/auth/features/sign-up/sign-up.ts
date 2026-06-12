@@ -45,7 +45,7 @@ interface SignUpForm {
             alt="logo"
           />
           <h1 class="text-3xl font-bold">Crear Cuenta</h1>
-          <p class="text-sm text-zinc-400">Nordikos Grill House</p>
+          <p class="text-sm text-zinc-400">Nórdicos Grill House</p>
         </div>
 
         <!-- Nombre -->
