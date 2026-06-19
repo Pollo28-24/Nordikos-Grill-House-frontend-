@@ -132,6 +132,16 @@
   transform: scale(1.1);
 }
 
+.share-btn {
+  background: #3b82f6;
+  color: white;
+}
+
+.share-btn:hover {
+  background: #60a5fa;
+  transform: scale(1.1);
+}
+
 .ticket {
   width: 58mm;
   padding: 4mm;

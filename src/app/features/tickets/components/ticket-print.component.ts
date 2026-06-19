@@ -3,6 +3,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { TicketService } from '../services/ticket.service';
 import { TicketData } from '../models/ticket.model';
+import { ToastService } from '@core/services/toast.service';
 
 @Component({
   selector: 'app-ticket-print',
@@ -14,9 +15,11 @@ import { TicketData } from '../models/ticket.model';
 })
 export class TicketPrintComponent {
   private ticketService = inject(TicketService);
+  private toastService = inject(ToastService);
 
   orderId = input.required<string | number>();
   ticketType = input<'account' | 'kitchen'>('account');
+  autoPrint = input<boolean>(true);
   ticketData = signal<TicketData | null>(null);
   loading = signal(false);
   readyToPrint = output<void>();
@@ -38,7 +41,7 @@ export class TicketPrintComponent {
     this.ticketData.set(data);
     this.loading.set(false);
     
-    if (data) {
+    if (data && this.autoPrint()) {
       // Pequeño delay para asegurar que el DOM se renderice antes de avisar que está listo
       setTimeout(() => {
         if (!this.loading()) {
@@ -52,6 +55,19 @@ export class TicketPrintComponent {
     const data = this.ticketData();
     if (data) {
       this.ticketService.printTicket(data);
+    }
+  }
+
+  async shareOrCopy() {
+    const data = this.ticketData();
+    if (!data) return;
+    const result = await this.ticketService.shareOrCopyTicket(data);
+    if (result === 'copied') {
+      this.toastService.show('¡Ticket copiado al portapapeles!', 'success');
+    } else if (result === 'shared') {
+      // Compartido de forma nativa con éxito
+    } else {
+      this.toastService.show('No se pudo compartir el ticket.', 'error');
     }
   }
 }

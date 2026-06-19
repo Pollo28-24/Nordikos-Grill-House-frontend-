@@ -64,6 +64,11 @@ export const routes: Routes = [
     canActivate: [privateGuard],
   },
   {
+    path: 'orders/requests',
+    loadComponent: () => import('./pages/orders/order-requests/order-requests').then(m => m.OrderRequestsPage),
+    canActivate: [privateGuard],
+  },
+  {
     path: 'orders/:id',
     loadComponent: () => import('./pages/orders/order-detail/order-detail').then(m => m.OrderDetail),
     canActivate: [privateGuard],

@@ -70,9 +70,20 @@
                 } @else {
                   <p class="text-xs text-orange-600 font-semibold mt-1">{{ item.precio | currencyMxn }}</p>
                 }
+
+                <!-- Note Input -->
+                <div class="mt-2">
+                  <textarea
+                    [(ngModel)]="item.nota"
+                    (ngModelChange)="notaChange.emit({ id: item.id, nota: $event })"
+                    placeholder="Agregar nota (ej: sin cebolla)..."
+                    class="w-full text-xs p-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 resize-none"
+                    rows="2"
+                  ></textarea>
+                </div>
               </div>
               
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between mt-2">
                 <!-- Qty Controls -->
                 <div class="flex items-center bg-white rounded-lg border border-gray-200 p-1">
                   <button 
@@ -114,6 +125,14 @@
           <span>Total</span>
           <span class="text-orange-600">{{ total() | currencyMxn }}</span>
         </div>
+
+        <button 
+          (click)="checkout.emit()"
+          class="w-full h-12 rounded-xl bg-orange-500 text-white font-bold text-sm shadow-lg shadow-orange-500/20 hover:bg-orange-600 active:scale-95 transition flex items-center justify-center gap-2 mt-2"
+        >
+          <lucide-icon name="send" class="h-4 w-4"></lucide-icon>
+          <span>Enviar Orden al Mesero</span>
+        </button>
         
         <button 
           (click)="clear.emit()"

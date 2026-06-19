@@ -48,17 +48,21 @@ export class OrderDetail implements OnInit {
   loading = signal(false);
   showTicket = signal(false);
   ticketType = signal<'account' | 'kitchen'>('account');
+  autoPrint = signal<boolean>(true);
 
-  openTicket(type: 'account' | 'kitchen') {
+  openTicket(type: 'account' | 'kitchen', autoPrint = true) {
     this.ticketType.set(type);
+    this.autoPrint.set(autoPrint);
     this.showTicket.set(true);
   }
 
   async shareTicketPDF() {
-    this.openTicket('account');
+    this.openTicket('account', false);
   }
 
   async onTicketReady() {
+    if (!this.autoPrint()) return;
+    
     const id = this.orderId();
     if (id) {
       const data = await this.ticketService.getTicketData(Number(id));

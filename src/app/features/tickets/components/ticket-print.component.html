@@ -5,7 +5,10 @@
       <button (click)="close.emit()" class="action-btn close-btn" title="Cerrar">
         <lucide-icon name="x" class="w-6 h-6"></lucide-icon>
       </button>
-      <button (click)="print()" class="action-btn print-btn" title="Imprimir / PDF">
+      <button (click)="shareOrCopy()" class="action-btn share-btn" title="Compartir / Copiar para WhatsApp">
+        <lucide-icon name="share-2" class="w-6 h-6"></lucide-icon>
+      </button>
+      <button (click)="print()" class="action-btn print-btn" title="Imprimir o Guardar como PDF">
         <lucide-icon name="printer" class="w-6 h-6"></lucide-icon>
       </button>
     </div>

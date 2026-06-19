@@ -1,5 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { CartItem } from '@core/services/public-cart.service';
 import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
@@ -7,7 +8,7 @@ import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
 @Component({
   selector: 'app-public-cart',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, CurrencyMxnPipe],
+  imports: [CommonModule, FormsModule, LucideAngularModule, CurrencyMxnPipe],
   templateUrl: './public-cart.html',
   styles: [`
     .cart-backdrop {
@@ -24,4 +25,6 @@ export class PublicCart {
   quantityChange = output<{ id: string; delta: number }>();
   remove         = output<string>();
   clear          = output<void>();
+  checkout       = output<void>();
+  notaChange     = output<{ id: string; nota: string }>();
 }

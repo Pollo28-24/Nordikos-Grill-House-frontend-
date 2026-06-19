@@ -57,7 +57,7 @@ export class PublicCartService {
     }
   }
 
-  addToCart(product: Product, variant?: ProductVariant, cantidad: number = 1) {
+  addToCart(product: Product, variant?: ProductVariant, cantidad: number = 1, nota?: string) {
     const items = [...this._items()];
     
     // Check if item with same product and variant already exists
@@ -69,7 +69,8 @@ export class PublicCartService {
     if (existingIndex > -1) {
       items[existingIndex] = {
         ...items[existingIndex],
-        cantidad: items[existingIndex].cantidad + cantidad
+        cantidad: items[existingIndex].cantidad + cantidad,
+        nota: nota || items[existingIndex].nota
       };
     } else {
       const newItem: CartItem = {
@@ -85,12 +86,23 @@ export class PublicCartService {
           id: variant.id,
           nombre: variant.nombre,
           precio: variant.precio
-        } : undefined
+        } : undefined,
+        nota: nota
       };
       items.push(newItem);
     }
 
     this._items.set(items);
+  }
+
+  updateNota(itemId: string, nota: string) {
+    const items = [...this._items()];
+    const index = items.findIndex(i => i.id === itemId);
+    
+    if (index > -1) {
+      items[index] = { ...items[index], nota: nota };
+      this._items.set(items);
+    }
   }
 
   removeFromCart(itemId: string) {

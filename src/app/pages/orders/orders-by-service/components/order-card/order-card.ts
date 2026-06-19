@@ -42,4 +42,27 @@ export class OrderCard {
       return `${diffHours}h ${remainingMins}m`;
     }
   }
+
+  get urgencyLevel(): 'normal' | 'warning' | 'critical' {
+    const o = this.order();
+    // Only active orders (not delivered/cancelled) have urgency
+    if (o.estado_pedido === 'entregado' || o.estado_pedido === 'cancelado') return 'normal';
+    if (o.fecha_cierre) return 'normal';
+
+    const current = this.currentTime();
+    const start = new Date(o.fecha_creacion).getTime();
+    const diffMins = Math.floor((current - start) / 60000);
+
+    if (diffMins >= 25) return 'critical';
+    if (diffMins >= 15) return 'warning';
+    return 'normal';
+  }
+
+  get elapsedMins(): number {
+    const o = this.order();
+    if (!o.fecha_creacion) return 0;
+    const current = this.currentTime();
+    const start = new Date(o.fecha_creacion).getTime();
+    return Math.floor((current - start) / 60000);
+  }
 }

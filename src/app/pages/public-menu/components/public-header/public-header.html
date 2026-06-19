@@ -31,19 +31,31 @@
         >
       </div>
 
-      <!-- CART TOGGLE -->
-      <button 
-        (click)="onCartClick.emit()"
-        class="relative p-2.5 bg-white border border-[#E2D7B7]/80 rounded-full shadow-sm hover:shadow-md hover:bg-gray-50 transition-all active:scale-95 shrink-0 text-gray-700"
-        [class.animate-bump]="cartBumping()"
-      >
-        <lucide-icon name="shopping-cart" class="h-5 w-5"></lucide-icon>
-        @if (cartCount() > 0) {
-          <span class="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-black h-5 w-5 flex items-center justify-center rounded-full shadow-sm border-2 border-[#F8F5EE]">
-            {{ cartCount() }}
-          </span>
-        }
-      </button>
+      <!-- USER & CART TOGGLES -->
+      <div class="flex items-center gap-2">
+        <!-- USER TOGGLE -->
+        <button 
+          (click)="onUserClick.emit()"
+          class="relative p-2.5 bg-white border border-[#E2D7B7]/80 rounded-full shadow-sm hover:shadow-md hover:bg-gray-50 transition-all active:scale-95 shrink-0 text-gray-700"
+          title="Editar datos de entrega"
+        >
+          <lucide-icon name="user" class="h-5 w-5"></lucide-icon>
+        </button>
+        
+        <!-- CART TOGGLE -->
+        <button 
+          (click)="onCartClick.emit()"
+          class="relative p-2.5 bg-white border border-[#E2D7B7]/80 rounded-full shadow-sm hover:shadow-md hover:bg-gray-50 transition-all active:scale-95 shrink-0 text-gray-700"
+          [class.animate-bump]="cartBumping()"
+        >
+          <lucide-icon name="shopping-cart" class="h-5 w-5"></lucide-icon>
+          @if (cartCount() > 0) {
+            <span class="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-black h-5 w-5 flex items-center justify-center rounded-full shadow-sm border-2 border-[#F8F5EE]">
+              {{ cartCount() }}
+            </span>
+          }
+        </button>
+      </div>
     </div>
 
     <!-- SEARCH (Mobile) -->

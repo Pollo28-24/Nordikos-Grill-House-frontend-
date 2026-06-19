@@ -1,85 +1,35 @@
 <div
   (click)="toggleActive.emit()"
-  class="group rounded-2xl border border-black/40 bg-[#1E1E1E] p-4 transition hover:border-[#FFB300]/40 hover:shadow-xl hover:-translate-y-1 hover:bg-[#1A1A1A] relative cursor-pointer animate-in fade-in zoom-in-95 duration-300 w-full box-border"
-  [class.border-amber-500\/50]="active()"
-  [class.bg-[#1A1A1A]]="active()"
+  class="group rounded-xl border bg-gradient-to-b from-[#1C1C1E] to-[#161618] p-4 transition-all duration-300 hover:border-white/10 hover:shadow-lg relative cursor-pointer w-full box-border touch-manipulation shadow-md"
+  [class.border-[#FFB300]/40]="active()"
+  [class.border-white/[0.04]]="!active()"
+  [class.order-urgency-warning]="urgencyLevel === 'warning'"
+  [class.order-urgency-critical]="urgencyLevel === 'critical'"
 >
 
-  <!-- BOTONES DE ACCIÓN RÁPIDA -->
-  <div 
-    class="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20"
-    [class.opacity-100]="active()"
-    (click)="$event.stopPropagation()"
-  >
-    <button 
-      (click)="printTicket.emit('kitchen')"
-      class="w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center shadow-lg hover:bg-orange-500 active:scale-95"
-      title="Ticket Cocina"
-    >
-      <lucide-icon name="chef-hat" class="w-4 h-4"></lucide-icon>
-    </button>
-
-    <button 
-      (click)="printTicket.emit('account')"
-      class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg hover:bg-blue-400 active:scale-95"
-      title="Ticket Cuenta"
-    >
-      <lucide-icon name="printer" class="w-4 h-4"></lucide-icon>
-    </button>
-
-    <button 
-      (click)="viewDetail.emit()"
-      class="w-8 h-8 rounded-full bg-[#FFB300] text-black flex items-center justify-center shadow-lg hover:bg-[#FFC107] active:scale-95"
-      title="Ver detalles"
-    >
-      <lucide-icon name="eye" class="w-4 h-4"></lucide-icon>
-    </button>
-    
-    @if (order().estado_pedido === 'confirmado') {
-      <button 
-        (click)="updateStatus.emit('entregado')"
-        class="w-8 h-8 rounded-full bg-emerald-500 text-black flex items-center justify-center shadow-lg hover:bg-emerald-400 active:scale-95"
-        title="Marcar como entregado"
-      >
-        <lucide-icon name="check" class="w-4 h-4"></lucide-icon>
-      </button>
-    }
-    @if (order().estado_pago === 'pendiente') {
-      <button 
-        (click)="updatePaymentStatus.emit('pagado')"
-        class="w-8 h-8 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-lg hover:bg-amber-400 active:scale-95"
-        title="Marcar como pagado"
-      >
-        <lucide-icon name="dollar-sign" class="w-4 h-4"></lucide-icon>
-      </button>
-    }
-  </div>
-
   <!-- HEADER -->
-  <div class="flex items-center justify-between mb-3">
-    <div class="flex flex-col">
-      <span class="text-xl font-black text-white">#{{ order().numero_orden || order().id }}</span>
-    </div>
-
-    <!-- ESTADOS -->
-    <div class="flex flex-col items-end gap-1">
-      <span class="px-3 py-1 text-[10px] rounded-full font-bold uppercase tracking-wider"
+  <div class="flex items-center justify-between mb-1.5">
+    <span class="text-sm font-extrabold text-white tracking-tight">#{{ order().numero_orden || order().id }}</span>
+    
+    <!-- ESTADOS (Diseño unificado rounded-md con contraste AA) -->
+    <div class="flex items-center gap-1.5">
+      <span class="px-1.5 py-0.5 text-[9px] rounded-md font-bold uppercase tracking-wider border transition-all duration-300"
         [ngClass]="{
-          'bg-zinc-500/20 text-zinc-400': order().estado_pedido === 'pendiente',
-          'bg-blue-500/20 text-blue-400': order().estado_pedido === 'confirmado',
-          'bg-emerald-500/20 text-emerald-400': order().estado_pedido === 'entregado',
-          'bg-red-500/20 text-red-400': order().estado_pedido === 'cancelado'
+          'bg-zinc-500/10 text-zinc-400 border-zinc-500/20': order().estado_pedido === 'pendiente',
+          'bg-blue-500/10 text-blue-400 border-blue-500/20': order().estado_pedido === 'confirmado',
+          'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': order().estado_pedido === 'entregado',
+          'bg-red-500/10 text-red-400 border-red-500/20': order().estado_pedido === 'cancelado'
         }"
       >
         {{ order().estado_pedido }}
       </span>
       
-      <span class="px-2 py-0.5 text-[9px] rounded-md font-medium border"
+      <span class="px-1.5 py-0.5 text-[9px] rounded-md font-bold uppercase tracking-wider border transition-all duration-300"
         [ngClass]="{
-          'bg-zinc-500/5 text-zinc-500 border-zinc-500/20': order().estado_pago === 'pendiente',
-          'bg-emerald-500/10 text-emerald-500 border-emerald-500/20': order().estado_pago === 'pagado',
-          'bg-red-500/10 text-red-500 border-red-500/20': order().estado_pago === 'fallido',
-          'bg-purple-500/10 text-purple-500 border-purple-500/20': order().estado_pago === 'reembolsado'
+          'bg-rose-500/10 text-rose-400 border-rose-500/20': order().estado_pago === 'pendiente',
+          'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': order().estado_pago === 'pagado',
+          'bg-red-500/10 text-red-400 border-red-500/20': order().estado_pago === 'fallido',
+          'bg-purple-500/10 text-purple-400 border-purple-500/20': order().estado_pago === 'reembolsado'
         }"
       >
         {{ order().estado_pago }}
@@ -87,36 +37,71 @@
     </div>
   </div>
 
-  <!-- INFO -->
-  <div class="space-y-3 text-sm">
-    <div class="flex items-center justify-between">
-      <div class="text-[#B0B0B0] flex flex-col">
-        <span class="text-[10px] uppercase tracking-wider font-bold text-zinc-500">
-          {{ order().fecha_creacion | date:'EEEE':'':'es' }}
-        </span>
-        <span class="text-xs">
-          {{ order().fecha_creacion | date:'dd/MM/yy, hh:mm a' }}
-        </span>
-      </div>
-      
-      <span class="text-[10px] font-medium bg-white/5 px-2 py-0.5 rounded"
-        [class.text-zinc-500]="order().fecha_cierre"
-        [class.text-amber-500]="!order().fecha_cierre"
-      >
-        {{ order().fecha_cierre ? 'Duración: ' : 'En curso: ' }} {{ duration }}
-      </span>
+  <!-- DATE & TIME -->
+  <div class="text-[11px] text-zinc-500 font-medium mb-3">
+    {{ order().fecha_creacion | date:'dd/MM/yy' }} · {{ order().fecha_creacion | date:'hh:mm a' }}
+  </div>
+
+  <!-- TOTAL & DURATION -->
+  <div class="flex items-center justify-between gap-2 mb-3">
+    <span class="text-base font-extrabold text-white tabular-nums">\${{ order().total | number:'1.2-2' }}</span>
+    <span class="text-[10px] font-bold text-zinc-400 flex items-center gap-1">
+      <lucide-icon name="clock" class="w-3 h-3 text-[#FFB300]"></lucide-icon>
+      <span>{{ order().fecha_cierre ? 'Cerrado: ' : 'Duración: ' }}{{ duration }}</span>
+    </span>
+  </div>
+
+  <!-- GENERAL NOTE -->
+  @if (order().nota_general) {
+    <div class="text-[10px] text-zinc-500 italic truncate mb-3 border-l border-white/10 pl-2">
+      {{ order().nota_general }}
     </div>
+  }
 
-    <div class="flex items-center justify-between gap-2">
-      <div class="inline-flex items-center px-3 py-1 rounded-md bg-[#FFB300]/15 text-[#FFB300] border border-[#FFB300]/30 text-sm font-semibold">
-        ${{ order().total | number:'1.2-2' }}
-      </div>
+  <!-- ACCIONES (Desktop y Móvil unificados) -->
+  <div class="flex items-center justify-between gap-2 pt-3 border-t border-white/[0.04]" (click)="$event.stopPropagation()">
+    <button 
+      (click)="viewDetail.emit()"
+      class="px-3 h-9 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-bold transition-all active:scale-95 border border-white/5 touch-manipulation"
+    >
+      Ver pedido
+    </button>
 
-      @if (order().nota_general) {
-        <div class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-zinc-800 border border-white/5 text-[10px] text-zinc-400 max-w-[60%] overflow-hidden" title="{{ order().nota_general }}">
-          <lucide-icon name="info" class="w-3 h-3 shrink-0 text-amber-500/50"></lucide-icon>
-          <span class="truncate italic">{{ order().nota_general }}</span>
-        </div>
+    <div class="flex items-center gap-1.5">
+      <!-- Imprimir Cocina -->
+      <button 
+        (click)="printTicket.emit('kitchen')"
+        class="h-9 w-9 rounded-lg bg-white/5 text-orange-400 hover:bg-white/10 border border-white/5 active:scale-95 transition-all flex items-center justify-center touch-manipulation"
+        title="Ticket Cocina"
+      >
+        <lucide-icon name="chef-hat" class="w-4 h-4"></lucide-icon>
+      </button>
+
+      <!-- Imprimir Cuenta -->
+      <button 
+        (click)="printTicket.emit('account')"
+        class="h-9 w-9 rounded-lg bg-white/5 text-blue-400 hover:bg-white/10 border border-white/5 active:scale-95 transition-all flex items-center justify-center touch-manipulation"
+        title="Ticket Cuenta"
+      >
+        <lucide-icon name="printer" class="w-4 h-4"></lucide-icon>
+      </button>
+
+      @if (order().estado_pedido === 'confirmado') {
+        <button 
+          (click)="updateStatus.emit('entregado')"
+          class="h-9 px-3 rounded-lg bg-emerald-500 text-black font-extrabold text-xs active:scale-95 transition-all shadow-md shadow-emerald-500/10 touch-manipulation"
+        >
+          Empaquetar
+        </button>
+      }
+
+      @if (order().estado_pedido !== 'confirmado' && order().estado_pago === 'pendiente') {
+        <button 
+          (click)="updatePaymentStatus.emit('pagado')"
+          class="h-9 px-3 rounded-lg bg-[#FFB300] text-[#121212] font-extrabold text-xs active:scale-95 transition-all shadow-md shadow-amber-500/10 touch-manipulation"
+        >
+          Pagar
+        </button>
       }
     </div>
   </div>

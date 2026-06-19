@@ -1,19 +1,30 @@
 import { Component, inject, signal, computed, effect } from '@angular/core';
-import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
+import { CommonModule, DecimalPipe, DatePipe, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { Router } from '@angular/router';
 import { OrdersService } from '@core/services/orders.service';
+import { SalesKpis } from './components/sales-kpis/sales-kpis';
+import { SalesBreakdown } from './components/sales-breakdown/sales-breakdown';
+import { SalesTransactions } from './components/sales-transactions/sales-transactions';
 
 @Component({
   selector: 'app-sales-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, DecimalPipe, DatePipe],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    LucideAngularModule, 
+    SalesKpis,
+    SalesBreakdown,
+    SalesTransactions
+  ],
   templateUrl: './sales-dashboard.html'
 })
 export class SalesDashboard {
   private ordersService = inject(OrdersService);
   private router = inject(Router);
+  private location = inject(Location);
   
   // State
   selectedDateRange = signal<'today' | 'week' | 'month' | 'custom' | 'all'>('all');
@@ -118,7 +129,11 @@ export class SalesDashboard {
   }
   
   goBack() {
-    this.router.navigate(['/home']);
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      this.location.back();
+    } else {
+      this.router.navigate(['/orders']);
+    }
   }
 
   setRange(range: 'today' | 'week' | 'month' | 'custom' | 'all') {
@@ -190,3 +205,4 @@ export class SalesDashboard {
     this.ordersService.loadOrders({ start: startStr, end: endStr });
   }
 }
+// Trigger rebuild for Angular compiler watch mode after kpis fix

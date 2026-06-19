@@ -1,42 +1,55 @@
-<div class="mb-8 space-y-4">
-  <div class="flex items-center gap-2 overflow-x-auto pb-2">
-    <button (click)="setDateFilter.emit('today')" [class.bg-amber-500]="dateFilterType() === 'today'"
-      [class.text-black]="dateFilterType() === 'today'"
-      class="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-sm font-medium hover:bg-white/10 transition whitespace-nowrap">
+<div class="space-y-4">
+  <!-- Filtro de Fecha Segmentado -->
+  <div class="inline-flex p-1 gap-1 rounded-lg bg-black/40 border border-white/5 overflow-x-auto scrollbar-hide flex-nowrap max-w-full">
+    <button (click)="setDateFilter.emit('today')" 
+      [class.bg-white/10]="dateFilterType() === 'today'"
+      [class.text-[#FFB300]]="dateFilterType() === 'today'"
+      [class.text-zinc-400]="dateFilterType() !== 'today'"
+      [class.hover:text-zinc-200]="dateFilterType() !== 'today'"
+      class="shrink-0 px-4 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition duration-200 active:scale-95 whitespace-nowrap">
       Hoy
     </button>
-    <button (click)="setDateFilter.emit('week')" [class.bg-amber-500]="dateFilterType() === 'week'"
-      [class.text-black]="dateFilterType() === 'week'"
-      class="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-sm font-medium hover:bg-white/10 transition whitespace-nowrap">
+    <button (click)="setDateFilter.emit('week')" 
+      [class.bg-white/10]="dateFilterType() === 'week'"
+      [class.text-[#FFB300]]="dateFilterType() === 'week'"
+      [class.text-zinc-400]="dateFilterType() !== 'week'"
+      [class.hover:text-zinc-200]="dateFilterType() !== 'week'"
+      class="shrink-0 px-4 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition duration-200 active:scale-95 whitespace-nowrap">
       Última semana
     </button>
-    <button (click)="setDateFilter.emit('month')" [class.bg-amber-500]="dateFilterType() === 'month'"
-      [class.text-black]="dateFilterType() === 'month'"
-      class="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-sm font-medium hover:bg-white/10 transition whitespace-nowrap">
+    <button (click)="setDateFilter.emit('month')" 
+      [class.bg-white/10]="dateFilterType() === 'month'"
+      [class.text-[#FFB300]]="dateFilterType() === 'month'"
+      [class.text-zinc-400]="dateFilterType() !== 'month'"
+      [class.hover:text-zinc-200]="dateFilterType() !== 'month'"
+      class="shrink-0 px-4 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition duration-200 active:scale-95 whitespace-nowrap">
       Último mes
     </button>
-    <button (click)="setDateFilter.emit('custom')" [class.bg-amber-500]="dateFilterType() === 'custom'"
-      [class.text-black]="dateFilterType() === 'custom'"
-      class="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-sm font-medium hover:bg-white/10 transition whitespace-nowrap">
+    <button (click)="setDateFilter.emit('custom')" 
+      [class.bg-white/10]="dateFilterType() === 'custom'"
+      [class.text-[#FFB300]]="dateFilterType() === 'custom'"
+      [class.text-zinc-400]="dateFilterType() !== 'custom'"
+      [class.hover:text-zinc-200]="dateFilterType() !== 'custom'"
+      class="shrink-0 px-4 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition duration-200 active:scale-95 whitespace-nowrap">
       Personalizado
     </button>
   </div>
 
   @if (dateFilterType() === 'custom') {
-  <div class="flex flex-wrap items-end gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+  <div class="flex flex-wrap items-end gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5 animate-in fade-in duration-300">
     <div class="space-y-1.5 flex-1 min-w-37.5">
-      <label class="text-xs text-zinc-500 font-medium">Desde</label>
+      <label class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Desde</label>
       <input type="date" [value]="customStartDate()" (change)="customStartChange.emit($any($event.target).value)"
-        class="block w-full bg-[#121212] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-amber-500/50 scheme-dark">
+        class="block w-full bg-[#121212] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[#FFB300]/50 scheme-dark">
     </div>
     <div class="space-y-1.5 flex-1 min-w-37.5">
-      <label class="text-xs text-zinc-500 font-medium">Hasta</label>
+      <label class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Hasta</label>
       <input type="date" [value]="customEndDate()" (change)="customEndChange.emit($any($event.target).value)"
-        class="block w-full bg-[#121212] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-amber-500/50 scheme-dark">
+        class="block w-full bg-[#121212] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[#FFB300]/50 scheme-dark">
     </div>
     <button 
         (click)="applyFilter.emit()"
-        class="px-6 py-2 h-9 rounded-lg bg-amber-500 text-black font-bold text-sm hover:bg-amber-400 transition active:scale-95"
+        class="px-5 h-9 rounded-lg bg-[#FFB300] text-[#121212] font-bold text-xs uppercase tracking-wider hover:bg-[#FFC107] transition active:scale-95"
       >
         Filtrar
       </button>
@@ -46,17 +59,17 @@
   <!-- ACCIONES MASIVAS -->
   @if (filteredCount() > 0) {
     <div class="flex items-center gap-2 pt-2 animate-in fade-in slide-in-from-left-2">
-      <span class="text-xs text-zinc-500 font-bold uppercase tracking-widest mr-2">Acciones rápidas ({{ filteredCount() }}):</span>
+      <span class="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mr-2">Acciones rápidas ({{ filteredCount() }}):</span>
       <button 
         (click)="bulkUpdate.emit({ type: 'pedido', status: 'entregado' })"
-        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20 transition text-[10px] font-bold uppercase"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition text-[10px] font-bold uppercase tracking-wider"
       >
         <lucide-icon name="check-circle" class="w-3 h-3"></lucide-icon>
         Entregar todo
       </button>
       <button 
         (click)="bulkUpdate.emit({ type: 'pago', status: 'pagado' })"
-        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 hover:bg-amber-500/20 transition text-[10px] font-bold uppercase"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FFB300]/10 text-[#FFB300] border border-[#FFB300]/20 hover:bg-[#FFB300]/20 transition text-[10px] font-bold uppercase tracking-wider"
       >
         <lucide-icon name="dollar-sign" class="w-3 h-3"></lucide-icon>
         Pagar todo
@@ -64,3 +77,4 @@
     </div>
   }
 </div>
+

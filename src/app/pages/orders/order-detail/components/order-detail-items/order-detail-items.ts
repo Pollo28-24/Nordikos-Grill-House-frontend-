@@ -8,20 +8,20 @@ import { LucideAngularModule } from 'lucide-angular';
   imports: [CommonModule, DecimalPipe, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="space-y-4 mb-8">
-      <div class="flex items-center justify-between px-2">
-        <h3 class="text-xs font-bold text-zinc-500 uppercase tracking-widest">Productos en la Orden</h3>
+    <div class="space-y-4 mb-8 animate-in fade-in slide-in-from-top-2 duration-300">
+      <div class="flex items-center justify-between px-1">
+        <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Productos en la Orden</h3>
         @if (order()?.nota_general) {
-          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+          <div class="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[#FFB300]">
             <lucide-icon name="info" class="w-3.5 h-3.5" />
-            <span class="text-[10px] font-bold uppercase tracking-wider">Nota General</span>
+            <span class="text-[9px] font-bold uppercase tracking-wider">Nota General</span>
           </div>
         }
       </div>
       
       @if (order()?.nota_general) {
-        <div class="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 mb-4 animate-in fade-in slide-in-from-top-2">
-          <p class="text-sm text-amber-200/80 italic leading-relaxed">
+        <div class="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
+          <p class="text-xs text-amber-200/80 italic leading-relaxed">
             "{{ order()?.nota_general }}"
           </p>
         </div>
@@ -29,17 +29,17 @@ import { LucideAngularModule } from 'lucide-angular';
       
       <div class="space-y-2">
         @for (item of items(); track item.id) {
-          <div class="p-4 rounded-2xl bg-[#1E1E1E] border border-white/5 flex items-center justify-between group">
-            <div class="flex-1">
-              <div class="flex items-center gap-3 mb-1">
-                <span class="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center text-xs font-black">
+          <div class="p-4 rounded-xl bg-gradient-to-b from-[#1C1C1E] to-[#161618] border border-white/[0.04] flex items-center justify-between group shadow-sm">
+            <div class="flex-grow min-w-0 pr-4">
+              <div class="flex items-center gap-3">
+                <span class="w-6 h-6 rounded-md bg-[#FFB300]/10 text-[#FFB300] border border-[#FFB300]/20 flex items-center justify-center text-xs font-black shrink-0">
                   {{ item.cantidad }}
                 </span>
-                <span class="font-bold text-white">{{ item.nombre_producto }}</span>
+                <span class="font-extrabold text-white text-sm truncate">{{ item.nombre_producto }}</span>
               </div>
               
               @if (item.nota) {
-                <p class="text-[11px] text-amber-400 italic ml-9 mt-1">
+                <p class="text-[11px] text-[#FFB300]/80 italic ml-9 mt-1 truncate">
                   "{{ item.nota }}"
                 </p>
               }
@@ -47,7 +47,7 @@ import { LucideAngularModule } from 'lucide-angular';
               @if (item.modificadores?.length > 0) {
                 <div class="ml-9 mt-1.5 flex flex-wrap gap-1.5">
                   @for (m of item.modificadores; track m.id) {
-                    <span class="text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
+                    <span class="text-[8px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                       + {{ m.nombre_modificador }}
                     </span>
                   }
@@ -55,15 +55,15 @@ import { LucideAngularModule } from 'lucide-angular';
               }
             </div>
 
-            <div class="text-right">
-              <span class="text-sm font-bold text-white">\${{ (item.precio_unitario * item.cantidad) | number:'1.2-2' }}</span>
-              <p class="text-[10px] text-zinc-500 mt-1">\${{ item.precio_unitario }} c/u</p>
+            <div class="text-right shrink-0">
+              <span class="text-sm font-extrabold text-white tabular-nums">\${{ (item.precio_unitario * item.cantidad) | number:'1.2-2' }}</span>
+              <p class="text-[10px] text-zinc-500 mt-0.5 font-medium tabular-nums">\${{ item.precio_unitario }} c/u</p>
             </div>
           </div>
         }
       </div>
     </div>
-  `
+  `,
 })
 export class OrderDetailItems {
   order = input.required<any>();

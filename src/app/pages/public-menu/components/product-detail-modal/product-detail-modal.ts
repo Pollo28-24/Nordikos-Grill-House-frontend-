@@ -1,5 +1,6 @@
 import { Component, input, output, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { Product, ProductVariant } from '@core/models/product.model';
 import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
@@ -7,7 +8,7 @@ import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
 @Component({
   selector: 'app-product-detail-modal',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, CurrencyMxnPipe],
+  imports: [CommonModule, FormsModule, LucideAngularModule, CurrencyMxnPipe],
   templateUrl: './product-detail-modal.html',
 })
 export class ProductDetailModal {
@@ -15,15 +16,17 @@ export class ProductDetailModal {
   isAdded = input<boolean>(false);
 
   onClose = output<void>();
-  onAddToCart = output<{ product: Product, quantity: number, variants: Record<string, number> }>();
+  onAddToCart = output<{ product: Product, quantity: number, variants: Record<string, number>, note: string }>();
 
   selectedQuantity = signal<number>(1);
   variantQuantities = signal<Record<string, number>>({});
+  productNote = signal<string>('');
 
   constructor() {
     effect(() => {
       const p = this.product();
       this.selectedQuantity.set(1);
+      this.productNote.set('');
       
       const initialQuantities: Record<string, number> = {};
       if (p.variants?.length) {
@@ -33,7 +36,7 @@ export class ProductDetailModal {
         initialQuantities[p.variants[0].id] = 1;
       }
       this.variantQuantities.set(initialQuantities);
-    }, { allowSignalWrites: true });
+    },);
   }
 
   updateSelectedQuantity(amount: number) {
@@ -65,7 +68,8 @@ export class ProductDetailModal {
     this.onAddToCart.emit({
       product: this.product(),
       quantity: this.selectedQuantity(),
-      variants: this.variantQuantities()
+      variants: this.variantQuantities(),
+      note: this.productNote()
     });
   }
 }

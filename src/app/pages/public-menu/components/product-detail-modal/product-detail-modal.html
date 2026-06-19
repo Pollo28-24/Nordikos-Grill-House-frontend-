@@ -105,6 +105,17 @@
         </div>
       }
 
+      <!-- Note Input -->
+      <div class="space-y-2">
+        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nota especial</p>
+        <textarea
+          [(ngModel)]="productNote"
+          placeholder="Agregar nota (ej: sin cebolla, bien cocido, etc.)"
+          class="w-full text-sm p-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 transition resize-none"
+          rows="3"
+        ></textarea>
+      </div>
+
       <!-- Footer Action -->
       <div class="pt-2 shrink-0">
         <button 

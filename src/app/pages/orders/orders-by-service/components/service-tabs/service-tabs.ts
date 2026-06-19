@@ -7,23 +7,32 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="mb-6 flex gap-2 flex-wrap">
-      <button class="px-4 h-9 rounded-full text-sm bg-[#1E1E1E] border border-black/40 hover:bg-[#1A1A1A] transition" 
-        [class.bg-[#FFB300]]="selectedTypeId() === null" 
-        [class.text-[#121212]]="selectedTypeId() === null"
+    <div class="inline-flex p-1 gap-1 rounded-lg bg-white/[0.02] border border-white/5 overflow-x-auto scrollbar-hide flex-nowrap max-w-full">
+      <button class="shrink-0 px-4 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95" 
+        [class.bg-white/10]="selectedTypeId() === null" 
+        [class.text-[#FFB300]]="selectedTypeId() === null"
+        [class.text-zinc-400]="selectedTypeId() !== null"
+        [class.hover:text-zinc-200]="selectedTypeId() !== null"
         (click)="selectType.emit(null)">
         Todas
       </button>
 
       @for (t of serviceTypes(); track t.id) {
-        <button class="px-4 h-9 rounded-full text-sm bg-[#1E1E1E] border border-black/40 hover:bg-[#1A1A1A] transition" 
-          [class.bg-[#FFB300]]="selectedTypeId() === t.id" 
-          [class.text-[#121212]]="selectedTypeId() === t.id"
+        <button class="shrink-0 px-4 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95" 
+          [class.bg-white/10]="selectedTypeId() === t.id" 
+          [class.text-[#FFB300]]="selectedTypeId() === t.id"
+          [class.text-zinc-400]="selectedTypeId() !== t.id"
+          [class.hover:text-zinc-200]="selectedTypeId() !== t.id"
           (click)="selectType.emit(t.id)">
           {{ t.nombre }}
         </button>
       }
     </div>
+  `,
+  styles: `
+    :host { display: block; max-width: 100%; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   `
 })
 export class ServiceTabs {
@@ -32,3 +41,4 @@ export class ServiceTabs {
   
   selectType = output<number | null>();
 }
+

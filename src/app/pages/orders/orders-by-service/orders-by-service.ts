@@ -15,6 +15,7 @@ import { OrderKpiBar } from './components/order-kpi-bar/order-kpi-bar';
 import { ServiceTabs } from './components/service-tabs/service-tabs';
 import { OrderFilterBar } from './components/order-filter-bar/order-filter-bar';
 import { OrderCard } from './components/order-card/order-card';
+import { OrderStatusFilter, OrderStatusFilterValue, PaymentStatusFilterValue } from './components/order-status-filter/order-status-filter';
 
 interface ServiceType {
   id: number;
@@ -24,7 +25,7 @@ interface ServiceType {
 @Component({
   selector: 'app-orders-by-service',
   standalone: true,
-  imports: [LucideAngularModule, Navbar, TicketPrintComponent, OrderKpiBar, ServiceTabs, OrderFilterBar, OrderCard],
+  imports: [LucideAngularModule, Navbar, TicketPrintComponent, OrderKpiBar, ServiceTabs, OrderFilterBar, OrderCard, OrderStatusFilter],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './orders-by-service.html'
 })
@@ -54,11 +55,49 @@ export class OrdersByService implements OnInit, OnDestroy {
 
   activeOrderIdMobile = signal<number | string | null>(null);
 
-  filtered = computed(() => {
+  statusFilter = signal<OrderStatusFilterValue>('all');
+  paymentStatusFilter = signal<PaymentStatusFilterValue>('all');
+  showFilters = signal(false);
+
+  hasActiveFilters = computed(() => {
+    return this.dateFilterType() !== 'today' || 
+           this.statusFilter() !== 'all' || 
+           this.paymentStatusFilter() !== 'all';
+  });
+
+  activeFiltersCount = computed(() => {
+    let count = 0;
+    if (this.dateFilterType() !== 'today') count++;
+    if (this.statusFilter() !== 'all') count++;
+    if (this.paymentStatusFilter() !== 'all') count++;
+    return count;
+  });
+
+  toggleFilters() {
+    this.showFilters.set(!this.showFilters());
+  }
+
+  serviceTypeFilteredOrders = computed(() => {
     const all = this.orders();
     const t = this.selectedTypeId();
     if (!t) return all;
     return all.filter(o => o.tipo_servicio_id === t);
+  });
+
+  filtered = computed(() => {
+    let list = this.serviceTypeFilteredOrders();
+    
+    const sf = this.statusFilter();
+    if (sf !== 'all') {
+      list = list.filter(o => o.estado_pedido === sf);
+    }
+    
+    const pf = this.paymentStatusFilter();
+    if (pf !== 'all') {
+      list = list.filter(o => o.estado_pago === pf);
+    }
+    
+    return list;
   });
 
   selectedServiceName = computed(() => {
@@ -68,17 +107,39 @@ export class OrdersByService implements OnInit, OnDestroy {
     return s ? s.nombre : 'Todas las órdenes';
   });
 
-  totalSales = computed(() => {
-    const filtered = this.filtered();
-    return filtered
-      .filter(o => o.estado_pedido === 'entregado' && o.estado_pago === 'pagado')
-      .reduce((sum, o) => sum + (o.total || 0), 0);
+  pendingCount = computed(() => {
+    const orders = this.serviceTypeFilteredOrders();
+    return orders.filter(o => o.estado_pedido === 'pendiente' || o.estado_pedido === 'confirmado').length;
   });
 
-  completedOrdersCount = computed(() => {
-    const filtered = this.filtered();
-    return filtered.filter(o => o.estado_pedido === 'entregado' && o.estado_pago === 'pagado').length;
+  unpaidCount = computed(() => {
+    const orders = this.serviceTypeFilteredOrders();
+    return orders.filter(o => o.estado_pago === 'pendiente' && o.estado_pedido !== 'cancelado').length;
   });
+
+  deliveredCount = computed(() => {
+    const orders = this.serviceTypeFilteredOrders();
+    return orders.filter(o => o.estado_pedido === 'entregado').length;
+  });
+
+  activeOrdersCount = computed(() => {
+    const orders = this.orders();
+    return orders.filter(o => o.estado_pedido !== 'entregado' && o.estado_pedido !== 'cancelado').length;
+  });
+
+  pendingOrdersCount = computed(() => {
+    const orders = this.orders();
+    return orders.filter(o => o.estado_pedido === 'pendiente' || o.estado_pedido === 'confirmado').length;
+  });
+
+  setStatusFilter(value: OrderStatusFilterValue) {
+    this.statusFilter.set(value);
+  }
+
+  setPaymentFilter(value: PaymentStatusFilterValue) {
+    this.paymentStatusFilter.set(value);
+  }
+
 
   ngOnInit(): void {
     this.loadTypes();

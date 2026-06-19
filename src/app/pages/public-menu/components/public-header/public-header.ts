@@ -16,6 +16,7 @@ export class PublicHeader {
 
   onSearchChange = output<string>();
   onCartClick = output<void>();
+  onUserClick = output<void>();
 
   handleSearch(event: Event) {
     const target = event.target as HTMLInputElement;

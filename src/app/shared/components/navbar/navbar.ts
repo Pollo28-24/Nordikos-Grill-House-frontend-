@@ -1,13 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '@auth/data-access/auth.services';
 import { ToastService } from '@core/services/toast.service';
+import { OrdersRequestsService } from '@core/services/orders-requests.service';
 import { filter } from 'rxjs';
 
 @Component({
   selector: 'app-navbar',
-  imports: [LucideAngularModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, LucideAngularModule, RouterLink, RouterLinkActive],
   templateUrl: './navbar.html',
   styles: `
     :host {
@@ -20,6 +22,8 @@ export class Navbar {
   private authService = inject(AuthService);
   private router = inject(Router);
   private toastService = inject(ToastService);
+  public requestsService = inject(OrdersRequestsService);
+  private platformId = inject(PLATFORM_ID);
 
   user = this.authService.user;
   isAuthenticated = computed(() => !!this.user());
@@ -31,6 +35,11 @@ export class Navbar {
       .subscribe(() => {
         this.menuOpen.set(false);
       });
+
+    if (isPlatformBrowser(this.platformId)) {
+      this.requestsService.loadRequests();
+      this.requestsService.subscribeRealtime();
+    }
   }
 
   toggleMenu() {

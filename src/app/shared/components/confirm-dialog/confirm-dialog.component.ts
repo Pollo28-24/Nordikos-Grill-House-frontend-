@@ -2,7 +2,9 @@ import {
   Component,
   inject,
   ChangeDetectionStrategy,
-  HostListener
+  HostListener,
+  ViewChild,
+  ElementRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -63,11 +65,11 @@ import { ConfirmService } from '@core/services/confirm.service';
           @if (confirm.showInput) {
             <div class="mt-6">
               <textarea
+                #confirmInput
                 [placeholder]="confirm.inputPlaceholder || 'Escribe aquí...'"
                 class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors resize-none h-24"
                 [ngModel]="confirmService.inputValue()"
                 (ngModelChange)="confirmService.setInputValue($event)"
-                autofocus
               ></textarea>
             </div>
           }
@@ -125,6 +127,14 @@ import { ConfirmService } from '@core/services/confirm.service';
 export class ConfirmDialogComponent {
 
   confirmService = inject(ConfirmService);
+
+  @ViewChild('confirmInput') set confirmInput(element: ElementRef<HTMLTextAreaElement>) {
+    if (element) {
+      setTimeout(() => {
+        element.nativeElement.focus();
+      }, 60);
+    }
+  }
 
   @HostListener('document:keydown.escape')
   onEsc() {

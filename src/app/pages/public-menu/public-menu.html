@@ -1,7 +1,6 @@
 <div class="min-h-screen bg-[#E2D7B7] text-gray-900 font-sans pb-32">
 
-  <app-public-header [cartCount]="cartService.totalItems()" [searchQuery]="searchQuery()" [cartBumping]="cartBumping()"
-    (onSearchChange)="searchQuery.set($event)" (onCartClick)="toggleCart()"></app-public-header>
+  <app-public-header [cartCount]="cartService.totalItems()" [searchQuery]="searchQuery()" [cartBumping]="cartBumping()" (onSearchChange)="searchQuery.set($event)" (onCartClick)="toggleCart()" (onUserClick)="openUserCheckout()"></app-public-header>
 
   <!-- HERO -->
   <div class="max-w-7xl mx-auto px-5 mt-6">
@@ -134,7 +133,179 @@
     (quantityChange)="cartService.updateQuantity($event.id, $event.delta)"
     (remove)="cartService.removeFromCart($event)"
     (clear)="cartService.clearCart()"
+    (checkout)="openCheckout()"
+    (notaChange)="cartService.updateNota($event.id, $event.nota)"
   ></app-public-cart>
+  }
+
+  <!-- CLIENT CHECKOUT MODAL -->
+  @if (isCheckoutModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" (click)="closeCheckout()"></div>
+
+    <!-- Modal Content -->
+    <div class="relative w-full max-w-md bg-[#F8F5EE] border border-[#E2D7B7]/50 text-gray-900 rounded-3xl shadow-2xl p-6 overflow-hidden animate-in zoom-in-95 duration-200">
+      <div class="flex items-center justify-between mb-4 border-b border-[#E2D7B7]/50 pb-3">
+        <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+          <lucide-icon name="user" class="h-5 w-5 text-orange-500"></lucide-icon>
+          Datos de Entrega
+        </h3>
+        <button (click)="closeCheckout()" class="text-gray-400 hover:text-gray-600 transition p-1">
+          <lucide-icon name="x" class="h-5 w-5"></lucide-icon>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <!-- Nombre -->
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nombre Completo *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="checkoutForm().nombre"
+            placeholder="Ej. Juan Pérez"
+            class="w-full h-11 px-3 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition"
+            required
+          />
+        </div>
+
+        <!-- Telefono -->
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Teléfono *</label>
+          <input 
+            type="tel" 
+            [(ngModel)]="checkoutForm().telefono"
+            placeholder="Ej. 9511234567"
+            class="w-full h-11 px-3 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition"
+            required
+          />
+        </div>
+
+        <!-- Email (Opcional) -->
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Email (Opcional)</label>
+          <input 
+            type="email" 
+            [(ngModel)]="checkoutForm().email"
+            placeholder="Ej. juan@correo.com"
+            class="w-full h-11 px-3 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition"
+          />
+        </div>
+
+        <!-- Tipo de Servicio -->
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">¿Cómo recibirás tu pedido? *</label>
+          <div class="relative">
+            <select 
+              [(ngModel)]="checkoutForm().tipo_servicio_id"
+              class="w-full h-11 px-3 pr-10 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition appearance-none cursor-pointer"
+            >
+              @for (type of serviceTypes(); track type.id) {
+                <option [value]="type.id">{{ type.nombre }}</option>
+              }
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500">
+              <lucide-icon name="chevron-down" class="h-4 w-4"></lucide-icon>
+            </div>
+          </div>
+        </div>
+
+        <!-- Condicional Mesa -->
+        @if (isMesaSelected()) {
+          <div class="animate-in slide-in-from-top-3 duration-200">
+            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Número de Mesa *</label>
+            <input 
+              type="text" 
+              [(ngModel)]="checkoutForm().numero_mesa"
+              placeholder="Ej. Mesa 3"
+              class="w-full h-11 px-3 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition"
+              required
+            />
+          </div>
+        }
+
+        <!-- Condicional Domicilio -->
+        @if (isDomicilioSelected()) {
+          <div class="animate-in slide-in-from-top-3 duration-200">
+            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Dirección de Entrega *</label>
+            <textarea 
+              [(ngModel)]="checkoutForm().direccion_entrega"
+              placeholder="Calle, número, colonia, referencias..."
+              class="w-full h-20 p-3 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition resize-none"
+              required
+            ></textarea>
+          </div>
+        }
+
+        <!-- Notas generales -->
+        <div>
+          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Notas especiales (Opcional)</label>
+          <textarea 
+            [(ngModel)]="checkoutForm().nota_general"
+            placeholder="Sin cebolla, hamburguesa bien cocida, aderezo extra, etc."
+            class="w-full h-16 p-3 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition resize-none"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center gap-3 mt-6 border-t border-[#E2D7B7]/50 pt-4">
+        <button 
+          (click)="closeCheckout()"
+          class="flex-1 h-11 rounded-xl border border-gray-250 text-gray-700 text-sm font-semibold active:scale-95 transition"
+        >
+          Cancelar
+        </button>
+        <button 
+          (click)="submitRequest()"
+          [disabled]="isSubmitting()"
+          class="flex-1 h-11 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white text-sm font-bold shadow-lg shadow-orange-500/20 active:scale-95 transition flex items-center justify-center gap-2"
+        >
+          @if (isSubmitting()) {
+            <lucide-icon name="loader" class="h-4 w-4 animate-spin"></lucide-icon>
+            <span>Enviando...</span>
+          } @else {
+            <lucide-icon name="send" class="h-4 w-4"></lucide-icon>
+            <span>Enviar Pedido</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- SUCCESS MODAL -->
+  @if (isSuccessModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+
+    <!-- Modal Content -->
+    <div class="relative w-full max-w-sm bg-[#F8F5EE] border border-[#E2D7B7]/50 rounded-3xl shadow-2xl p-6 text-center animate-in zoom-in-95 duration-200">
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <lucide-icon name="check" class="h-8 w-8 text-green-600"></lucide-icon>
+      </div>
+
+      <h3 class="text-xl font-bold text-gray-900 mb-2">¡Pedido Enviado!</h3>
+      <p class="text-sm text-gray-500 mb-6 leading-relaxed">
+        Tu pedido ha sido recibido por el mesero. Tu código de solicitud es:
+      </p>
+
+      <!-- Code display box -->
+      <div class="bg-white border border-[#E2D7B7] rounded-2xl p-4 mb-6">
+        <span class="text-2xl font-extrabold text-orange-600 tracking-wider font-mono">
+          {{ successRequestCode() }}
+        </span>
+      </div>
+
+      <button 
+        (click)="closeSuccessModal()"
+        class="w-full h-11 rounded-xl bg-zinc-950 hover:bg-zinc-900 text-white text-sm font-bold shadow-md active:scale-95 transition"
+      >
+        Entendido
+      </button>
+    </div>
+  </div>
   }
 
 </div>

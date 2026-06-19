@@ -89,7 +89,16 @@ import {
   Inbox,
   HelpCircle,
   Ban,
-  
+  Clock,
+  Share2,
+  Send,
+  Bell,
+  Tag,
+  MapPin,
+  CheckSquare,
+  Slash,
+  Loader,
+  AlertCircle
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -186,8 +195,16 @@ providers: [
         Inbox,
         HelpCircle,
         Ban,
-        
-
+        Clock,
+        Share2,
+        Send,
+        Bell,
+        Tag,
+        MapPin,
+        CheckSquare,
+        Slash,
+        Loader,
+        AlertCircle
       }),
     ),
   ],
