@@ -2,6 +2,27 @@
   <app-navbar />
 
   <main class="max-w-7xl mx-auto px-4 py-6 space-y-8">
+    
+    <!-- ============================= -->
+    <!-- BUSCADOR DE PRODUCTOS -->
+    <!-- ============================= -->
+    <div class="relative w-full max-w-md">
+      <div class="flex items-center gap-3 bg-zinc-900 border border-white/5 px-4 py-2.5 rounded-2xl focus-within:border-amber-500 transition duration-200 shadow-sm">
+        <lucide-icon name="search" class="w-4 h-4 text-zinc-500 shrink-0"></lucide-icon>
+        <input 
+          type="text" 
+          [value]="searchQuery()"
+          (input)="onSearchQueryInput($event)"
+          placeholder="Buscar producto por nombre..."
+          class="w-full bg-transparent outline-none text-sm text-white placeholder-zinc-500"
+        />
+        @if (searchQuery()) {
+          <button (click)="clearSearchQuery()" class="p-1 rounded-full hover:bg-white/5 transition text-zinc-400 hover:text-white" title="Limpiar búsqueda">
+            <lucide-icon name="x" class="w-3.5 h-3.5"></lucide-icon>
+          </button>
+        }
+      </div>
+    </div>
 
     <!-- ============================= -->
     <!-- CATEGORY FILTER -->

@@ -19,24 +19,25 @@
         <p class="text-zinc-500 font-medium">Cargando detalles...</p>
       </div>
     } @else if (order()) {
-      
-      <!-- Info General -->
-      <app-order-detail-summary
-        [order]="order()"
-        [currentTime]="currentTime()"
-      />
+      <div class="flex flex-col gap-5">
+        <!-- Info General -->
+        <app-order-detail-summary
+          [order]="order()"
+          [currentTime]="currentTime()"
+        />
 
-      <!-- Items de la Orden -->
-      <app-order-detail-items
-        [order]="order()"
-        [items]="items()"
-      />
+        <!-- Items de la Orden -->
+        <app-order-detail-items
+          [order]="order()"
+          [items]="items()"
+          (addProducts)="addMoreProducts()"
+        />
 
-      <!-- Resumen de Totales -->
-      <app-order-detail-totals
-        [order]="order()"
-      />
-
+        <!-- Resumen de Totales -->
+        <app-order-detail-totals
+          [order]="order()"
+        />
+      </div>
     }
 
   </div>
@@ -58,15 +59,4 @@
       }
     </div>
   </div>
-}
-
-<!-- Botón Flotante para Agregar más productos -->
-@if (order() && order().estado_pedido === 'confirmado' && order().estado_pago === 'pendiente') {
-  <button
-    (click)="addMoreProducts()"
-    class="fixed bottom-6 right-6 z-20 inline-flex items-center gap-2 px-5 h-12 rounded-lg bg-[#FFB300] text-[#121212] font-extrabold text-xs uppercase tracking-wider hover:bg-[#FFC107] active:scale-95 transition-all shadow-xl shadow-amber-500/10 animate-in fade-in zoom-in-95"
-  >
-    <lucide-icon name="folder-open" class="w-4 h-4" />
-    <span>Agregar Productos</span>
-  </button>
 }

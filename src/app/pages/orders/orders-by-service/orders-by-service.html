@@ -21,6 +21,21 @@
           <lucide-icon name="refresh-cw" class="w-5 h-5" [class.animate-spin]="loading()"></lucide-icon>
         </button>
 
+        <button (click)="goToRequests()" class="
+          inline-flex items-center gap-2
+          px-4 h-11
+          rounded-lg
+          bg-white/5 hover:bg-white/10
+          text-[#FFB300] border border-[#FFB300]/10
+          font-bold text-sm
+          active:scale-95
+          transition duration-200
+          "
+          title="Ver Solicitudes">
+          <lucide-icon name="inbox" class="w-4 h-4" />
+          <span class="hidden sm:inline">Solicitudes</span>
+        </button>
+
         <button (click)="createNewOrder()" class="
           inline-flex items-center gap-2
           px-5 h-11

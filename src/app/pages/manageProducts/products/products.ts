@@ -42,6 +42,7 @@ export class Products {
   // --------------------------
 
   selectedCategoryId = signal<string | null>(null);
+  searchQuery = signal<string>('');
   
   // Visibility cache (reactive) to persist state across re-computations
   private visibilityCache = signal<Record<string, boolean>>({});
@@ -66,8 +67,14 @@ export class Products {
     const products = this.products();
     const overrides = this.categoryNameOverrides();
     const visibility = this.visibilityCache();
+    const query = this.normalizeText(this.searchQuery());
 
     if (!categories.length) return [];
+
+    let activeProducts = products;
+    if (query) {
+      activeProducts = products.filter((p) => this.normalizeText(p.nombre).includes(query));
+    }
 
     if (selectedId) {
       const category = categories.find((c) => c.id === selectedId);
@@ -77,7 +84,7 @@ export class Products {
           categoryName: category?.nombre ?? 'Categoría',
           displayName: overrides[selectedId] || (category?.nombre ?? 'Categoría'),
           categoryDescription: category?.descripcion,
-          products: products.filter((p) => p.categoria_id === selectedId),
+          products: activeProducts.filter((p) => p.categoria_id === selectedId),
           isVisible: true, // Always visible when selected
         },
       ];
@@ -88,7 +95,7 @@ export class Products {
       categoryName: category.nombre,
       displayName: overrides[category.id] || category.nombre,
       categoryDescription: category.descripcion,
-      products: products.filter((p) => p.categoria_id === category.id),
+      products: activeProducts.filter((p) => p.categoria_id === category.id),
       isVisible: visibility[category.id] ?? true,
     }));
   });
@@ -104,6 +111,22 @@ export class Products {
   // --------------------------
   // ACTIONS
   // --------------------------
+
+  normalizeText(text: string): string {
+    return (text || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  onSearchQueryInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.searchQuery.set(input.value || '');
+  }
+
+  clearSearchQuery() {
+    this.searchQuery.set('');
+  }
 
   filterProductsByCategory(id: string | null) {
     this.selectedCategoryId.set(id);

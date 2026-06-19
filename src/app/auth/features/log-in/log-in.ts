@@ -39,9 +39,9 @@ interface LogInForm {
         <div class="text-center mb-8">
           <img
             loading="lazy"
-            src="assets/logo/logo_Nordicos.webp"
+            src="assets/logo/logo 2 nordicos.jpg"
             alt="logo"
-            class="w-20 h-20 mx-auto mb-3"
+            class="w-20 h-20 mx-auto mb-3 rounded-full object-cover"
           />
           <h1 class="text-3xl font-bold tracking-wide">Iniciar Sesión</h1>
           <p class="text-sm text-zinc-400 mt-1">Nórdicos Grill House</p>
@@ -360,7 +360,7 @@ export default class LogIn {
 
       this.toastService.show('🔥 Bienvenido a Nórdicos Grill House', 'success');
 
-      this.router.navigateByUrl('/');
+      this.router.navigateByUrl('/home');
       this.resetThrottling();
       this.logAuthEvent(true, 'success');
     } catch {

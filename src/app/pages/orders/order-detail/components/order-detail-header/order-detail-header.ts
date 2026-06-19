@@ -8,84 +8,105 @@ import { LucideAngularModule } from 'lucide-angular';
   imports: [CommonModule, NgClass, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex flex-col gap-6 mb-8">
-      <!-- Fila 1: Botón Regresar y Título -->
-      <div class="flex items-center gap-3">
-        <button (click)="goBack.emit()" class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 transition active:scale-95 shrink-0" title="Volver">
-          <lucide-icon name="chevron-left" class="w-5 h-5 text-zinc-300" />
-        </button>
-        <div class="flex flex-col min-w-0">
-          <h1 class="text-2xl font-extrabold tracking-tight text-white leading-tight">Orden #{{ order()?.numero_orden || orderId() }}</h1>
-          
-          <!-- Fila de Estados Unificados -->
-          @if (order()) {
-            <div class="flex items-center gap-1.5 mt-1.5">
-              <span
-                class="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider border transition-all duration-300"
-                [ngClass]="{
-                  'bg-zinc-500/10 text-zinc-400 border-zinc-500/20': order()?.estado_pedido === 'pendiente',
-                  'bg-blue-500/10 text-blue-400 border-blue-500/20': order()?.estado_pedido === 'confirmado',
-                  'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': order()?.estado_pedido === 'entregado',
-                  'bg-red-500/10 text-red-400 border-red-500/20': order()?.estado_pedido === 'cancelado'
-                }"
-              >
-                {{ order()?.estado_pedido }}
-              </span>
-
-              <span
-                class="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider border transition-all duration-300"
-                [ngClass]="{
-                  'bg-rose-500/10 text-rose-400 border-rose-500/20': order()?.estado_pago === 'pendiente',
-                  'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': order()?.estado_pago === 'pagado',
-                  'bg-red-500/10 text-red-400 border-red-500/20': order()?.estado_pago === 'fallido',
-                  'bg-purple-500/10 text-purple-400 border-purple-500/20': order()?.estado_pago === 'reembolsado'
-                }"
-              >
-                Pago: {{ order()?.estado_pago }}
-              </span>
-            </div>
-          }
+    <div class="flex flex-col gap-5 mb-6 animate-in fade-in slide-in-from-top-3 duration-300">
+      <!-- Fila 1: Botón Regresar, Título y Estados -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <button (click)="goBack.emit()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 transition duration-200 active:scale-95 shrink-0" title="Volver">
+            <lucide-icon name="chevron-left" class="w-5 h-5 text-zinc-300" />
+          </button>
+          <div class="flex flex-col min-w-0">
+            <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-none mb-1">Detalle de la Orden</span>
+            <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
+              Orden #{{ order()?.numero_orden || orderId() }}
+            </h1>
+          </div>
         </div>
+
+        <!-- Fila de Estados Unificados con Indicadores de Pulso -->
+        @if (order()) {
+          <div class="flex flex-wrap items-center gap-2 self-start sm:self-center">
+            <!-- Chip Estado Pedido -->
+            <div
+              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all duration-300"
+              [ngClass]="{
+                'bg-zinc-500/5 text-zinc-400 border-zinc-500/10': order()?.estado_pedido === 'pendiente',
+                'bg-blue-500/10 text-blue-400 border-blue-500/20': order()?.estado_pedido === 'confirmado',
+                'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': order()?.estado_pedido === 'entregado',
+                'bg-red-500/10 text-red-400 border-red-500/20': order()?.estado_pedido === 'cancelado'
+              }"
+            >
+              <span class="w-1.5 h-1.5 rounded-full"
+                [ngClass]="{
+                  'bg-zinc-500': order()?.estado_pedido === 'pendiente',
+                  'bg-blue-400 animate-pulse shadow-[0_0_8px_rgba(96,165,250,0.5)]': order()?.estado_pedido === 'confirmado',
+                  'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.5)]': order()?.estado_pedido === 'entregado',
+                  'bg-red-400': order()?.estado_pedido === 'cancelado'
+                }"></span>
+              <span>{{ order()?.estado_pedido }}</span>
+            </div>
+
+            <!-- Chip Estado Pago -->
+            <div
+              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all duration-300"
+              [ngClass]="{
+                'bg-rose-500/10 text-rose-400 border-rose-500/20': order()?.estado_pago === 'pendiente',
+                'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': order()?.estado_pago === 'pagado',
+                'bg-red-500/10 text-red-400 border-red-500/20': order()?.estado_pago === 'fallido',
+                'bg-purple-500/10 text-purple-400 border-purple-500/20': order()?.estado_pago === 'reembolsado'
+              }"
+            >
+              <span class="w-1.5 h-1.5 rounded-full"
+                [ngClass]="{
+                  'bg-rose-400 animate-pulse shadow-[0_0_8px_rgba(251,113,133,0.5)]': order()?.estado_pago === 'pendiente',
+                  'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.5)]': order()?.estado_pago === 'pagado',
+                  'bg-red-400': order()?.estado_pago === 'fallido',
+                  'bg-purple-400': order()?.estado_pago === 'reembolsado'
+                }"></span>
+              <span>Pago: {{ order()?.estado_pago }}</span>
+            </div>
+          </div>
+        }
       </div>
       
       <!-- Fila 2: Botones de Acción (POS Toolbar style) -->
       @if (order()) {
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 mt-2">
           @if (order()?.estado_pedido !== 'cancelado') {
             <button 
               (click)="cancelOrder.emit()"
-              class="flex-1 sm:flex-none h-10 px-4 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider"
+              class="h-10 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition duration-200 active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider w-full sm:w-auto"
               title="Cancelar orden"
             >
-              <lucide-icon name="ban" class="w-4 h-4" />
+              <lucide-icon name="ban" class="w-4 h-4 text-red-400" />
               <span>Cancelar</span>
             </button>
           }
 
           <button 
             (click)="openTicket.emit('kitchen')"
-            class="flex-1 sm:flex-none h-10 px-4 rounded-lg bg-white/5 text-orange-400 border border-white/5 hover:bg-white/10 hover:border-orange-500/20 transition active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider"
+            class="h-10 px-4 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/20 transition duration-200 active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider w-full sm:w-auto"
             title="Ticket Cocina"
           >
-            <lucide-icon name="chef-hat" class="w-4 h-4" />
+            <lucide-icon name="chef-hat" class="w-4 h-4 text-orange-400" />
             <span>Cocina</span>
           </button>
           
           <button 
             (click)="openTicket.emit('account')"
-            class="flex-1 sm:flex-none h-10 px-4 rounded-lg bg-white/5 text-[#FFB300] border border-white/5 hover:bg-white/10 hover:border-[#FFB300]/20 transition active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider"
+            class="h-10 px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-[#FFB300] border border-amber-500/20 transition duration-200 active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider w-full sm:w-auto"
             title="Ticket Cuenta"
           >
-            <lucide-icon name="printer" class="w-4 h-4" />
+            <lucide-icon name="printer" class="w-4 h-4 text-[#FFB300]" />
             <span>Cuenta</span>
           </button>
           
           <button 
             (click)="shareTicketPDF.emit()"
-            class="flex-1 sm:flex-none h-10 px-4 rounded-lg bg-white/5 text-blue-400 border border-white/5 hover:bg-white/10 hover:border-blue-500/20 transition active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider"
+            class="h-10 px-4 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition duration-200 active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider w-full sm:w-auto"
             title="Compartir comprobante PDF"
           >
-            <lucide-icon name="file-text" class="w-4 h-4" />
+            <lucide-icon name="file-text" class="w-4 h-4 text-blue-400" />
             <span>PDF</span>
           </button>
         </div>

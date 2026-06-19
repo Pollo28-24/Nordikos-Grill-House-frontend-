@@ -140,6 +140,10 @@ export class OrdersByService implements OnInit, OnDestroy {
     this.paymentStatusFilter.set(value);
   }
 
+  goToRequests() {
+    this.router.navigate(['/orders/requests']);
+  }
+
 
   ngOnInit(): void {
     this.loadTypes();
@@ -155,9 +159,6 @@ export class OrdersByService implements OnInit, OnDestroy {
     const { data, error } = await this.ordersService.getServiceTypes();
     if (!error) {
       this.serviceTypes.set((data ?? []) as ServiceType[]);
-      if (this.serviceTypes().length) {
-        this.selectedTypeId.set(this.serviceTypes()[0].id);
-      }
     }
   }
 
