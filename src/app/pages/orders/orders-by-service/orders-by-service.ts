@@ -1,9 +1,24 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, OnDestroy, effect } from '@angular/core';
 import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { Router, RouterLink } from '@angular/router';
 import { OrdersService } from '@core/services/orders.service';
 import { Navbar } from '@shared/components/navbar/navbar';
+
+const getSavedFilter = <T>(key: string, defaultValue: T): T => {
+  try {
+    const val = localStorage.getItem(`orders_filter_${key}`);
+    return val ? JSON.parse(val) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+};
+
+const saveFilter = (key: string, value: any) => {
+  try {
+    localStorage.setItem(`orders_filter_${key}`, JSON.stringify(value));
+  } catch {}
+};
 import { LoggerService } from '@core/services/logger.service';
 import { OrderStatus, PaymentStatus } from '@core/models/order.model';
 import { UserFeedbackService } from '@core/services/user-feedback.service';
@@ -41,11 +56,11 @@ export class OrdersByService implements OnInit, OnDestroy {
   loading = this.ordersService.loadingOrders;
 
   serviceTypes = signal<ServiceType[]>([]);
-  selectedTypeId = signal<number | null>(null);
+  selectedTypeId = signal<number | null>(getSavedFilter<number | null>('selectedTypeId', null));
 
-  dateFilterType = signal<'today' | 'week' | 'month' | 'custom'>('today');
-  customStartDate = signal<string>(new Date().toISOString().split('T')[0]);
-  customEndDate = signal<string>(new Date().toISOString().split('T')[0]);
+  dateFilterType = signal<'today' | 'week' | 'month' | 'custom'>(getSavedFilter<'today' | 'week' | 'month' | 'custom'>('dateFilterType', 'today'));
+  customStartDate = signal<string>(getSavedFilter<string>('customStartDate', new Date().toISOString().split('T')[0]));
+  customEndDate = signal<string>(getSavedFilter<string>('customEndDate', new Date().toISOString().split('T')[0]));
 
   quickPrintOrderId = signal<number | string | null>(null);
   quickPrintType = signal<'account' | 'kitchen'>('account');
@@ -55,21 +70,49 @@ export class OrdersByService implements OnInit, OnDestroy {
 
   activeOrderIdMobile = signal<number | string | null>(null);
 
-  statusFilter = signal<OrderStatusFilterValue>('all');
-  paymentStatusFilter = signal<PaymentStatusFilterValue>('all');
-  showFilters = signal(false);
+  statusFilter = signal<OrderStatusFilterValue[]>(getSavedFilter<OrderStatusFilterValue[]>('statusFilter', ['all']));
+  paymentStatusFilter = signal<PaymentStatusFilterValue[]>(getSavedFilter<PaymentStatusFilterValue[]>('paymentStatusFilter', ['all']));
+  showFilters = signal<boolean>(getSavedFilter<boolean>('showFilters', false));
+
+  constructor() {
+    effect(() => {
+      saveFilter('selectedTypeId', this.selectedTypeId());
+    });
+    effect(() => {
+      saveFilter('dateFilterType', this.dateFilterType());
+    });
+    effect(() => {
+      saveFilter('customStartDate', this.customStartDate());
+    });
+    effect(() => {
+      saveFilter('customEndDate', this.customEndDate());
+    });
+    effect(() => {
+      saveFilter('statusFilter', this.statusFilter());
+    });
+    effect(() => {
+      saveFilter('paymentStatusFilter', this.paymentStatusFilter());
+    });
+    effect(() => {
+      saveFilter('showFilters', this.showFilters());
+    });
+  }
 
   hasActiveFilters = computed(() => {
+    const sf = this.statusFilter();
+    const pf = this.paymentStatusFilter();
     return this.dateFilterType() !== 'today' || 
-           this.statusFilter() !== 'all' || 
-           this.paymentStatusFilter() !== 'all';
+           (sf.length > 0 && !sf.includes('all')) || 
+           (pf.length > 0 && !pf.includes('all'));
   });
 
   activeFiltersCount = computed(() => {
     let count = 0;
     if (this.dateFilterType() !== 'today') count++;
-    if (this.statusFilter() !== 'all') count++;
-    if (this.paymentStatusFilter() !== 'all') count++;
+    const sf = this.statusFilter();
+    if (sf.length > 0 && !sf.includes('all')) count++;
+    const pf = this.paymentStatusFilter();
+    if (pf.length > 0 && !pf.includes('all')) count++;
     return count;
   });
 
@@ -80,7 +123,7 @@ export class OrdersByService implements OnInit, OnDestroy {
   serviceTypeFilteredOrders = computed(() => {
     const all = this.orders();
     const t = this.selectedTypeId();
-    if (!t) return all;
+    if (t == null) return all;
     return all.filter(o => o.tipo_servicio_id === t);
   });
 
@@ -88,13 +131,13 @@ export class OrdersByService implements OnInit, OnDestroy {
     let list = this.serviceTypeFilteredOrders();
     
     const sf = this.statusFilter();
-    if (sf !== 'all') {
-      list = list.filter(o => o.estado_pedido === sf);
+    if (sf.length > 0 && !sf.includes('all')) {
+      list = list.filter(o => sf.includes(o.estado_pedido as any));
     }
     
     const pf = this.paymentStatusFilter();
-    if (pf !== 'all') {
-      list = list.filter(o => o.estado_pago === pf);
+    if (pf.length > 0 && !pf.includes('all')) {
+      list = list.filter(o => pf.includes(o.estado_pago as any));
     }
     
     return list;
@@ -132,11 +175,11 @@ export class OrdersByService implements OnInit, OnDestroy {
     return orders.filter(o => o.estado_pedido === 'pendiente' || o.estado_pedido === 'confirmado').length;
   });
 
-  setStatusFilter(value: OrderStatusFilterValue) {
+  setStatusFilter(value: OrderStatusFilterValue[]) {
     this.statusFilter.set(value);
   }
 
-  setPaymentFilter(value: PaymentStatusFilterValue) {
+  setPaymentFilter(value: PaymentStatusFilterValue[]) {
     this.paymentStatusFilter.set(value);
   }
 
@@ -281,7 +324,7 @@ export class OrdersByService implements OnInit, OnDestroy {
     if (id) {
       const data = await this.ticketService.getTicketData(Number(id));
       if (data) {
-        this.ticketService.printTicket(data);
+        this.ticketService.printTicket(data, this.quickPrintType());
       }
     }
   }

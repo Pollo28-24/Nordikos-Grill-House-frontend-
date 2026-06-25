@@ -185,6 +185,20 @@ export class OrdersService {
     }
   }
 
+  async cancelItemFromOrder(orderId: number, itemId: number, propina: number) {
+    const { error: cancelError } = await this.api.cancelOrderItem(itemId);
+    if (cancelError) throw cancelError;
+
+    const { data: activeItems, error: fetchError } = await this.api.getActiveOrderItems(orderId);
+    if (fetchError) throw fetchError;
+
+    const newItemsTotal = (activeItems || []).reduce((sum: number, item: any) => sum + Number(item.total || 0), 0);
+    const newTotal = newItemsTotal + propina;
+
+    const { error: updateTotalError } = await this.api.updateOrderTotal(orderId, newTotal);
+    if (updateTotalError) throw updateTotalError;
+  }
+
   private async sendToServer(dto: OrderCreateDto) {
     const { data, error } = await this.api.rpcCreateOrderV1({ 
       p_client_request_id: dto.client_request_id, p_cliente_id: dto.cliente_id ?? null, p_items: dto.items, 
@@ -265,6 +279,26 @@ export class OrdersService {
     } finally {
       this.creating.set(false);
     }
+  }
+
+  async incrementOrderItem(orderId: number, itemId: number, currentQty: number, unitPrice: number, propina: number) {
+    const newQty = currentQty + 1;
+    const newLineTotal = newQty * unitPrice;
+
+    // 1. Update the order item quantity and total in the DB
+    const { error: itemError } = await this.api.updateOrderItemQuantity(itemId, newQty, newLineTotal);
+    if (itemError) throw itemError;
+
+    // 2. Fetch all active order items to calculate new order total
+    const { data: activeItems, error: fetchError } = await this.api.getActiveOrderItems(orderId);
+    if (fetchError) throw fetchError;
+
+    const newItemsTotal = (activeItems || []).reduce((sum: number, item: any) => sum + Number(item.total || 0), 0);
+    const newOrderTotal = newItemsTotal + propina;
+
+    // 3. Update the parent order total in the DB
+    const { error: updateTotalError } = await this.api.updateOrderTotal(orderId, newOrderTotal);
+    if (updateTotalError) throw updateTotalError;
   }
 
   // ==========================================

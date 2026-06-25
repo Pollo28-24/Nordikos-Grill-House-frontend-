@@ -21,7 +21,7 @@ export type PaymentStatusFilterValue = 'all' | 'pendiente' | 'pagado';
         <div class="inline-flex p-1 gap-1 rounded-lg bg-black/40 border border-white/5 overflow-x-auto scrollbar-hide flex-nowrap max-w-full">
           @for (chip of orderChips; track chip.value) {
             <button 
-              (click)="statusFilter.emit(chip.value)"
+              (click)="toggleStatus(chip.value)"
               [class]="getOrderChipClasses(chip.value)"
               class="shrink-0 flex items-center gap-1.5 px-3.5 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 touch-manipulation whitespace-nowrap"
             >
@@ -41,7 +41,7 @@ export type PaymentStatusFilterValue = 'all' | 'pendiente' | 'pagado';
         <div class="inline-flex p-1 gap-1 rounded-lg bg-black/40 border border-white/5 overflow-x-auto scrollbar-hide flex-nowrap max-w-full">
           @for (chip of paymentChips; track chip.value) {
             <button 
-              (click)="paymentFilter.emit(chip.value)"
+              (click)="togglePayment(chip.value)"
               [class]="getPaymentChipClasses(chip.value)"
               class="shrink-0 flex items-center gap-1.5 px-3.5 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 touch-manipulation whitespace-nowrap"
             >
@@ -60,11 +60,11 @@ export type PaymentStatusFilterValue = 'all' | 'pendiente' | 'pagado';
   `
 })
 export class OrderStatusFilter {
-  currentStatus = input<OrderStatusFilterValue>('all');
-  currentPayment = input<PaymentStatusFilterValue>('all');
+  currentStatus = input<OrderStatusFilterValue[]>(['all']);
+  currentPayment = input<PaymentStatusFilterValue[]>(['all']);
 
-  statusFilter = output<OrderStatusFilterValue>();
-  paymentFilter = output<PaymentStatusFilterValue>();
+  statusFilter = output<OrderStatusFilterValue[]>();
+  paymentFilter = output<PaymentStatusFilterValue[]>();
 
   orderChips: { value: OrderStatusFilterValue; label: string; icon: string }[] = [
     { value: 'all', label: 'Todas', icon: 'list-ordered' },
@@ -80,29 +80,75 @@ export class OrderStatusFilter {
     { value: 'pagado', label: 'Pagadas', icon: 'check-circle2' },
   ];
 
+  toggleStatus(val: OrderStatusFilterValue) {
+    if (val === 'all') {
+      this.statusFilter.emit(['all']);
+      return;
+    }
+
+    let current = [...this.currentStatus()];
+    // Remove 'all'
+    current = current.filter(v => v !== 'all');
+
+    if (current.includes(val)) {
+      current = current.filter(v => v !== val);
+    } else {
+      current.push(val);
+    }
+
+    if (current.length === 0) {
+      this.statusFilter.emit(['all']);
+    } else {
+      this.statusFilter.emit(current);
+    }
+  }
+
+  togglePayment(val: PaymentStatusFilterValue) {
+    if (val === 'all') {
+      this.paymentFilter.emit(['all']);
+      return;
+    }
+
+    let current = [...this.currentPayment()];
+    // Remove 'all'
+    current = current.filter(v => v !== 'all');
+
+    if (current.includes(val)) {
+      current = current.filter(v => v !== val);
+    } else {
+      current.push(val);
+    }
+
+    if (current.length === 0) {
+      this.paymentFilter.emit(['all']);
+    } else {
+      this.paymentFilter.emit(current);
+    }
+  }
+
   getOrderChipClasses(value: OrderStatusFilterValue) {
-    const isCurrent = this.currentStatus() === value;
+    const isCurrent = this.currentStatus().includes(value);
     if (!isCurrent) {
-      return 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.02]';
+      return 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.02] border border-transparent';
     }
     
-    if (value === 'all') return 'bg-white/10 text-white';
-    if (value === 'pendiente') return 'bg-white/10 text-[#FFB300]';
-    if (value === 'confirmado') return 'bg-white/10 text-blue-400';
-    if (value === 'entregado') return 'bg-white/10 text-emerald-400';
-    if (value === 'cancelado') return 'bg-white/10 text-rose-500';
+    if (value === 'all') return 'bg-white/10 text-white border border-white/10';
+    if (value === 'pendiente') return 'bg-white/10 text-[#FFB300] border border-[#FFB300]/20';
+    if (value === 'confirmado') return 'bg-white/10 text-blue-400 border border-blue-400/20';
+    if (value === 'entregado') return 'bg-white/10 text-emerald-400 border border-emerald-400/20';
+    if (value === 'cancelado') return 'bg-white/10 text-rose-500 border border-rose-500/20';
     return '';
   }
 
   getPaymentChipClasses(value: PaymentStatusFilterValue) {
-    const isCurrent = this.currentPayment() === value;
+    const isCurrent = this.currentPayment().includes(value);
     if (!isCurrent) {
-      return 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.02]';
+      return 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.02] border border-transparent';
     }
     
-    if (value === 'all') return 'bg-white/10 text-white';
-    if (value === 'pendiente') return 'bg-white/10 text-rose-500';
-    if (value === 'pagado') return 'bg-white/10 text-emerald-400';
+    if (value === 'all') return 'bg-white/10 text-white border border-white/10';
+    if (value === 'pendiente') return 'bg-white/10 text-rose-500 border border-rose-500/20';
+    if (value === 'pagado') return 'bg-white/10 text-emerald-400 border border-emerald-400/20';
     return '';
   }
 }

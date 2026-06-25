@@ -1,16 +1,90 @@
 @if (ticketData(); as data) {
   <!-- UI para previsualización (No se imprime) -->
   <div class="ticket-overlay no-print">
-    <div class="ticket-actions">
-      <button (click)="close.emit()" class="action-btn close-btn" title="Cerrar">
-        <lucide-icon name="x" class="w-6 h-6"></lucide-icon>
-      </button>
-      <button (click)="shareOrCopy()" class="action-btn share-btn" title="Compartir / Copiar para WhatsApp">
-        <lucide-icon name="share-2" class="w-6 h-6"></lucide-icon>
-      </button>
-      <button (click)="print()" class="action-btn print-btn" title="Imprimir o Guardar como PDF">
-        <lucide-icon name="printer" class="w-6 h-6"></lucide-icon>
-      </button>
+    <div class="flex flex-col gap-3 items-center w-full max-w-[320px]">
+      <div class="ticket-actions">
+        <button (click)="close.emit()" class="action-btn close-btn" title="Cerrar">
+          <lucide-icon name="x" class="w-6 h-6"></lucide-icon>
+        </button>
+        <button (click)="shareOrCopy()" class="action-btn share-btn" title="Compartir / Copiar para WhatsApp">
+          <lucide-icon name="share-2" class="w-6 h-6"></lucide-icon>
+        </button>
+        <button (click)="print()" class="action-btn print-btn" title="Imprimir o Guardar como PDF">
+          <lucide-icon name="printer" class="w-6 h-6"></lucide-icon>
+        </button>
+      </div>
+
+      <!-- Panel de Impresora Bluetooth (Sólo en móvil nativo) -->
+      @if (isNative) {
+        <div class="bluetooth-panel w-full">
+          <div class="flex items-center justify-between gap-4 mb-2">
+            <span class="text-xs font-bold text-zinc-400 tracking-wider uppercase">Impresora Bluetooth</span>
+            @if (isBluetoothConnected()) {
+              <span class="status-badge connected">Conectada</span>
+            } @else if (connectionState() === 'connecting') {
+              <span class="status-badge connecting">Conectando...</span>
+            } @else if (connectionState() === 'scanning') {
+              <span class="status-badge scanning">Buscando...</span>
+            } @else {
+              <span class="status-badge disconnected">Desconectada</span>
+            }
+          </div>
+
+          @if (isBluetoothConnected()) {
+            <div class="flex items-center justify-between gap-3 bg-zinc-900/80 p-3 rounded-lg border border-zinc-700">
+              <div class="flex items-center gap-2 overflow-hidden">
+                <lucide-icon name="printer" class="w-4 h-4 text-amber-500 shrink-0"></lucide-icon>
+                <div class="text-left overflow-hidden">
+                  <p class="text-sm font-bold text-white leading-tight truncate">{{ selectedDeviceName() }}</p>
+                  <p class="text-xs text-zinc-400 font-mono truncate">{{ selectedDeviceAddress() }}</p>
+                </div>
+              </div>
+              <button (click)="disconnectPrinter()" class="text-xs bg-red-950 text-red-400 px-3 py-1.5 rounded hover:bg-red-900 border border-red-900/50 transition shrink-0">
+                Desconectar
+              </button>
+            </div>
+          } @else {
+            <div class="flex flex-col gap-2">
+              @if (errorMessage()) {
+                <div class="text-xs text-red-400 bg-red-950/50 border border-red-900/50 p-2 rounded text-left">
+                  {{ errorMessage() }}
+                </div>
+              }
+
+              <!-- Selección de dispositivo -->
+              @if (bluetoothDevices().length > 0) {
+                <div class="flex flex-col gap-1.5 max-h-40 overflow-y-auto pr-1">
+                  <p class="text-[11px] text-zinc-400 text-left font-semibold">Vinculadas en el celular:</p>
+                  @for (dev of bluetoothDevices(); track dev.address) {
+                    <button (click)="connectPrinter(dev)" 
+                            class="flex items-center justify-between text-left p-2 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-850 transition">
+                      <div class="overflow-hidden pr-2">
+                        <p class="text-xs font-bold text-white truncate">{{ dev.name || 'Dispositivo sin nombre' }}</p>
+                        <p class="text-[10px] text-zinc-400 font-mono truncate">{{ dev.address }}</p>
+                      </div>
+                      <lucide-icon name="chevron-right" class="w-3.5 h-3.5 text-zinc-500 shrink-0"></lucide-icon>
+                    </button>
+                  }
+                </div>
+              } @else {
+                <p class="text-xs text-zinc-500 my-1 italic text-center">No hay impresoras en la lista.</p>
+              }
+
+              <button (click)="scanBluetooth()" 
+                      [disabled]="connectionState() === 'scanning' || connectionState() === 'connecting'"
+                      class="flex items-center justify-center gap-2 w-full mt-1 bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-700 text-black font-bold py-2 px-4 rounded text-sm transition">
+                @if (connectionState() === 'scanning') {
+                  <lucide-icon name="loader-2" class="w-4 h-4 animate-spin"></lucide-icon>
+                  Buscando vinculadas...
+                } @else {
+                  <lucide-icon name="refresh-cw" class="w-4 h-4"></lucide-icon>
+                  Listar Vinculadas
+                }
+              </button>
+            </div>
+          }
+        </div>
+      }
     </div>
   </div>
 
@@ -21,7 +95,7 @@
     @if (data.order; as order) {
       <div class="header">
         @if (ticketType() === 'account') {
-          <h1 class="brand">NORDIKOS</h1>
+          <h1 class="brand">NORDICOS</h1>
           <p class="tagline">Grill House</p>
         }
         
@@ -31,9 +105,9 @@
             {{ order.numero_orden ? 'ORDEN #' + order.numero_orden : 'ORDEN #' + order.id }}
           </h2>
           <div class="divider"></div>        
-          @if (ticketType() === 'kitchen') {
+          <!-- @if (ticketType() === 'kitchen') {
             <p class="ticket-label">COCINA</p>
-          }
+          } -->
         </div>
 
         <div class="header-details">
@@ -86,7 +160,7 @@
           }
 
           <!-- Nota del item -->
-          @if (item.nota) {
+          @if (item.nota && ticketType() === 'kitchen') {
             <div class="item-note">
               <p>Instrucción: {{ item.nota }}</p>
             </div>
@@ -97,7 +171,7 @@
 
     <div class="divider"></div>
 
-    <!-- Nota General (Solo cocina o si no es cliente) -->
+    <!-- Nota General -->
     @if (data.order.nota_general && ticketType() === 'kitchen') {
       <div class="general-note">
         <p class="note-title">--- NOTA GENERAL ---</p>
@@ -113,10 +187,6 @@
           <span>SUBTOTAL</span>
           <span>${{ (order.total - (order.propina || 0)) | number:'1.2-2' }}</span>
         </div>
-        <div class="total-line">
-          <span>PROPINA</span>
-          <span>${{ (order.propina || 0) | number:'1.2-2' }}</span>
-        </div>
         <div class="divider"></div>
         <div class="total-line grand-total">
           <span>TOTAL</span>
@@ -127,7 +197,6 @@
       <div class="footer">
         <div class="divider"></div>
         <p>¡GRACIAS POR SU VISITA!</p>
-        <p class="tagline">Sabor que te transporta al norte</p>
         <div class="barcode">||||||||||||||||||||||||||||||</div>
       </div>
     }

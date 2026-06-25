@@ -13,6 +13,7 @@ export interface TicketItem {
   total: number;
   nota?: string; // Nuevo campo
   variante?: string; // Nuevo campo
+  estado?: string; // Nuevo campo
   modificadores?: TicketModifier[];
 }
 

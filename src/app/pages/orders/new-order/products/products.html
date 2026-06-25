@@ -1,7 +1,7 @@
-<section class="flex flex-col h-full bg-[#050505] text-[#F5F5F5]">
+<section class="flex flex-col h-full bg-[#0D0D0E] text-[#F5F5F5]">
 
   <!-- FILTERS BAR -->
-  <div class="sticky top-0 z-30 bg-[#050505]/95 backdrop-blur-md border-b border-white/5 px-4 py-3 flex flex-col gap-3">
+  <div class="sticky top-0 z-30 bg-[#0D0D0E]/95 backdrop-blur-md border-b border-white/5 px-4 py-3 flex flex-col gap-3">
     
     <!-- SEARCH -->
     <div class="relative w-full shrink-0 group">
@@ -12,13 +12,13 @@
       <input
         type="text"
         placeholder="Buscar producto..."
-        class="w-full h-10 pl-10 pr-10 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-zinc-500 outline-none transition-all focus:bg-white/10 focus:border-amber-500/30 focus:shadow-[0_0_15px_rgba(245,158,11,0.1)]"
+        class="w-full h-10 pl-10 pr-10 rounded-xl bg-[#161618] border border-zinc-800 text-sm text-white placeholder:text-zinc-500 outline-none transition-all focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/10 focus:bg-zinc-900/60"
         (input)="onSearchInput($any($event.target).value)"
       />
       @if (searchTerm()) {
         <button
           (click)="onSearchInput('')"
-          class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/10 transition"
+          class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:text-white hover:bg-[#1C1C1F] transition"
         >
           <lucide-icon name="x" class="w-3.5 h-3.5"></lucide-icon>
         </button>
@@ -33,8 +33,8 @@
         [class.bg-amber-500]="selectedCategory() === null"
         [class.border-amber-500]="selectedCategory() === null"
         [class.text-black]="selectedCategory() === null"
-        [class.bg-[#121212]]="selectedCategory() !== null"
-        [class.border-white/10]="selectedCategory() !== null"
+        [class.bg-[#161618]]="selectedCategory() !== null"
+        [class.border-zinc-800]="selectedCategory() !== null"
         [class.text-zinc-400]="selectedCategory() !== null"
         [class.hover:bg-white/5]="selectedCategory() !== null"
         [class.hover:text-white]="selectedCategory() !== null"
@@ -49,8 +49,8 @@
           [class.bg-amber-500]="selectedCategory() === c.id"
           [class.border-amber-500]="selectedCategory() === c.id"
           [class.text-black]="selectedCategory() === c.id"
-          [class.bg-[#121212]]="selectedCategory() !== c.id"
-          [class.border-white/10]="selectedCategory() !== c.id"
+          [class.bg-[#161618]]="selectedCategory() !== c.id"
+          [class.border-zinc-800]="selectedCategory() !== c.id"
           [class.text-zinc-400]="selectedCategory() !== c.id"
           [class.hover:bg-white/5]="selectedCategory() !== c.id"
           [class.hover:text-white]="selectedCategory() !== c.id"
@@ -87,7 +87,7 @@
             <div class="space-y-4">
               <!-- CATEGORY HEADER (Solo visible en modo TODOS) -->
               @if (selectedCategory() === null) {
-                <div class="flex items-center gap-4 py-2 bg-[#050505]">
+                <div class="flex items-center gap-4 py-2 bg-[#0D0D0E]">
                   <div class="h-px grow bg-white/5"></div>
                   <h2 class="text-[10px] font-black text-amber-500/80 uppercase tracking-[0.2em] whitespace-nowrap px-4 py-1.5 rounded-full border border-amber-500/10 bg-amber-500/5">
                     {{ group.category.nombre }}
@@ -104,7 +104,7 @@
                     
                     <!-- VISTA DESKTOP (CARDS) -->
                     <div
-                      class="hidden sm:flex group relative h-full flex-col bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 transition-all duration-200 hover:border-amber-500/50 active:scale-[0.98]"
+                      class="hidden sm:flex group relative h-full flex-col bg-[#141416] rounded-2xl overflow-hidden border border-zinc-800/80 transition-all duration-200 hover:border-amber-500/50 active:scale-[0.98]"
                     >
                       <!-- Imagen y Clic para Añadir Rápido -->
                       <div 
@@ -130,8 +130,8 @@
                         </div>
                         <div class="flex-1"></div>
                         <div class="flex items-center gap-2 mt-3">
-                          <button (click)="p.disponible !== false && quickAdd(p)" [disabled]="p.disponible === false" class="flex-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold h-10 rounded-xl text-xs uppercase tracking-wider transition-all disabled:opacity-20">AÑADIR</button>
-                          <button (click)="p.disponible !== false && openProduct(p, $event)" [disabled]="p.disponible === false" class="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 transition-all">
+                          <button (click)="p.disponible !== false && quickAdd(p)" [disabled]="p.disponible === false" class="flex-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold h-10 rounded-xl text-xs uppercase tracking-wider transition-all disabled:opacity-20 cursor-pointer">AÑADIR</button>
+                          <button (click)="p.disponible !== false && openProduct(p, $event)" [disabled]="p.disponible === false" class="w-10 h-10 flex items-center justify-center rounded-xl bg-[#1C1C1F] border border-zinc-800 text-zinc-300 hover:bg-[#222226] transition-all cursor-pointer">
                             <lucide-icon [name]="(p.variants && p.variants.length > 0) ? 'sliders-horizontal' : 'plus'" class="w-4 h-4"></lucide-icon>
                           </button>
                         </div>
@@ -146,11 +146,11 @@
                     <!-- VISTA MÓVIL (LISTA COMPACTA) -->
                     <div 
                       (click)="p.disponible !== false && quickAdd(p)"
-                      class="flex sm:hidden items-center gap-3 p-3 bg-zinc-900/50 border border-white/5 rounded-2xl active:bg-white/5 transition-colors relative"
+                      class="flex sm:hidden items-center gap-3 p-3 bg-[#141416] border border-white/10 rounded-2xl active:bg-white/5 transition-colors relative cursor-pointer"
                       [class.opacity-50]="p.disponible === false"
                     >
                       <!-- Miniatura -->
-                      <div class="w-12 h-12 rounded-xl bg-zinc-800 overflow-hidden shrink-0 border border-white/5">
+                      <div class="w-12 h-12 rounded-xl bg-[#1C1C1F] overflow-hidden shrink-0 border border-white/10">
                         @if (p.imagen_url) {
                           <img [src]="p.imagen_url" class="w-full h-full object-cover" />
                         } @else {

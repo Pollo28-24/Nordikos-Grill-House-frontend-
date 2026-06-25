@@ -57,7 +57,19 @@ export class OrderDetail implements OnInit {
   }
 
   async shareTicketPDF() {
-    this.openTicket('account', false);
+    const id = this.orderIdNumber();
+    if (!id) return;
+    try {
+      const data = await this.ticketService.getTicketData(id);
+      if (data) {
+        await this.ticketService.shareTicketPDF(data);
+      } else {
+        this.feedback.showError('No se pudieron obtener los datos de la orden');
+      }
+    } catch (err) {
+      this.logger.error('Error sharing PDF', err, 'OrderDetail');
+      this.feedback.showError('Error al generar o compartir el PDF');
+    }
   }
 
   async onTicketReady() {
@@ -67,7 +79,7 @@ export class OrderDetail implements OnInit {
     if (id) {
       const data = await this.ticketService.getTicketData(Number(id));
       if (data) {
-        this.ticketService.printTicket(data);
+        this.ticketService.printTicket(data, this.ticketType());
       }
     }
   }
@@ -134,6 +146,46 @@ export class OrderDetail implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  async onIncrementItem(item: any) {
+    const orderId = this.orderIdNumber();
+    if (!orderId) return;
+
+    try {
+      const propina = Number(this.order()?.propina || 0);
+      await this.ordersService.incrementOrderItem(
+        orderId, 
+        item.id, 
+        item.cantidad, 
+        item.precio_unitario, 
+        propina
+      );
+      await this.loadOrder(String(orderId));
+      this.feedback.showSuccess(`Se agregó otro "${item.nombre_producto}"`);
+    } catch (err) {
+      this.logger.error('Error incrementing item', err, 'OrderDetail');
+      this.feedback.showError('Error al agregar producto');
+    }
+  }
+
+  onCancelItem(item: any) {
+    const orderId = this.orderIdNumber();
+    if (!orderId) return;
+
+    this.feedback.confirmAndExecute({
+      title: '¿Quitar producto?',
+      message: `¿Estás seguro de que deseas quitar "${item.nombre_producto}" de la orden?`,
+      confirmText: 'Quitar producto',
+      cancelText: 'Cancelar',
+      isDanger: true,
+      action: async () => {
+        const propina = Number(this.order()?.propina || 0);
+        await this.ordersService.cancelItemFromOrder(orderId, item.id, propina);
+        await this.loadOrder(String(orderId));
+      },
+      successMsg: 'Producto quitado de la orden'
+    });
   }
 
   goBack() {

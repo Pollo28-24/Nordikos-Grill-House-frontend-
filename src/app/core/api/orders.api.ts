@@ -50,6 +50,18 @@ export class OrdersApi {
   rpcCreateOrderV1(payload: any) { 
     return this.supabase.rpc('orders_create_v1', payload); 
   }
+
+  cancelOrderItem(itemId: number) {
+    return this.supabase.from('order_items').update({ estado: 'cancelado' }).eq('id', itemId);
+  }
+
+  getActiveOrderItems(orderId: number) {
+    return this.supabase.from('order_items').select('total').eq('order_id', orderId).neq('estado', 'cancelado');
+  }
+
+  updateOrderTotal(orderId: number, total: number) {
+    return this.supabase.from('orders').update({ total }).eq('id', orderId);
+  }
   
   updateOrderNote(orderId: number, nota: string) { 
     return this.supabase.from('orders').update({ nota_general: nota }).eq('id', orderId).then(); 
@@ -111,5 +123,9 @@ export class OrdersApi {
 
   removeRealtimeChannel(channel: any) {
     this.supabase.removeChannel(channel);
+  }
+
+  updateOrderItemQuantity(itemId: number, cantidad: number, total: number) {
+    return this.supabase.from('order_items').update({ cantidad, total }).eq('id', itemId);
   }
 }

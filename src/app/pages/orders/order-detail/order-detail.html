@@ -31,6 +31,8 @@
           [order]="order()"
           [items]="items()"
           (addProducts)="addMoreProducts()"
+          (incrementItem)="onIncrementItem($event)"
+          (cancelItem)="onCancelItem($event)"
         />
 
         <!-- Resumen de Totales -->

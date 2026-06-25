@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
+import { RouterLink } from '@angular/router';
 import { OrdersRequestsService, OrderRequest } from '@core/services/orders-requests.service';
 import { ToastService } from '@core/services/toast.service';
 import { UserFeedbackService } from '@core/services/user-feedback.service';
@@ -12,7 +13,7 @@ import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
 @Component({
   selector: 'app-order-requests-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, Navbar, CurrencyMxnPipe],
+  imports: [CommonModule, FormsModule, LucideAngularModule, Navbar, CurrencyMxnPipe, RouterLink],
   templateUrl: './order-requests.html'
 })
 export class OrderRequestsPage implements OnInit, OnDestroy {

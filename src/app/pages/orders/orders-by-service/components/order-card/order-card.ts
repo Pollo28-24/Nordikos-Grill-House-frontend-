@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, computed } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { OrderStatus, PaymentStatus } from '@core/models/order.model';
@@ -21,6 +21,40 @@ export class OrderCard {
   viewDetail = output<void>();
   updateStatus = output<OrderStatus>();
   updatePaymentStatus = output<PaymentStatus>();
+
+  cardClasses = computed(() => {
+    const o = this.order();
+    const isActive = this.active();
+    const urgency = this.urgencyLevel;
+
+    let classes = 'group rounded-xl border p-4 transition-all duration-300 hover:border-white/10 hover:shadow-lg relative cursor-pointer w-full box-border touch-manipulation shadow-md bg-gradient-to-b ';
+
+    if (o.estado_pedido === 'cancelado') {
+      classes += 'opacity-55 from-[#161212] to-[#100d0d] ';
+      classes += isActive ? 'border-[#FFB300]/40' : 'border-red-950/20';
+    } else if (o.estado_pago === 'pagado' && o.estado_pedido === 'entregado') {
+      classes += 'opacity-65 from-[#121613] to-[#0f1210] ';
+      classes += isActive ? 'border-[#FFB300]/40' : 'border-emerald-950/20';
+    } else if (o.estado_pago === 'pagado') {
+      classes += 'opacity-100 from-[#141b16] to-[#111612] ';
+      classes += isActive ? 'border-[#FFB300]/40' : 'border-emerald-500/20';
+    } else {
+      classes += 'opacity-100 from-[#1C1C1E] to-[#161618] ';
+      if (isActive) {
+        classes += 'border-[#FFB300]/40 ';
+      } else {
+        if (urgency === 'warning') {
+          classes += 'order-urgency-warning border-orange-500/30 ';
+        } else if (urgency === 'critical') {
+          classes += 'order-urgency-critical border-red-500/30 ';
+        } else {
+          classes += 'border-white/[0.04] ';
+        }
+      }
+    }
+
+    return classes;
+  });
 
   get duration(): string {
     const o = this.order();

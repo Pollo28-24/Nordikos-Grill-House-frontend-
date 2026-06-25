@@ -14,9 +14,26 @@
         </p>
       </div>
 
-      <button (click)="refresh()" class="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 border border-white/5 active:scale-95 transition duration-200" title="Refrescar">
-        <lucide-icon name="refresh-cw" class="w-5 h-5" [class.animate-spin]="requestsService.loading()"></lucide-icon>
-      </button>
+      <div class="flex items-center gap-2">
+        <button [routerLink]="['/orders/by-service']" class="
+          inline-flex items-center gap-2
+          px-4 h-11
+          rounded-lg
+          bg-white/5 hover:bg-white/10
+          text-[#FFB300] border border-[#FFB300]/10
+          font-bold text-sm
+          active:scale-95
+          transition duration-200
+          "
+          title="Ver Órdenes">
+          <lucide-icon name="list-ordered" class="w-4 h-4" />
+          <span class="hidden sm:inline">Órdenes</span>
+        </button>
+
+        <button (click)="refresh()" class="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 border border-white/5 active:scale-95 transition duration-200" title="Refrescar">
+          <lucide-icon name="refresh-cw" class="w-5 h-5" [class.animate-spin]="requestsService.loading()"></lucide-icon>
+        </button>
+      </div>
     </div>
 
     <!-- TABS -->

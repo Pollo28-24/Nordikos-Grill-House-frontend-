@@ -4,6 +4,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { TicketService } from '../services/ticket.service';
 import { TicketData } from '../models/ticket.model';
 import { ToastService } from '@core/services/toast.service';
+import { Capacitor } from '@capacitor/core';
 
 @Component({
   selector: 'app-ticket-print',
@@ -24,6 +25,15 @@ export class TicketPrintComponent {
   loading = signal(false);
   readyToPrint = output<void>();
   close = output<void>();
+
+  // Bluetooth signals expuestas
+  isNative = Capacitor.isNativePlatform();
+  bluetoothDevices = this.ticketService.bluetoothDevices;
+  isBluetoothConnected = this.ticketService.isBluetoothConnected;
+  connectionState = this.ticketService.connectionState;
+  errorMessage = this.ticketService.errorMessage;
+  selectedDeviceAddress = this.ticketService.selectedDeviceAddress;
+  selectedDeviceName = this.ticketService.selectedDeviceName;
 
   constructor() {
     effect(() => {
@@ -54,7 +64,7 @@ export class TicketPrintComponent {
   print() {
     const data = this.ticketData();
     if (data) {
-      this.ticketService.printTicket(data);
+      this.ticketService.printTicket(data, this.ticketType());
     }
   }
 
@@ -69,5 +79,17 @@ export class TicketPrintComponent {
     } else {
       this.toastService.show('No se pudo compartir el ticket.', 'error');
     }
+  }
+
+  scanBluetooth() {
+    this.ticketService.scanDevices();
+  }
+
+  connectPrinter(device: any) {
+    this.ticketService.selectAndConnectPrinter(device.address, device.name);
+  }
+
+  disconnectPrinter() {
+    this.ticketService.disconnectPrinter();
   }
 }

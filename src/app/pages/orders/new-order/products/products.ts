@@ -44,26 +44,83 @@ export class NewOrderProducts {
     return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
 
-  // GROUPS COMPAT
+  // ALGORITMO LEVENSHTEIN (Mide diferencia entre palabras)
+  private levenshtein(a: string, b: string): number {
+    const tmp = [];
+    for (let i = 0; i <= a.length; i++) {
+      tmp[i] = [i];
+    }
+    for (let j = 0; j <= b.length; j++) {
+      tmp[0][j] = j;
+    }
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        tmp[i][j] = Math.min(
+          tmp[i - 1][j] + 1,
+          tmp[i][j - 1] + 1,
+          tmp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+        );
+      }
+    }
+    return tmp[a.length][b.length];
+  }
+
+  // BUSQUEDA DIFUSA (Fuzzy Match inteligente con tolerancia a errores de escritura)
+  private fuzzySearch(text: string, query: string): boolean {
+    const qWords = query.split(/\s+/).filter(w => w.length > 0);
+    if (qWords.length === 0) return true;
+
+    const tWords = text.split(/\s+/).filter(w => w.length > 0);
+
+    return qWords.every(qw => {
+      return tWords.some(tw => {
+        // Coincidencia exacta de subcadena (ej: "pap" en "papas")
+        if (tw.includes(qw)) return true;
+        // Palabras muy cortas (< 3 letras) no permiten búsqueda difusa para evitar falsos positivos
+        if (qw.length < 3) return false;
+
+        // Tolerancia dinámica según longitud de palabra
+        const threshold = qw.length <= 4 ? 1 : 2;
+        
+        // Compara inicio de palabra o palabra completa con Levenshtein
+        const distStart = this.levenshtein(qw, tw.substring(0, qw.length + 1));
+        if (distStart <= threshold) return true;
+
+        const distFull = this.levenshtein(qw, tw);
+        return distFull <= threshold;
+      });
+    });
+  }
+
+  // PRE-NORMALIZED PRODUCTS (Calculado solo cuando cambia la lista de productos)
+  normalizedProducts = computed(() => {
+    return this.products().map((p: any) => ({
+      ...p,
+      _normalizedName: this.normalize(p.nombre),
+      _normalizedDesc: this.normalize(p.descripcion)
+    }));
+  });
+
+  // GROUPS COMPAT (Búsqueda ultra-eficiente e inteligente)
   groups = computed(() => {
     const cats = this.categories();
-    const prods = this.products();
+    const prods = this.normalizedProducts();
     const term = this.normalize(this.searchTerm());
     const selectedCat = this.selectedCategory();
 
+    // Si hay búsqueda, ignoramos la categoría para buscar globalmente
+    const effectiveCat = term ? null : selectedCat;
+
     return cats
-      .filter(c => !selectedCat || String(c.id) === String(selectedCat))
+      .filter(c => !effectiveCat || String(c.id) === String(effectiveCat))
       .map((c: any) => ({
         category: c,
         items: prods
           .filter((p: any) => String(p.categoria_id ?? '') === String(c.id))
           .filter((p: any) => {
             if (!term) return true;
-
-            const name = this.normalize(p.nombre);
-            const desc = this.normalize(p.descripcion);
-
-            return name.includes(term) || desc.includes(term);
+            const fullText = `${p._normalizedName} ${p._normalizedDesc}`;
+            return this.fuzzySearch(fullText, term);
           })
       }))
       .filter((g: any) => g.items.length > 0);
@@ -84,30 +141,24 @@ export class NewOrderProducts {
     this.collapsed.set(next);
   }
 
-  // FILTERED PRODUCTS
+  // FILTERED PRODUCTS (Búsqueda ultra-eficiente e inteligente)
   filteredProducts = computed(() => {
-
-    const products = this.products();
+    const products = this.normalizedProducts();
     const category = this.selectedCategory();
     const term = this.normalize(this.searchTerm());
 
-    return products.filter(p => {
+    // Si hay búsqueda, ignoramos la categoría para buscar globalmente
+    const effectiveCat = term ? null : category;
 
+    return products.filter(p => {
       const matchCategory =
-        !category || String(p.categoria_id) === String(category);
+        !effectiveCat || String(p.categoria_id) === String(effectiveCat);
 
       if (!term) return matchCategory;
 
-      const name = this.normalize(p.nombre);
-      const desc = this.normalize(p.descripcion);
-
-      const matchSearch =
-        name.includes(term) || desc.includes(term);
-
-      return matchCategory && matchSearch;
-
+      const fullText = `${p._normalizedName} ${p._normalizedDesc}`;
+      return matchCategory && this.fuzzySearch(fullText, term);
     });
-
   });
 
   // MODAL STATE
@@ -170,8 +221,19 @@ export class NewOrderProducts {
   // ACTIONS
   editingOrderId = this.ordersService.editingOrderId;
 
+  private searchTimeout: any;
+
   onSearchInput(value: string) {
-    this.searchTerm.set(value);
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+    if (!value) {
+      this.searchTerm.set('');
+      return;
+    }
+    this.searchTimeout = setTimeout(() => {
+      this.searchTerm.set(value);
+    }, 150);
   }
 
   selectCategory(id: number | string | null) {
