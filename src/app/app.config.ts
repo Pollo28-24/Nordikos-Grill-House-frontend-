@@ -98,7 +98,10 @@ import {
   CheckSquare,
   Slash,
   Loader,
-  AlertCircle
+  AlertCircle,
+  BookOpen,
+  LayoutDashboard,
+  Copy
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -204,7 +207,10 @@ providers: [
         CheckSquare,
         Slash,
         Loader,
-        AlertCircle
+        AlertCircle,
+        BookOpen,
+        LayoutDashboard,
+        Copy
       }),
     ),
   ],
