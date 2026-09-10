@@ -1,42 +1,44 @@
-<section class="flex flex-col h-full bg-[#0D0D0E] text-[#F5F5F5]">
+<section class="flex flex-col h-full bg-[#121212] text-[#F5F5F5]">
 
   <!-- FILTERS BAR -->
-  <div class="sticky top-0 z-30 bg-[#0D0D0E]/95 backdrop-blur-md border-b border-white/5 px-4 py-3 flex flex-col gap-3">
+  <div class="sticky top-0 z-30 bg-[#121212]/95 backdrop-blur-md border-b border-white/10 px-4 py-3 flex flex-col gap-3 shrink-0">
     
     <!-- SEARCH -->
     <div class="relative w-full shrink-0 group">
       <lucide-icon
         name="search"
-        class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-amber-500 transition-colors"
+        class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-[#FFB300] transition-colors"
       />
       <input
         type="text"
         placeholder="Buscar producto..."
-        class="w-full h-10 pl-10 pr-10 rounded-xl bg-[#161618] border border-zinc-800 text-sm text-white placeholder:text-zinc-500 outline-none transition-all focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/10 focus:bg-zinc-900/60"
+        class="w-full h-11 pl-10 pr-10 rounded-xl bg-[#1A1A1A] border border-white/10 text-sm text-white placeholder:text-zinc-500 outline-none transition-all focus:border-[#FFB300] focus:ring-1 focus:ring-[#FFB300]/20"
         (input)="onSearchInput($any($event.target).value)"
       />
       @if (searchTerm()) {
         <button
           (click)="onSearchInput('')"
-          class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:text-white hover:bg-[#1C1C1F] transition"
+          class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+          title="Limpiar búsqueda"
         >
-          <lucide-icon name="x" class="w-3.5 h-3.5"></lucide-icon>
+          <lucide-icon name="x" class="w-4 h-4"></lucide-icon>
         </button>
       }
     </div>
 
     <!-- CATEGORIES SCROLL -->
-    <div class="w-full flex gap-2 overflow-x-auto pb-1 hide-scrollbar items-center">
+    <div class="w-full flex gap-2 overflow-x-auto pb-1 hide-scrollbar items-center select-none">
       <button
         (click)="selectCategory(null)"
-        class="px-4 h-10 rounded-xl text-xs font-bold whitespace-nowrap transition-all border uppercase tracking-wider"
-        [class.bg-amber-500]="selectedCategory() === null"
-        [class.border-amber-500]="selectedCategory() === null"
-        [class.text-black]="selectedCategory() === null"
-        [class.bg-[#161618]]="selectedCategory() !== null"
-        [class.border-zinc-800]="selectedCategory() !== null"
+        class="px-4 h-10 rounded-xl text-xs font-bold whitespace-nowrap transition-all border uppercase tracking-wider cursor-pointer"
+        [class.bg-[#FFB300]]="selectedCategory() === null"
+        [class.border-[#FFB300]]="selectedCategory() === null"
+        [class.text-[#121212]]="selectedCategory() === null"
+        [class.shadow-md]="selectedCategory() === null"
+        [class.bg-[#1A1A1A]]="selectedCategory() !== null"
+        [class.border-white\/10]="selectedCategory() !== null"
         [class.text-zinc-400]="selectedCategory() !== null"
-        [class.hover:bg-white/5]="selectedCategory() !== null"
+        [class.hover:bg-white\/5]="selectedCategory() !== null"
         [class.hover:text-white]="selectedCategory() !== null"
       >
         TODOS
@@ -45,14 +47,15 @@
       @for (c of categories(); track c.id) {
         <button
           (click)="selectCategory(c.id)"
-          class="px-4 h-10 rounded-xl text-xs font-bold whitespace-nowrap transition-all border uppercase tracking-wider"
-          [class.bg-amber-500]="selectedCategory() === c.id"
-          [class.border-amber-500]="selectedCategory() === c.id"
-          [class.text-black]="selectedCategory() === c.id"
-          [class.bg-[#161618]]="selectedCategory() !== c.id"
-          [class.border-zinc-800]="selectedCategory() !== c.id"
+          class="px-4 h-10 rounded-xl text-xs font-bold whitespace-nowrap transition-all border uppercase tracking-wider cursor-pointer"
+          [class.bg-[#FFB300]]="selectedCategory() === c.id"
+          [class.border-[#FFB300]]="selectedCategory() === c.id"
+          [class.text-[#121212]]="selectedCategory() === c.id"
+          [class.shadow-md]="selectedCategory() === c.id"
+          [class.bg-[#1A1A1A]]="selectedCategory() !== c.id"
+          [class.border-white\/10]="selectedCategory() !== c.id"
           [class.text-zinc-400]="selectedCategory() !== c.id"
-          [class.hover:bg-white/5]="selectedCategory() !== c.id"
+          [class.hover:bg-white\/5]="selectedCategory() !== c.id"
           [class.hover:text-white]="selectedCategory() !== c.id"
         >
           {{ c.nombre }}
@@ -62,133 +65,157 @@
 
   </div>
 
-  <!-- PRODUCT GRID (COMPACT) -->
-  <div class="flex-1 overflow-y-auto px-3 py-4 custom-scrollbar">
+  <!-- PRODUCT GRID (COMPACT & RESPONSIVE) -->
+  <div class="flex-1 overflow-y-auto px-3 sm:px-4 py-4 custom-scrollbar">
 
     @if (loadingProducts()) {
       <div class="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3">
-        @for (i of [1,2,3,4,5,6,7,8,9,10,11,12]; track i) {
-          <div class="h-56 rounded-2xl bg-zinc-900/50 animate-pulse border border-zinc-800"></div>
+        @for (i of [1,2,3,4,5,6,7,8]; track i) {
+          <div class="h-24 sm:h-56 rounded-2xl bg-[#1A1A1A] animate-pulse border border-white/5"></div>
         }
       </div>
     } 
     @else {
 
       @if (groups().length === 0) {
-        <div class="flex flex-col items-center justify-center py-20 text-zinc-800">
-          <lucide-icon name="package-search" class="w-8 h-8 mb-2 opacity-5" />
-          <p class="text-[9px] font-black uppercase tracking-widest">Sin resultados</p>
+        <div class="flex flex-col items-center justify-center py-20 text-zinc-600">
+          <lucide-icon name="package-search" class="w-12 h-12 mb-3 text-zinc-700" />
+          <p class="text-xs font-bold uppercase tracking-wider text-zinc-400">Sin productos disponibles</p>
         </div>
       } 
       @else {
 
-        <div class="flex flex-col gap-8">
+        <div class="flex flex-col gap-6 sm:gap-8 pb-4">
           @for (group of groups(); track group.category.id) {
-            <div class="space-y-4">
+            <div class="space-y-3">
               <!-- CATEGORY HEADER (Solo visible en modo TODOS) -->
               @if (selectedCategory() === null) {
-                <div class="flex items-center gap-4 py-2 bg-[#0D0D0E]">
-                  <div class="h-px grow bg-white/5"></div>
-                  <h2 class="text-[10px] font-black text-amber-500/80 uppercase tracking-[0.2em] whitespace-nowrap px-4 py-1.5 rounded-full border border-amber-500/10 bg-amber-500/5">
+                <div class="flex items-center gap-3 py-1 bg-[#121212]">
+                  <div class="h-px grow bg-white/10"></div>
+                  <h2 class="text-[10px] sm:text-xs font-black text-[#FFB300] uppercase tracking-[0.2em] whitespace-nowrap px-3.5 py-1 rounded-full border border-amber-500/20 bg-amber-500/10">
                     {{ group.category.nombre }}
                   </h2>
-                  <div class="h-px grow bg-white/5"></div>
+                  <div class="h-px grow bg-white/10"></div>
                 </div>
               }
 
               <!-- DESKTOP GRID / MOBILE LIST -->
-              <div class="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-2.5 sm:gap-3">
 
                 @for (p of group.items; track p.id) {
                   @defer (on viewport; prefetch on idle) {
                     
                     <!-- VISTA DESKTOP (CARDS) -->
                     <div
-                      class="hidden sm:flex group relative h-full flex-col bg-[#141416] rounded-2xl overflow-hidden border border-zinc-800/80 transition-all duration-200 hover:border-amber-500/50 active:scale-[0.98]"
+                      class="hidden sm:flex group relative h-full flex-col bg-[#1A1A1A] rounded-2xl overflow-hidden border border-white/10 transition-all duration-200 hover:border-[#FFB300]/50 active:scale-[0.99] shadow-sm"
                     >
-                      <!-- Imagen y Clic para Añadir Rápido -->
+                      <!-- Imagen y Clic para Añadir / Abrir Opciones -->
                       <div 
-                        (click)="p.disponible !== false && quickAdd(p)"
-                        class="h-32 bg-zinc-800 overflow-hidden relative cursor-pointer shrink-0"
+                        (click)="p.disponible !== false && quickAdd(p, $event)"
+                        class="h-32 bg-zinc-900 overflow-hidden relative cursor-pointer shrink-0"
                       >
                         @if (p.imagen_url) {
-                          <img [src]="p.imagen_url" [alt]="p.nombre" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" [class.grayscale]="p.disponible === false" />
+                          <img [src]="p.imagen_url" [alt]="p.nombre" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" [class.grayscale]="p.disponible === false" />
                         } @else {
                           <div class="w-full h-full flex items-center justify-center"><lucide-icon name="utensils" class="w-6 h-6 text-zinc-600" /></div>
                         }
                         @if (p.disponible === false) {
-                          <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
+                          <div class="absolute inset-0 bg-black/70 backdrop-blur-[2px] flex items-center justify-center">
                             <span class="bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">Agotado</span>
                           </div>
                         }
                       </div>
 
-                      <div class="p-3 flex flex-col flex-1">
+                      <div class="p-3.5 flex flex-col flex-1">
                         <div class="flex justify-between items-start gap-2">
-                          <h3 class="text-[13px] font-semibold text-zinc-100 leading-tight line-clamp-2">{{ p.nombre }}</h3>
-                          <span class="text-[13px] font-black text-amber-400 shrink-0">{{ getProductPrice(p) }}</span>
+                          <h3 class="text-xs sm:text-sm font-bold text-white leading-tight line-clamp-2">{{ p.nombre }}</h3>
+                          <span class="text-xs sm:text-sm font-black text-[#FFB300] shrink-0 tabular-nums">{{ getProductPrice(p) }}</span>
                         </div>
                         <div class="flex-1"></div>
                         <div class="flex items-center gap-2 mt-3">
-                          <button (click)="p.disponible !== false && quickAdd(p)" [disabled]="p.disponible === false" class="flex-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold h-10 rounded-xl text-xs uppercase tracking-wider transition-all disabled:opacity-20 cursor-pointer">AÑADIR</button>
-                          <button (click)="p.disponible !== false && openProduct(p, $event)" [disabled]="p.disponible === false" class="w-10 h-10 flex items-center justify-center rounded-xl bg-[#1C1C1F] border border-zinc-800 text-zinc-300 hover:bg-[#222226] transition-all cursor-pointer">
-                            <lucide-icon [name]="(p.variants && p.variants.length > 0) ? 'sliders-horizontal' : 'plus'" class="w-4 h-4"></lucide-icon>
+                          <button 
+                            (click)="p.disponible !== false && quickAdd(p, $event)" 
+                            [disabled]="p.disponible === false" 
+                            class="flex-1 bg-[#FFB300] hover:brightness-110 active:bg-amber-400 text-[#121212] font-bold h-11 rounded-xl text-xs uppercase tracking-wider transition-all disabled:opacity-20 cursor-pointer select-none"
+                          >
+                            AÑADIR
+                          </button>
+                          <button 
+                            (click)="p.disponible !== false && openProduct(p, $event)" 
+                            [disabled]="p.disponible === false" 
+                            class="w-11 h-11 flex items-center justify-center rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white transition-all cursor-pointer shrink-0 select-none"
+                            [title]="hasOptions(p) ? 'Personalizar modificadores / opciones' : 'Ver detalle'"
+                          >
+                            <lucide-icon [name]="hasOptions(p) ? 'sliders-horizontal' : 'plus'" class="w-4 h-4"></lucide-icon>
                           </button>
                         </div>
                       </div>
                       @if (getQty(p.id) > 0) {
-                        <div class="absolute top-1.5 left-1.5 bg-white text-black text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg border-2 border-amber-500 animate-in zoom-in">
+                        <div class="absolute top-2 left-2 bg-[#121212] text-[#FFB300] text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full shadow-lg border border-[#FFB300] tabular-nums animate-in zoom-in">
                           {{ getQty(p.id) }}
                         </div>
                       }
                     </div>
 
-                    <!-- VISTA MÓVIL (LISTA COMPACTA) -->
+                    <!-- VISTA MÓVIL (LISTA COMPACTA CON TOUCH TARGET 44px) -->
                     <div 
-                      (click)="p.disponible !== false && quickAdd(p)"
-                      class="flex sm:hidden items-center gap-3 p-3 bg-[#141416] border border-white/10 rounded-2xl active:bg-white/5 transition-colors relative cursor-pointer"
+                      (click)="p.disponible !== false && quickAdd(p, $event)"
+                      class="flex sm:hidden items-center gap-3 p-3 bg-[#1A1A1A] border border-white/10 rounded-2xl active:bg-white/5 transition-colors relative cursor-pointer select-none"
                       [class.opacity-50]="p.disponible === false"
                     >
-                      <!-- Miniatura -->
-                      <div class="w-12 h-12 rounded-xl bg-[#1C1C1F] overflow-hidden shrink-0 border border-white/10">
+                      <!-- Miniatura (56x56px) -->
+                      <div class="w-14 h-14 rounded-xl bg-zinc-900 overflow-hidden shrink-0 border border-white/10">
                         @if (p.imagen_url) {
-                          <img [src]="p.imagen_url" class="w-full h-full object-cover" />
+                          <img [src]="p.imagen_url" [alt]="p.nombre" class="w-full h-full object-cover" />
                         } @else {
-                          <div class="w-full h-full flex items-center justify-center"><lucide-icon name="utensils" class="w-4 h-4 text-zinc-700" /></div>
+                          <div class="w-full h-full flex items-center justify-center"><lucide-icon name="utensils" class="w-5 h-5 text-zinc-600" /></div>
                         }
                       </div>
 
                       <!-- Info Central -->
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
-                          <h3 class="text-sm font-bold text-zinc-100 truncate">{{ p.nombre }}</h3>
+                      <div class="flex-1 min-w-0 pr-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <h3 class="text-sm font-bold text-white truncate">{{ p.nombre }}</h3>
                           @if (getQty(p.id) > 0) {
-                            <span class="bg-amber-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded-md animate-in zoom-in">
+                            <span class="bg-[#FFB300] text-[#121212] text-[10px] font-black px-1.5 py-0.5 rounded-md tabular-nums shadow-sm animate-in zoom-in">
                               {{ getQty(p.id) }}
                             </span>
                           }
                         </div>
-                        <p class="text-xs font-black text-amber-500/90">{{ getProductPrice(p) }}</p>
+                        <p class="text-xs sm:text-sm font-black text-[#FFB300] tabular-nums mt-0.5">{{ getProductPrice(p) }}</p>
                       </div>
 
-                      <!-- Botón "+" para Modal -->
-                      <button 
-                        (click)="p.disponible !== false && openProduct(p, $event)"
-                        [disabled]="p.disponible === false"
-                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 border border-white/5 text-amber-500 active:scale-90 transition-transform"
-                      >
-                        <lucide-icon [name]="(p.variants && p.variants.length > 0) ? 'sliders-horizontal' : 'plus'" class="w-5 h-5"></lucide-icon>
-                      </button>
+                      <!-- Botones de Acción en Móvil (Touch Target 44px) -->
+                      <div class="flex items-center gap-1.5 shrink-0">
+                        @if (hasOptions(p)) {
+                          <button 
+                            (click)="p.disponible !== false && openProduct(p, $event)"
+                            [disabled]="p.disponible === false"
+                            class="w-11 h-11 flex items-center justify-center rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white active:scale-90 transition cursor-pointer"
+                            title="Personalizar modificadores"
+                          >
+                            <lucide-icon name="sliders-horizontal" class="w-4.5 h-4.5"></lucide-icon>
+                          </button>
+                        }
+                        <button 
+                          (click)="p.disponible !== false && quickAdd(p, $event)"
+                          [disabled]="p.disponible === false"
+                          class="w-11 h-11 flex items-center justify-center rounded-xl bg-[#FFB300] text-[#121212] active:scale-90 transition cursor-pointer font-black"
+                          title="Añadir directo"
+                        >
+                          <lucide-icon name="plus" class="w-5 h-5"></lucide-icon>
+                        </button>
+                      </div>
 
                       @if (p.disponible === false) {
                         <div class="absolute right-14 top-1/2 -translate-y-1/2">
-                          <span class="text-[8px] font-bold text-red-500 uppercase tracking-tighter">Agotado</span>
+                          <span class="text-[9px] font-bold text-red-400 uppercase tracking-wider bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded">Agotado</span>
                         </div>
                       }
                     </div>
 
                   } @placeholder {
-                    <div class="h-20 sm:h-56 rounded-2xl bg-white/5 animate-pulse"></div>
+                    <div class="h-20 sm:h-56 rounded-2xl bg-[#1A1A1A] animate-pulse border border-white/5"></div>
                   }
                 }
               </div>
@@ -200,167 +227,298 @@
     }
   </div>
 
-  <!-- MODAL PARA VARIANTES Y MODIFICADORES -->
+  <!-- MODAL PARA VARIANTES Y MODIFICADORES (MODAL A+ CON SECCIONES HORIZONTALES) -->
   @if (showModal()) {
     <div 
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+      class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
       (click)="closeModal()"
     >
       <div 
-        class="bg-[#181818] w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-white/5 animate-in zoom-in-95 duration-200"
+        class="bg-[#1A1A1A] w-full max-w-xl rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl border-t sm:border border-white/10 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 h-[85vh] sm:h-[75vh] max-h-[640px] flex flex-col"
         (click)="$event.stopPropagation()"
       >
         
-        <!-- Header Modal -->
-        <div class="p-5 border-b border-white/5 flex items-center justify-between">
-          <h3 class="text-xl font-bold text-white">{{ selectedProductForModal()?.nombre }}</h3>
-          <button (click)="closeModal()" class="text-zinc-400 hover:text-white transition">
-            <lucide-icon name="x" class="w-6 h-6"></lucide-icon>
-          </button>
-        </div>
-
-        <!-- Scrollable Content -->
-        <div class="p-5 max-h-[60vh] overflow-y-auto space-y-8 custom-scrollbar">
-          
-          <!-- Variantes -->
-          @if (selectedProductForModal()?.variants?.length) {
-            <div class="space-y-3">
-              <label class="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Selecciona opciones</label>
-              <div class="grid grid-cols-1 gap-2">
-                @for (v of selectedProductForModal()?.variants; track v.id) {
-                  <div 
-                    class="flex items-center justify-between p-3 rounded-xl border transition-all duration-200"
-                    [class.border-amber-500]="isVariantSelected(v.id)"
-                    [class.bg-amber-500\/10]="isVariantSelected(v.id)"
-                    [class.border-white\/5]="!isVariantSelected(v.id)"
-                    [class.bg-[#121212]]="!isVariantSelected(v.id)"
-                  >
-                    <div 
-                      class="flex-1 cursor-pointer flex items-center gap-3"
-                      (click)="toggleVariant(v)"
-                    >
-                      <div 
-                        class="w-6 h-6 rounded-full border flex items-center justify-center transition-colors"
-                        [class.bg-amber-500]="isVariantSelected(v.id)"
-                        [class.border-amber-500]="isVariantSelected(v.id)"
-                        [class.border-white\/20]="!isVariantSelected(v.id)"
-                      >
-                        @if (isVariantSelected(v.id)) {
-                          <lucide-icon name="check" class="w-4 h-4 text-black font-bold"></lucide-icon>
-                        }
-                      </div>
-                      <div class="flex flex-col">
-                        <span class="font-bold text-white">{{ v.nombre }}</span>
-                        <div class="flex items-center gap-2">
-                          @if (v.descuento && v.descuento > 0) {
-                            <del class="text-[10px] text-zinc-500 font-medium">${{ v.precio }}</del>
-                            <span class="text-emerald-400 font-bold text-xs">${{ v.precio - v.descuento }}</span>
-                          } @else {
-                            <span class="text-amber-500/80 font-medium text-xs">${{ v.precio }}</span>
-                          }
-                        </div>
-                      </div>
-                    </div>
-
-                    @if (isVariantSelected(v.id)) {
-                      <div class="flex items-center gap-3 bg-black/40 rounded-xl p-1.5 border border-white/10">
-                        <button 
-                          (click)="updateVariantQty(v.id, -1)"
-                          class="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5 hover:bg-white/10 text-white transition-colors"
-                        >
-                          <lucide-icon name="minus" class="w-4 h-4"></lucide-icon>
-                        </button>
-                        <span class="text-sm font-black text-amber-500">{{ getVariantQty(v.id) }}</span>
-                        <button 
-                          (click)="updateVariantQty(v.id, 1)"
-                          class="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-500 text-black hover:bg-amber-400 transition-colors"
-                        >
-                          <lucide-icon name="plus" class="w-4 h-4"></lucide-icon>
-                        </button>
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
-            </div>
-          }
-
-          <!-- Modificadores Agrupados (Extras) -->
-          @for (group of groupedModifiers(); track group.name) {
-            <div class="space-y-4">
-              <div class="flex items-center gap-3 px-1">
-                <div class="h-px flex-1 bg-white/5"></div>
-                <label class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] whitespace-nowrap">{{ group.name }}</label>
-                <div class="h-px flex-1 bg-white/5"></div>
-              </div>
-
-              <div class="grid grid-cols-1 gap-2">
-                @for (m of group.items; track m.id) {
-                  <div 
-                    class="flex items-center justify-between p-4 rounded-xl border transition-all duration-200"
-                    [class.border-emerald-500]="isModifierSelected(m.id)"
-                    [class.bg-emerald-500\/10]="isModifierSelected(m.id)"
-                    [class.border-white\/5]="!isModifierSelected(m.id)"
-                    [class.bg-[#121212]]="!isModifierSelected(m.id)"
-                  >
-                    <div 
-                      class="flex-1 cursor-pointer flex items-center gap-3"
-                      (click)="toggleModifier(m)"
-                    >
-                      <div 
-                        class="w-5 h-5 rounded border flex items-center justify-center transition-colors"
-                        [class.bg-emerald-500]="isModifierSelected(m.id)"
-                        [class.border-emerald-500]="isModifierSelected(m.id)"
-                        [class.border-white\/20]="!isModifierSelected(m.id)"
-                      >
-                        @if (isModifierSelected(m.id)) {
-                          <lucide-icon name="check" class="w-3 h-3 text-black"></lucide-icon>
-                        }
-                      </div>
-                      <div class="flex flex-col text-left">
-                        <span class="font-medium text-white">{{ m.nombre }}</span>
-                        <span class="text-emerald-500 font-bold text-xs">+${{ m.precio }}</span>
-                      </div>
-                    </div>
-
-                    @if (isModifierSelected(m.id) && (m.cantidad_maxima || 1) > 1) {
-                      <div class="flex items-center gap-3 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5">
-                        <button (click)="updateModifierQty(m.id, -1)" class="text-zinc-400 hover:text-white transition">
-                          <lucide-icon name="minus" class="w-4 h-4"></lucide-icon>
-                        </button>
-                        <span class="text-white font-bold text-sm min-w-4 text-center">{{ getModifierQty(m.id) }}</span>
-                        <button (click)="updateModifierQty(m.id, 1)" class="text-zinc-400 hover:text-white transition">
-                          <lucide-icon name="plus" class="w-4 h-4"></lucide-icon>
-                        </button>
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
-            </div>
-          }
-
-          <!-- Nota del Producto -->
-          <div class="space-y-3">
-            <label class="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Nota / Instrucciones</label>
-            <textarea 
-              [value]="productNote()"
-              (input)="productNote.set($any($event.target).value)"
-              placeholder="Ej: Sin tomate, bien cocido..."
-              class="w-full h-24 p-4 rounded-xl border border-white/5 bg-[#121212] text-white text-sm outline-none focus:border-amber-500/50 transition resize-none"
-            ></textarea>
+        <!-- Header Modal Fijo -->
+        <div class="px-4 py-3.5 sm:px-5 sm:py-4 border-b border-white/10 bg-[#161618] flex items-center justify-between shrink-0">
+          <div class="flex flex-col min-w-0 pr-3">
+            <span class="text-[10px] font-black uppercase tracking-widest text-[#FFB300]">Personalizar Producto</span>
+            <h3 class="text-sm sm:text-base font-black text-white truncate">{{ selectedProductForModal()?.nombre }}</h3>
           </div>
-
+          <button 
+            (click)="closeModal()" 
+            class="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] text-zinc-400 hover:text-white flex items-center justify-center transition cursor-pointer shrink-0 select-none"
+            title="Cerrar modal"
+          >
+            <lucide-icon name="x" class="w-4.5 h-4.5"></lucide-icon>
+          </button>
         </div>
 
-        <!-- Footer Modal -->
-        <div class="p-5 border-t border-white/5 bg-[#141414]">
-          <button 
-            (click)="confirmModalProduct()"
-            class="w-full py-4 rounded-xl bg-amber-500 text-black font-bold text-lg hover:bg-amber-400 active:scale-95 transition shadow-lg shadow-amber-500/10"
-          >
-            {{ editingOrderId() ? 'Actualizar Orden' : 'Agregar al carrito' }}
-          </button>
+        <!-- Barra de Navegación de Secciones / Pestañas (Section Nav) -->
+        @if (sections().length > 1) {
+          <div class="px-3 sm:px-4 py-2 bg-[#141416] border-b border-white/10 flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0">
+            @for (sec of sections(); track sec.id; let idx = $index) {
+              <button
+                type="button"
+                (click)="scrollToSection(idx)"
+                class="h-8 sm:h-8.5 px-3 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer select-none"
+                [class.bg-[#FFB300]]="activeSectionIndex() === idx"
+                [class.text-[#121212]]="activeSectionIndex() === idx"
+                [class.font-black]="activeSectionIndex() === idx"
+                [class.shadow-sm]="activeSectionIndex() === idx"
+                [class.bg-white/[0.04]]="activeSectionIndex() !== idx"
+                [class.text-zinc-400]="activeSectionIndex() !== idx"
+                [class.hover:text-white]="activeSectionIndex() !== idx"
+                [class.hover:bg-white/[0.08]]="activeSectionIndex() !== idx"
+              >
+                @if (sec.isComplete) {
+                  <span class="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] font-black"
+                        [class]="activeSectionIndex() === idx ? 'bg-[#121212] text-[#FFB300]' : 'bg-emerald-500/20 text-emerald-400'">
+                    ✓
+                  </span>
+                } @else if (sec.isRequired) {
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                }
+                <span>{{ sec.title }}</span>
+                @if (sec.count > 0 && sec.type === 'modifier-group') {
+                  <span class="text-[10px] opacity-80 tabular-nums">({{ sec.count }})</span>
+                }
+                @if (sec.isRequired && !sec.isComplete) {
+                  <span class="text-[11px] text-amber-400 font-bold leading-none">*</span>
+                }
+              </button>
+            }
+          </div>
+        }
+
+        <!-- Contenedor Deslizable Horizontal (CSS Scroll-Snap Nativo) -->
+        <div 
+          #pagesContainer
+          (scroll)="onPagesScroll($event)"
+          class="flex-1 flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scrollbar-none"
+          style="scroll-snap-type: x mandatory; scrollbar-width: none;"
+        >
+          @for (sec of sections(); track sec.id; let idx = $index) {
+            <div 
+              class="w-full shrink-0 snap-start overflow-y-auto p-4 sm:p-5 space-y-3.5 custom-scrollbar flex flex-col justify-between"
+              style="scroll-snap-align: start; scroll-snap-stop: always; min-width: 100%; width: 100%;"
+            >
+              <div class="space-y-3.5">
+                <!-- Encabezado de Sección -->
+                <div class="flex items-center justify-between pb-2 border-b border-white/5">
+                  <div>
+                    <h4 class="text-xs sm:text-sm font-black text-white uppercase tracking-wider">{{ sec.title }}</h4>
+                    <p class="text-[10px] text-zinc-400 mt-0.5">
+                      @if (sec.type === 'variants') {
+                        Selecciona la opción deseada para el producto.
+                      } @else if (sec.type === 'modifier-group') {
+                        Elige los extras opcionales de esta categoría.
+                      } @else {
+                        Instrucciones especiales para la comanda de cocina.
+                      }
+                    </p>
+                  </div>
+                  @if (sec.isRequired) {
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500/10 text-[#FFB300] border border-amber-500/20">
+                      Requerido
+                    </span>
+                  } @else {
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/5 text-zinc-400 border border-white/10">
+                      Opcional
+                    </span>
+                  }
+                </div>
+
+                <!-- SECCIÓN 1: VARIANTES -->
+                @if (sec.type === 'variants') {
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    @for (v of selectedProductForModal()?.variants; track v.id) {
+                      <div 
+                        class="flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer select-none"
+                        [class.border-[#FFB300]]="isVariantSelected(v.id)"
+                        [class.bg-[#FFB300]/10]="isVariantSelected(v.id)"
+                        [class.border-white/10]="!isVariantSelected(v.id)"
+                        [class.bg-[#121212]]="!isVariantSelected(v.id)"
+                        [class.opacity-40]="v.disponible === false"
+                        (click)="selectVariant(v)"
+                      >
+                        <div class="flex items-center gap-3 min-w-0">
+                          <div 
+                            class="w-5 h-5 rounded-full border flex items-center justify-center transition-colors shrink-0"
+                            [class.bg-[#FFB300]]="isVariantSelected(v.id)"
+                            [class.border-[#FFB300]]="isVariantSelected(v.id)"
+                            [class.border-white/20]="!isVariantSelected(v.id)"
+                          >
+                            @if (isVariantSelected(v.id)) {
+                              <lucide-icon name="check" class="w-3 h-3 text-[#121212] font-black"></lucide-icon>
+                            }
+                          </div>
+                          <div class="flex flex-col min-w-0 text-left">
+                            <span class="font-bold text-xs sm:text-sm text-white truncate">{{ v.nombre }}</span>
+                            <div class="flex items-center gap-1.5">
+                              @if (v.descuento && v.descuento > 0) {
+                                <del class="text-[10px] text-zinc-500 font-medium">${{ v.precio }}</del>
+                                <span class="text-emerald-400 font-bold text-xs tabular-nums">${{ v.precio - v.descuento }}</span>
+                              } @else {
+                                <span class="text-[#FFB300] font-bold text-xs tabular-nums">${{ v.precio }}</span>
+                              }
+                            </div>
+                          </div>
+                        </div>
+
+                        @if (isVariantSelected(v.id)) {
+                          <div class="flex items-center gap-1.5 bg-[#1A1A1A] rounded-lg p-1 border border-white/10 shrink-0" (click)="$event.stopPropagation()">
+                            <button 
+                              (click)="updateVariantQty(v.id, -1)"
+                              class="w-7 h-7 rounded-md flex items-center justify-center bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] text-white transition cursor-pointer"
+                              title="Disminuir"
+                            >
+                              <lucide-icon name="minus" class="w-3.5 h-3.5"></lucide-icon>
+                            </button>
+                            <span class="text-xs font-black text-[#FFB300] tabular-nums min-w-4 text-center select-none">{{ getVariantQty(v.id) }}</span>
+                            <button 
+                              (click)="updateVariantQty(v.id, 1)"
+                              class="w-7 h-7 rounded-md flex items-center justify-center bg-[#FFB300] text-[#121212] hover:brightness-110 active:bg-amber-400 transition cursor-pointer font-black"
+                              title="Aumentar"
+                            >
+                              <lucide-icon name="plus" class="w-3.5 h-3.5"></lucide-icon>
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- SECCIÓN 2..N: MODIFICADORES POR CATEGORIA -->
+                @if (sec.type === 'modifier-group') {
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    @for (m of sec.data.items; track m.id) {
+                      <div 
+                        class="flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none"
+                        [class.border-emerald-500]="isModifierSelected(m.id)"
+                        [class.bg-emerald-500/10]="isModifierSelected(m.id)"
+                        [class.border-white/10]="!isModifierSelected(m.id)"
+                        [class.bg-[#121212]]="!isModifierSelected(m.id)"
+                        (click)="toggleModifier(m)"
+                      >
+                        <div class="flex items-center gap-3 min-w-0">
+                          <div 
+                            class="w-5 h-5 rounded border flex items-center justify-center transition-colors shrink-0"
+                            [class.bg-emerald-500]="isModifierSelected(m.id)"
+                            [class.border-emerald-500]="isModifierSelected(m.id)"
+                            [class.border-white/20]="!isModifierSelected(m.id)"
+                          >
+                            @if (isModifierSelected(m.id)) {
+                              <lucide-icon name="check" class="w-3.5 h-3.5 text-black font-bold"></lucide-icon>
+                            }
+                          </div>
+                          <div class="flex flex-col text-left min-w-0">
+                            <span class="font-bold text-xs sm:text-sm text-white truncate">{{ m.nombre }}</span>
+                            <span class="text-emerald-400 font-bold text-xs tabular-nums">+${{ m.precio }}</span>
+                          </div>
+                        </div>
+
+                        @if (isModifierSelected(m.id) && (m.cantidad_maxima || 1) > 1) {
+                          <div class="flex items-center gap-1.5 bg-[#1A1A1A] p-1 rounded-lg border border-white/10 shrink-0" (click)="$event.stopPropagation()">
+                            <button (click)="updateModifierQty(m.id, -1)" class="w-7 h-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-white bg-white/[0.04] transition cursor-pointer">
+                              <lucide-icon name="minus" class="w-3.5 h-3.5"></lucide-icon>
+                            </button>
+                            <span class="text-white font-bold text-xs min-w-4 text-center tabular-nums select-none">{{ getModifierQty(m.id) }}</span>
+                            <button (click)="updateModifierQty(m.id, 1)" class="w-7 h-7 rounded-md flex items-center justify-center text-[#121212] bg-[#FFB300] hover:brightness-110 transition cursor-pointer font-black">
+                              <lucide-icon name="plus" class="w-3.5 h-3.5"></lucide-icon>
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- SECCIÓN FINAL: INSTRUCCIONES DE COCINA -->
+                @if (sec.type === 'instructions') {
+                  <div class="space-y-3">
+                    <div>
+                      <label class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block mb-2">Instrucciones Rápidas (1 toque)</label>
+                      <div class="flex flex-wrap gap-1.5">
+                        @for (chip of quickNotes; track chip) {
+                          <button
+                            type="button"
+                            (click)="toggleQuickNote(chip)"
+                            class="px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer select-none flex items-center gap-1"
+                            [class.bg-[#FFB300]]="isQuickNoteSelected(chip)"
+                            [class.text-[#121212]]="isQuickNoteSelected(chip)"
+                            [class.font-black]="isQuickNoteSelected(chip)"
+                            [class.border-[#FFB300]]="isQuickNoteSelected(chip)"
+                            [class.shadow-sm]="isQuickNoteSelected(chip)"
+                            [class.bg-white/[0.04]]="!isQuickNoteSelected(chip)"
+                            [class.hover:bg-white/[0.08]]="!isQuickNoteSelected(chip)"
+                            [class.text-zinc-300]="!isQuickNoteSelected(chip)"
+                            [class.border-white/10]="!isQuickNoteSelected(chip)"
+                          >
+                            @if (isQuickNoteSelected(chip)) {
+                              <span class="text-[10px] font-black">✓</span>
+                            } @else {
+                              <span class="text-zinc-500 font-normal">+</span>
+                            }
+                            <span>{{ chip }}</span>
+                          </button>
+                        }
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5">Nota adicional para comanda</label>
+                      <textarea 
+                        [value]="productNote()"
+                        (input)="productNote.set($any($event.target).value)"
+                        placeholder="Ej: Salsa aparte, carne bien cocida, empaque especial..."
+                        class="w-full h-24 p-3.5 rounded-xl border border-white/10 bg-[#121212] text-white text-xs outline-none focus:border-[#FFB300] focus:ring-1 focus:ring-[#FFB300]/20 transition resize-none placeholder-zinc-600"
+                      ></textarea>
+                    </div>
+                  </div>
+                }
+
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Footer Fijo Modal (Total en Vivo + CTA) -->
+        <div class="p-3.5 sm:p-4 border-t border-white/10 bg-[#141416] shrink-0 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+          <div class="flex items-center justify-between gap-3">
+            
+            <!-- Precio en tiempo real con breakdown -->
+            <div class="flex flex-col min-w-0">
+              <div class="flex items-center gap-1.5 text-[10px] text-zinc-400 font-medium leading-none mb-1">
+                <span>Base: ${{ modalBaseTotal() | number:'1.2-2' }}</span>
+                @if (modalExtrasTotal() > 0) {
+                  <span class="text-zinc-600">•</span>
+                  <span class="text-emerald-400 font-bold">+Extras: ${{ modalExtrasTotal() | number:'1.2-2' }}</span>
+                }
+              </div>
+              <div class="flex items-baseline gap-1">
+                <span class="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Total:</span>
+                <span class="text-xl sm:text-2xl font-black text-[#FFB300] tabular-nums tracking-tight">
+                  ${{ modalLiveTotal() | number:'1.2-2' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Botón CTA semántico -->
+            <button 
+              (click)="confirmModalProduct()"
+              [disabled]="!canAddToOrder()"
+              class="h-12 px-5 sm:px-7 rounded-xl bg-[#FFB300] text-zinc-950 font-black text-xs sm:text-sm uppercase tracking-wider hover:brightness-110 active:scale-95 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:shadow-none transition-all shadow-lg shadow-[#FFB300]/10 flex items-center justify-center gap-2 cursor-pointer select-none shrink-0"
+            >
+              @if (!canAddToOrder()) {
+                <lucide-icon name="alert-circle" class="w-4 h-4 text-zinc-500"></lucide-icon>
+                <span>ELIGE OPCIÓN</span>
+              } @else {
+                <lucide-icon name="shopping-cart" class="w-4 h-4 text-zinc-950"></lucide-icon>
+                <span>{{ editingOrderId() ? 'AGREGAR A ORDEN #' + editingOrderId() : 'AGREGAR AL CARRITO' }}</span>
+              }
+            </button>
+          </div>
         </div>
 
       </div>

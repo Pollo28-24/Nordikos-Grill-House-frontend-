@@ -1,0 +1,538 @@
+@if (isOpen()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+  <!-- Backdrop -->
+  <div class="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity" (click)="onClose()"></div>
+
+  <!-- Modal Container -->
+  <div class="relative w-full max-w-lg bg-[#F8F5EE] border border-[#E2D7B7] text-gray-900 rounded-3xl shadow-2xl overflow-hidden my-auto animate-in zoom-in-95 duration-200 z-10 flex flex-col max-h-[92vh]">
+    
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between px-5 py-4 border-b border-[#E2D7B7]/60 bg-[#F4EEDC]/40 shrink-0">
+      <div class="flex items-center gap-2.5">
+        @if (step() === 'data' || step() === 'payment') {
+          <button (click)="step() === 'payment' ? goToStep('data') : goToStep('service')" class="p-1 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-black/5 transition">
+            <lucide-icon name="chevron-left" class="h-5 w-5"></lucide-icon>
+          </button>
+        }
+        <div>
+          <h3 class="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+            @if (step() === 'service') {
+              <lucide-icon name="utensils" class="h-5 w-5 text-orange-500"></lucide-icon>
+              <span>Elige cómo disfrutar tu pedido</span>
+            } @else if (step() === 'data') {
+              <lucide-icon name="user" class="h-5 w-5 text-orange-500"></lucide-icon>
+              <span>Datos del Pedido</span>
+            } @else if (step() === 'payment') {
+              <lucide-icon name="dollar-sign" class="h-5 w-5 text-orange-500"></lucide-icon>
+              <span>Método de Pago</span>
+            } @else {
+              <lucide-icon name="check-circle2" class="h-5 w-5 text-green-600"></lucide-icon>
+              <span>¡Pedido Confirmado!</span>
+            }
+          </h3>
+          <p class="text-[11px] text-gray-500 font-medium">
+            @if (step() === 'service') { Paso 1 de 3: Tipo de servicio }
+            @else if (step() === 'data') { Paso 2 de 3: Datos de entrega }
+            @else if (step() === 'payment') { Paso 3 de 3: Forma de pago }
+            @else { Tu orden ha sido recibida }
+          </p>
+        </div>
+      </div>
+
+      <button (click)="onClose()" class="text-gray-400 hover:text-gray-700 transition p-1.5 rounded-full hover:bg-black/5">
+        <lucide-icon name="x" class="h-5 w-5"></lucide-icon>
+      </button>
+    </div>
+
+    <!-- Order Summary Accordion (Except in Success Step) -->
+    @if (step() !== 'success') {
+      <div class="border-b border-[#E2D7B7]/50 bg-white/60 px-5 py-2.5 shrink-0">
+        <button (click)="toggleSummary()" class="w-full flex items-center justify-between text-left text-xs font-semibold text-gray-700">
+          <div class="flex items-center gap-2">
+            <span class="bg-orange-500/10 text-orange-600 font-bold px-2 py-0.5 rounded-full text-[11px]">
+              {{ items().length }} {{ items().length === 1 ? 'producto' : 'productos' }}
+            </span>
+            <span class="text-gray-500">Resumen del pedido</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-orange-600 text-sm">{{ total() | currencyMxn }}</span>
+            <lucide-icon [name]="showOrderSummary() ? 'chevron-up' : 'chevron-down'" class="h-4 w-4 text-gray-400"></lucide-icon>
+          </div>
+        </button>
+
+        @if (showOrderSummary()) {
+          <div class="mt-3 pt-2 border-t border-[#E2D7B7]/40 space-y-1.5 max-h-36 overflow-y-auto pr-1">
+            @for (item of items(); track item.id) {
+              <div class="flex items-center justify-between text-xs py-1 text-gray-700">
+                <span class="font-medium truncate mr-2">{{ item.cantidad }}x {{ item.nombre }}{{ item.variante ? ' (' + item.variante.nombre + ')' : '' }}</span>
+                <span class="font-bold shrink-0 text-gray-900">{{ (item.precio * item.cantidad) | currencyMxn }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Modal Scrollable Body -->
+    <div class="p-5 overflow-y-auto flex-1 space-y-5">
+
+      <!-- ============================================================= -->
+      <!-- PASO 1: SELECCIÓN DE TIPO DE SERVICIO                         -->
+      <!-- ============================================================= -->
+      @if (step() === 'service') {
+        <div class="space-y-3">
+          <p class="text-xs text-gray-600 leading-relaxed">
+            Seleccioná dónde vas a comer. Prepararemos el formulario específicamente para tu servicio sin pedirte datos innecesarios:
+          </p>
+
+          <div class="grid gap-3 sm:grid-cols-3 pt-1">
+            @for (st of serviceTypes(); track st.id) {
+              @let isMesa = st.nombre.toLowerCase().includes('mesa') || st.nombre.toLowerCase().includes('comedor');
+              @let isDelivery = st.nombre.toLowerCase().includes('domicilio') || st.nombre.toLowerCase().includes('delivery');
+              @let isSelected = selectedServiceId() === st.id;
+
+              <button 
+                (click)="selectService(st)"
+                class="flex flex-col items-center text-center p-4 rounded-2xl border-2 transition-all duration-200 group active:scale-95"
+                [class.border-orange-500]="isSelected"
+                [class.bg-orange-500]="isSelected"
+                [class.text-white]="isSelected"
+                [class.border-[#E2D7B7]]="!isSelected"
+                [class.bg-white]="!isSelected"
+                [class.hover:border-orange-300]="!isSelected"
+              >
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-2.5 transition"
+                  [class.bg-white/20]="isSelected"
+                  [class.text-white]="isSelected"
+                  [class.bg-orange-50]="!isSelected"
+                  [class.text-orange-500]="!isSelected"
+                >
+                  @if (isMesa) {
+                    <lucide-icon name="utensils" class="h-6 w-6"></lucide-icon>
+                  } @else if (isDelivery) {
+                    <lucide-icon name="bike" class="h-6 w-6"></lucide-icon>
+                  } @else {
+                    <lucide-icon name="shopping-bag" class="h-6 w-6"></lucide-icon>
+                  }
+                </div>
+
+                <span class="font-bold text-sm tracking-tight mb-1" [class.text-white]="isSelected" [class.text-gray-900]="!isSelected">
+                  {{ st.nombre }}
+                </span>
+
+                <span class="text-[11px] leading-tight" [class.text-white/80]="isSelected" [class.text-gray-500]="!isSelected">
+                  @if (isMesa) { Directo a tu mesa }
+                  @else if (isDelivery) { Hasta tu puerta }
+                  @else { Pasa a recogerlo }
+                </span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ============================================================= -->
+      <!-- PASO 2: DATOS DEL PEDIDO (FORMULARIO DINÁMICO)                -->
+      <!-- ============================================================= -->
+      @if (step() === 'data') {
+        <form [formGroup]="checkoutForm" class="space-y-4">
+          
+          <!-- Badge de Servicio Seleccionado -->
+          <div class="flex items-center justify-between p-3 bg-orange-50/70 border border-orange-200/60 rounded-2xl">
+            <div class="flex items-center gap-2.5">
+              @if (serviceCode() === 'mesa') {
+                <lucide-icon name="utensils" class="h-4 w-4 text-orange-600"></lucide-icon>
+              } @else if (serviceCode() === 'delivery') {
+                <lucide-icon name="bike" class="h-4 w-4 text-orange-600"></lucide-icon>
+              } @else {
+                <lucide-icon name="shopping-bag" class="h-4 w-4 text-orange-600"></lucide-icon>
+              }
+              <span class="text-xs font-bold text-orange-950">
+                Servicio: <span class="text-orange-600 uppercase">{{ selectedService()?.nombre }}</span>
+              </span>
+            </div>
+            <button type="button" (click)="goToStep('service')" class="text-[11px] font-bold text-orange-600 hover:text-orange-700 underline">
+              Cambiar
+            </button>
+          </div>
+
+          <!-- CASO 1: COMER EN MESA -->
+          @if (serviceCode() === 'mesa') {
+            <div class="space-y-3.5 animate-in fade-in duration-200">
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                  Número o Identificador de Mesa *
+                </label>
+                <input 
+                  type="text" 
+                  formControlName="numero_mesa"
+                  placeholder="Ej. Mesa 4, Barra 2, Terraza..."
+                  class="w-full h-12 px-4 bg-white border border-[#E2D7B7] rounded-xl text-base font-semibold focus:outline-none focus:border-orange-500 transition shadow-sm"
+                  [class.border-red-400]="checkoutForm.controls.numero_mesa.invalid && checkoutForm.controls.numero_mesa.touched"
+                />
+                @if (checkoutForm.controls.numero_mesa.invalid && checkoutForm.controls.numero_mesa.touched) {
+                  <p class="text-[11px] text-red-600 mt-1 font-medium">Por favor indica el número de mesa para llevarte los platillos.</p>
+                }
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                  Tu Nombre (Opcional)
+                </label>
+                <input 
+                  type="text" 
+                  formControlName="nombre"
+                  placeholder="¿Cómo te llamas?"
+                  class="w-full h-11 px-3.5 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition"
+                />
+              </div>
+            </div>
+          }
+
+          <!-- CASO 2: PARA LLEVAR -->
+          @if (serviceCode() === 'llevar') {
+            <div class="space-y-3.5 animate-in fade-in duration-200">
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                  Nombre Completo *
+                </label>
+                <input 
+                  type="text" 
+                  formControlName="nombre"
+                  placeholder="Ej. Martín Gómez"
+                  class="w-full h-11 px-3.5 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition"
+                  [class.border-red-400]="checkoutForm.controls.nombre.invalid && checkoutForm.controls.nombre.touched"
+                />
+                @if (checkoutForm.controls.nombre.invalid && checkoutForm.controls.nombre.touched) {
+                  <p class="text-[11px] text-red-600 mt-1 font-medium">Ingresa tu nombre para rotular tu pedido.</p>
+                }
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                  Teléfono de Contacto *
+                </label>
+                <input 
+                  type="tel" 
+                  formControlName="telefono"
+                  placeholder="Ej. 951 123 4567"
+                  class="w-full h-11 px-3.5 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition"
+                  [class.border-red-400]="checkoutForm.controls.telefono.invalid && checkoutForm.controls.telefono.touched"
+                />
+                @if (checkoutForm.controls.telefono.invalid && checkoutForm.controls.telefono.touched) {
+                  <p class="text-[11px] text-red-600 mt-1 font-medium">Ingresa un teléfono válido para avisarte cuando esté listo.</p>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- CASO 3: A DOMICILIO (DELIVERY) -->
+          @if (serviceCode() === 'delivery') {
+            <div class="space-y-3.5 animate-in fade-in duration-200">
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                  Nombre Completo *
+                </label>
+                <input 
+                  type="text" 
+                  formControlName="nombre"
+                  placeholder="Ej. Laura Méndez"
+                  class="w-full h-11 px-3.5 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition"
+                  [class.border-red-400]="checkoutForm.controls.nombre.invalid && checkoutForm.controls.nombre.touched"
+                />
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                  Teléfono para Entrega *
+                </label>
+                <input 
+                  type="tel" 
+                  formControlName="telefono"
+                  placeholder="Ej. 951 123 4567"
+                  class="w-full h-11 px-3.5 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition"
+                  [class.border-red-400]="checkoutForm.controls.telefono.invalid && checkoutForm.controls.telefono.touched"
+                />
+              </div>
+
+              <!-- BOTÓN DE GEOLOCALIZACIÓN GPS -->
+              <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                    <lucide-icon name="map-pin" class="h-4 w-4 text-orange-600"></lucide-icon>
+                    Ubicación GPS (Entrega Precisa)
+                  </span>
+
+                  @if (geoStatus() === 'success') {
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-green-700 bg-green-100 px-2.5 py-0.5 rounded-full">
+                      <lucide-icon name="check" class="h-3 w-3"></lucide-icon>
+                      GPS Fijado
+                    </span>
+                  }
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <button 
+                    type="button" 
+                    (click)="requestCurrentLocation()"
+                    [disabled]="geoStatus() === 'requesting'"
+                    class="flex-1 h-10 px-3.5 rounded-xl bg-white border border-[#E2D7B7] text-gray-800 text-xs font-bold hover:bg-gray-50 flex items-center justify-center gap-2 active:scale-95 transition shadow-sm disabled:opacity-60"
+                  >
+                    @if (geoStatus() === 'requesting') {
+                      <lucide-icon name="loader" class="h-4 w-4 animate-spin text-orange-500"></lucide-icon>
+                      <span>Obteniendo GPS...</span>
+                    } @else {
+                      <lucide-icon name="crosshair" class="h-4 w-4 text-orange-500"></lucide-icon>
+                      <span>{{ geoStatus() === 'success' ? 'Actualizar GPS' : 'Usar mi ubicación actual' }}</span>
+                    }
+                  </button>
+
+                  <button 
+                    type="button" 
+                    (click)="toggleManualAddress()"
+                    class="h-10 px-3 rounded-xl border border-gray-300 text-gray-600 text-xs font-semibold hover:bg-gray-100 transition"
+                  >
+                    {{ manualAddressMode() ? 'Ocultar manual' : 'Escribir dirección' }}
+                  </button>
+                </div>
+
+                @if (geoStatus() === 'denied' || geoStatus() === 'error') {
+                  <p class="text-[11px] text-amber-800 font-medium">
+                    No se pudo obtener el GPS. No te preocupes, escribe tu dirección detallada a continuación:
+                  </p>
+                } @else if (geoStatus() === 'success') {
+                  <p class="text-[11px] text-green-800 font-medium">
+                    Coordenadas capturadas con éxito. El repartidor sabrá llegar exactamente a tu punto.
+                  </p>
+                }
+              </div>
+
+              <!-- Dirección Escrita Obligatoria -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                  Calle y Número *
+                </label>
+                <input 
+                  type="text" 
+                  formControlName="direccion"
+                  placeholder="Calle, número exterior/interior, colonia..."
+                  class="w-full h-11 px-3.5 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition"
+                  [class.border-red-400]="checkoutForm.controls.direccion.invalid && checkoutForm.controls.direccion.touched"
+                />
+                @if (checkoutForm.controls.direccion.invalid && checkoutForm.controls.direccion.touched) {
+                  <p class="text-[11px] text-red-600 mt-1 font-medium">Ingresa tu dirección de entrega.</p>
+                }
+              </div>
+
+              <!-- Referencias Opcionales -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                  Referencias (Opcional)
+                </label>
+                <input 
+                  type="text" 
+                  formControlName="referencias"
+                  placeholder="Ej. Portón negro, frente al parque, entre Calles A y B"
+                  class="w-full h-11 px-3.5 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition"
+                />
+              </div>
+            </div>
+          }
+
+          <!-- Campo Común: Comentarios para la Cocina -->
+          <div>
+            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+              Comentarios o Instrucciones Especiales (Opcional)
+            </label>
+            <textarea 
+              formControlName="nota_general"
+              placeholder="Ej. Sin cebolla, hamburguesa bien cocida, sin cubiertos de plástico..."
+              class="w-full h-18 p-3 bg-white border border-[#E2D7B7] rounded-xl text-sm focus:outline-none focus:border-orange-500 transition resize-none"
+            ></textarea>
+          </div>
+
+        </form>
+      }
+
+      <!-- ============================================================= -->
+      <!-- PASO 3: MÉTODO DE PAGO (RANURA PREPARADA PARA ESCALABILIDAD)  -->
+      <!-- ============================================================= -->
+      @if (step() === 'payment') {
+        <div class="space-y-4 animate-in fade-in duration-200">
+          <p class="text-xs text-gray-600">
+            Seleccioná cómo deseas realizar tu pago:
+          </p>
+
+          <div class="space-y-2.5">
+            <!-- Opción Activa: Efectivo / Terminal al recibir -->
+            <label class="flex items-center justify-between p-4 bg-white border-2 border-orange-500 rounded-2xl cursor-pointer shadow-sm">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
+                  <lucide-icon name="dollar-sign" class="h-5 w-5"></lucide-icon>
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-gray-900">Pago en Mostrador / Entrega</h4>
+                  <p class="text-[11px] text-gray-500">Pagas en efectivo o con tarjeta al recibir tu orden</p>
+                </div>
+              </div>
+              <div class="w-5 h-5 rounded-full border-2 border-orange-500 flex items-center justify-center">
+                <div class="w-2.5 h-2.5 rounded-full bg-orange-500"></div>
+              </div>
+            </label>
+
+            <!-- Opción Futura: Tarjeta en Línea (Stripe / Mercado Pago slot) -->
+            <div class="flex items-center justify-between p-4 bg-gray-50/70 border border-gray-200/80 rounded-2xl opacity-60 cursor-not-allowed">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gray-200 flex items-center justify-center text-gray-500">
+                  <lucide-icon name="receipt" class="h-5 w-5"></lucide-icon>
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-gray-700">Pago con Tarjeta en Línea</h4>
+                  <p class="text-[11px] text-gray-400">Próximamente disponible</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold uppercase tracking-wider bg-gray-200 text-gray-600 px-2 py-0.5 rounded-md">
+                Próximamente
+              </span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ============================================================= -->
+      <!-- PASO 4: PANTALLA DE ÉXITO Y CONFIRMACIÓN                      -->
+      <!-- ============================================================= -->
+      @if (step() === 'success') {
+        <div class="text-center py-4 space-y-4 animate-in zoom-in-95 duration-200">
+          <div class="w-18 h-18 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+            <lucide-icon name="check-circle2" class="h-10 w-10"></lucide-icon>
+          </div>
+
+          <div>
+            <h3 class="text-xl font-extrabold text-gray-900">¡Pedido Enviado con Éxito!</h3>
+            <p class="text-xs text-gray-500 mt-1 max-w-xs mx-auto">
+              Tu solicitud ha llegado directamente al sistema de cocina de Nórdicos Grill House.
+            </p>
+          </div>
+
+          <!-- Código y Total de Pedido Destacado -->
+          <div class="p-4 bg-white border border-[#E2D7B7] rounded-2xl shadow-sm max-w-xs mx-auto divide-y divide-gray-100">
+            <div class="pb-2">
+              <span class="block text-[10px] uppercase font-extrabold text-gray-400 tracking-wider mb-1">Código de Solicitud</span>
+              <span class="text-3xl font-black text-orange-600 font-mono tracking-wider">
+                #{{ successRequestCode() }}
+              </span>
+            </div>
+            <div class="pt-2 flex items-center justify-between">
+              <span class="text-xs font-bold text-gray-500">Total del Pedido:</span>
+              <span class="text-base font-black text-gray-900">
+                {{ (submittedTotal() > 0 ? submittedTotal() : total()) | currencyMxn }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Información de Tiempo y Próximos Pasos -->
+          <div class="p-3.5 bg-orange-50/70 border border-orange-100 rounded-2xl text-left space-y-1.5 max-w-sm mx-auto">
+            <div class="flex items-center gap-2 text-orange-800 text-xs font-bold">
+              <lucide-icon name="clock" class="h-4 w-4 text-orange-600 shrink-0"></lucide-icon>
+              <span>Tiempo estimado de preparación: 20 a 35 min</span>
+            </div>
+            <p class="text-[11px] text-gray-600 leading-relaxed pl-6">
+              El personal validará tu comanda. Si requieres asistencia inmediata o deseas avisar al restaurante, puedes pulsar el botón de WhatsApp abajo.
+            </p>
+          </div>
+
+          <div class="pt-2 space-y-2.5 max-w-xs mx-auto">
+            <a 
+              [href]="getWhatsAppShareUrl()" 
+              target="_blank"
+              class="w-full h-11 rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md active:scale-95 transition"
+            >
+              <lucide-icon name="share-2" class="h-4 w-4"></lucide-icon>
+              <span>Avisar al restaurante por WhatsApp</span>
+            </a>
+
+            <button 
+              type="button" 
+              (click)="startNewOrder()"
+              class="w-full h-11 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition"
+            >
+              <lucide-icon name="plus-circle" class="h-4 w-4"></lucide-icon>
+              <span>Hacer otro pedido</span>
+            </button>
+
+            <button 
+              type="button" 
+              (click)="onClose()"
+              class="w-full h-11 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-gray-700 text-xs font-bold active:scale-95 transition"
+            >
+              Volver al Menú
+            </button>
+          </div>
+        </div>
+      }
+
+    </div>
+
+    <!-- Modal Footer Controls (Steps 1, 2, 3) -->
+    @if (step() !== 'success') {
+      <div class="p-5 border-t border-[#E2D7B7]/60 bg-[#F4EEDC]/40 flex items-center gap-3 shrink-0">
+        
+        @if (step() === 'service') {
+          <button 
+            type="button" 
+            (click)="onClose()" 
+            class="flex-1 h-12 rounded-xl border border-gray-300 text-gray-700 text-xs font-bold hover:bg-white active:scale-95 transition"
+          >
+            Seguir Comprando
+          </button>
+        }
+
+        @if (step() === 'data') {
+          <button 
+            type="button" 
+            (click)="goToStep('service')" 
+            class="h-12 px-4 rounded-xl border border-gray-300 text-gray-700 text-xs font-bold hover:bg-white active:scale-95 transition"
+          >
+            Atrás
+          </button>
+          <button 
+            type="button" 
+            (click)="goToStep('payment')" 
+            class="flex-1 h-12 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition shadow-md"
+          >
+            <span>Continuar al Pago</span>
+            <lucide-icon name="chevron-right" class="h-4 w-4"></lucide-icon>
+          </button>
+        }
+
+        @if (step() === 'payment') {
+          <button 
+            type="button" 
+            (click)="goToStep('data')" 
+            class="h-12 px-4 rounded-xl border border-gray-300 text-gray-700 text-xs font-bold hover:bg-white active:scale-95 transition"
+          >
+            Atrás
+          </button>
+          <button 
+            type="button" 
+            (click)="submitOrder()"
+            [disabled]="isSubmitting()"
+            class="flex-1 h-12 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 active:scale-95 transition"
+          >
+            @if (isSubmitting()) {
+              <lucide-icon name="loader" class="h-4 w-4 animate-spin"></lucide-icon>
+              <span>Enviando Comanda...</span>
+            } @else {
+              <lucide-icon name="send" class="h-4 w-4"></lucide-icon>
+              <span>Confirmar y Enviar Pedido ({{ total() | currencyMxn }})</span>
+            }
+          </button>
+        }
+
+      </div>
+    }
+
+  </div>
+</div>
+}

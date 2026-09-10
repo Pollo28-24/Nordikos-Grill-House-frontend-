@@ -1,21 +1,21 @@
 <app-navbar />
 
-<section class="w-full min-h-screen bg-[#121212] px-4 pb-24 pt-6">
+<section class="w-full min-h-screen bg-[#121212] px-4 sm:px-6 pb-[max(6rem,env(safe-area-inset-bottom))] pt-6">
   <div class="max-w-5xl mx-auto">
     <!-- HEADER -->
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
       <div>
-        <h1 class="text-3xl font-bold text-[#F5F5F5] tracking-tight">
+        <h1 class="text-2xl sm:text-3xl font-black text-[#F5F5F5] tracking-tight">
           Categorías
         </h1>
-        <p class="text-[#9CA3AF] mt-1">Gestiona las secciones de tu menú</p>
+        <p class="text-zinc-400 text-xs sm:text-sm mt-1">Gestiona y reordena las secciones de tu menú</p>
       </div>
 
       <button
         (click)="toggleCreateForm()"
-        class="bg-[#FFB300] text-[#1E1E1E] px-5 h-11 rounded-xl font-semibold hover:brightness-110 active:scale-95 transition flex items-center gap-2 shadow-lg shadow-[#FFB300]/10"
+        class="bg-[#FFB300] text-[#121212] px-5 h-11 rounded-xl font-bold text-xs uppercase tracking-wider hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-2 shadow-lg shadow-[#FFB300]/10 cursor-pointer select-none w-full sm:w-auto shrink-0"
       >
-        <lucide-icon name="plus" class="w-5 h-5"></lucide-icon>
+        <lucide-icon name="plus" class="w-4.5 h-4.5"></lucide-icon>
         <span>Agregar categoría</span>
       </button>
     </div>
@@ -23,37 +23,51 @@
     <!-- CREATE FORM -->
     @if (showCreateForm()) {
       <div
-        class="mb-8 p-5 bg-[#1E1E1E] rounded-2xl border border-[#2A2A2A] animate-in fade-in slide-in-from-top-2"
+        class="mb-6 sm:mb-8 p-5 sm:p-6 bg-[#1A1A1A] rounded-2xl border border-white/10 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200"
       >
-        <div class="flex flex-col gap-3">
+        <div class="flex flex-col gap-3.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
+              <lucide-icon name="plus-circle" class="w-4 h-4 text-[#FFB300]" />
+              Nueva Categoría de Menú
+            </h3>
+            <button 
+              (click)="toggleCreateForm()" 
+              class="text-zinc-500 hover:text-zinc-300 p-1 rounded-lg transition"
+              title="Cerrar"
+            >
+              <lucide-icon name="x" class="w-4 h-4" />
+            </button>
+          </div>
+
           <input
             type="text"
             [(ngModel)]="newCategoryName"
             (keydown.enter)="createCategory()"
-            placeholder="Nombre de la nueva categoría..."
-            class="w-full bg-[#121212] border border-[#333] rounded-xl px-4 py-3 text-[#F5F5F5] placeholder-[#666] focus:outline-none focus:border-[#FFB300] transition"
+            placeholder="Nombre de la nueva categoría (Ej: Hamburguesas, Bebidas)..."
+            class="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-[#FFB300] transition"
             autofocus
           />
 
-          <div class="flex gap-3">
-            <div class="flex-1 relative">
-              <lucide-icon
-                name="file-text"
-                class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666]"
-              />
+          <div class="relative w-full">
+            <lucide-icon
+              name="file-text"
+              class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500"
+            />
+            <input
+              type="text"
+              [(ngModel)]="newCategoryDescription"
+              (keydown.enter)="createCategory()"
+              placeholder="Descripción (opcional)..."
+              class="w-full bg-[#121212] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-[#FFB300] transition"
+            />
+          </div>
 
-              <input
-                type="text"
-                [(ngModel)]="newCategoryDescription"
-                (keydown.enter)="createCategory()"
-                placeholder="Descripción (opcional)..."
-                class="w-full bg-[#121212] border border-[#333] rounded-xl pl-10 pr-4 py-3 text-[#F5F5F5] placeholder-[#666] focus:outline-none focus:border-[#FFB300] transition"
-              />
-            </div>
-
+          <!-- BOTONES DE ACCIÓN (44px) -->
+          <div class="flex items-center justify-end gap-2.5 pt-1">
             <button
               (click)="toggleCreateForm()"
-              class="bg-[#2A2A2A] text-[#9CA3AF] hover:text-[#F5F5F5] hover:bg-[#333] px-6 rounded-xl font-semibold transition flex items-center whitespace-nowrap"
+              class="h-11 px-5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] text-zinc-300 hover:text-white border border-white/10 font-bold text-xs uppercase tracking-wider flex items-center justify-center transition active:scale-95 cursor-pointer select-none flex-1 sm:flex-initial"
             >
               Cancelar
             </button>
@@ -61,12 +75,13 @@
             <button
               (click)="createCategory()"
               [disabled]="!newCategoryName().trim() || creating()"
-              class="bg-[#FFB300] text-[#1E1E1E] px-6 rounded-xl font-semibold hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2 whitespace-nowrap"
+              class="h-11 px-6 rounded-xl bg-[#FFB300] hover:brightness-110 active:bg-amber-400 text-[#121212] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md shadow-[#FFB300]/10 disabled:opacity-50 disabled:cursor-not-allowed transition active:scale-95 cursor-pointer select-none flex-1 sm:flex-initial"
             >
               @if (creating()) {
-                <lucide-icon name="loader-2" class="w-5 h-5 animate-spin" />
+                <lucide-icon name="loader-2" class="w-4 h-4 animate-spin" />
+                <span>Creando...</span>
               } @else {
-                <span>Crear</span>
+                <span>Crear Categoría</span>
               }
             </button>
           </div>
@@ -76,14 +91,14 @@
 
     <!-- LOADING -->
     @if (loading() && localCategories().length === 0) {
-      <div class="flex flex-col items-center justify-center py-20 text-[#666]">
-        <lucide-icon name="loader-2" class="w-8 h-8 animate-spin mb-4" />
-        <p>Cargando categorías...</p>
+      <div class="flex flex-col items-center justify-center py-20 gap-3 text-zinc-400">
+        <lucide-icon name="loader-2" class="w-10 h-10 text-[#FFB300] animate-spin" />
+        <p class="text-sm font-medium">Cargando categorías...</p>
       </div>
     }
 
     <!-- LIST MODE WITH DRAG & DROP -->
-    <div cdkDropList (cdkDropListDropped)="onDrop($event)" class="space-y-4">
+    <div cdkDropList (cdkDropListDropped)="onDrop($event)" class="space-y-3 sm:space-y-4">
       @for (category of localCategories(); track category.id) {
         <div cdkDrag>
           <app-category-card
@@ -96,15 +111,15 @@
             (addProduct)="addProduct(category.id)"
           />
           
-          <!-- Drag Preview Personalizado (Opcional, CDK ya clona el elemento) -->
-          <div *cdkDragPlaceholder class="bg-[#FFB300]/5 border-2 border-dashed border-[#FFB300]/20 rounded-2xl h-[100px] mb-4"></div>
+          <!-- Drag Preview Personalizado (CDK placeholder) -->
+          <div *cdkDragPlaceholder class="bg-[#FFB300]/5 border-2 border-dashed border-[#FFB300]/30 rounded-2xl h-[100px] mb-3 sm:mb-4"></div>
         </div>
       } @empty { 
         @if (!loading()) {
-          <div class="text-center py-20 text-gray-500">
-            <lucide-icon name="folder-open" class="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p class="text-lg">No hay categorías aún</p>
-            <p class="text-sm mt-2">Crea la primera para empezar a organizar tu menú</p>
+          <div class="text-center py-16 sm:py-20 px-4 bg-[#1A1A1A] rounded-2xl border border-white/5 border-dashed">
+            <lucide-icon name="folder-open" class="w-12 h-12 mx-auto mb-3 text-zinc-600" />
+            <p class="text-base font-bold text-zinc-300">No hay categorías registradas</p>
+            <p class="text-xs text-zinc-500 mt-1">Crea la primera para empezar a organizar tu menú</p>
           </div>
         }
       }

@@ -1,30 +1,59 @@
 <div 
   (click)="navigate.emit()"
-  class="group relative rounded-2xl border border-white/5 bg-[#181818] p-5 hover:border-amber-500/30 transition shadow-xl cursor-pointer"
+  class="group relative rounded-2xl border border-white/10 bg-[#1A1A1A] p-5 hover:border-[#FFB300]/40 transition-all shadow-md cursor-pointer select-none flex flex-col justify-between"
 >
-  <div class="flex items-start justify-between mb-4">
-    <div class="p-3 rounded-xl bg-amber-500/10 text-amber-500">
-      <lucide-icon name="layers" class="w-6 h-6" />
+  <div>
+    <!-- Top Row: Icono + Acciones con Touch Targets de 44px -->
+    <div class="flex items-start justify-between gap-3 mb-3.5">
+      <div class="w-11 h-11 rounded-xl bg-[#FFB300]/10 border border-[#FFB300]/20 flex items-center justify-center text-[#FFB300] shrink-0">
+        <lucide-icon name="layers" class="w-5 h-5" />
+      </div>
+      
+      <!-- Botones de Acción Aislados (44x44px con stopPropagation) -->
+      <div class="flex items-center gap-2 opacity-100 sm:opacity-80 sm:group-hover:opacity-100 transition-opacity" (click)="$event.stopPropagation()">
+        <button 
+          (click)="edit.emit()" 
+          class="w-11 h-11 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] text-zinc-300 hover:text-white border border-white/10 flex items-center justify-center transition active:scale-95 cursor-pointer" 
+          title="Editar categoría"
+        >
+          <lucide-icon name="edit-3" class="w-4 h-4" />
+        </button>
+        <button 
+          (click)="delete.emit()" 
+          class="w-11 h-11 rounded-xl bg-red-500/10 hover:bg-red-500/20 active:bg-red-500/30 text-red-400 border border-red-500/20 flex items-center justify-center transition active:scale-95 cursor-pointer" 
+          title="Eliminar categoría"
+        >
+          <lucide-icon name="trash-2" class="w-4 h-4 text-red-400" />
+        </button>
+      </div>
     </div>
-    <div class="flex gap-2" (click)="$event.stopPropagation()">
-      <button (click)="edit.emit()" class="p-2 rounded-lg bg-zinc-800 text-white hover:bg-zinc-700 transition" title="Editar">
-        <lucide-icon name="edit-3" class="w-4 h-4" />
-      </button>
-      <button (click)="delete.emit()" class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition" title="Eliminar">
-        <lucide-icon name="trash-2" class="w-4 h-4" />
-      </button>
+    
+    <!-- Título y Descripción -->
+    <h3 class="text-base sm:text-lg font-black text-white group-hover:text-[#FFB300] transition-colors line-clamp-1 mb-1">
+      {{ category().nombre }}
+    </h3>
+    <p class="text-xs text-zinc-400 line-clamp-2 min-h-8 leading-relaxed mb-3">
+      {{ category().descripcion || 'Sin descripción adicional' }}
+    </p>
+
+    <!-- Badge de Visibilidad -->
+    <div class="flex items-center gap-2 mb-3">
+      <span 
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border"
+        [ngClass]="category().visible ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'"
+      >
+        <span class="w-1.5 h-1.5 rounded-full" [ngClass]="category().visible ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]' : 'bg-zinc-500'"></span>
+        {{ category().visible ? 'Visible en POS' : 'Oculto' }}
+      </span>
     </div>
   </div>
   
-  <h3 class="text-lg font-bold text-white mb-1">{{ category().nombre }}</h3>
-  <p class="text-xs text-zinc-500 line-clamp-2 mb-4 h-8">{{ category().descripcion || 'Sin descripción' }}</p>
-  
-  <div class="flex items-center gap-2">
-    <span 
-      class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"
-      [ngClass]="category().visible ? 'bg-emerald-500/10 text-emerald-500' : 'bg-zinc-500/10 text-zinc-500'"
-    >
-      {{ category().visible ? 'Visible' : 'Oculto' }}
+  <!-- Footer de Navegación Explícito: "Ver modificadores →" -->
+  <div class="pt-3 border-t border-white/5 flex items-center justify-between text-xs font-bold text-zinc-400 group-hover:text-[#FFB300] transition-colors">
+    <span class="text-[10px] uppercase tracking-wider text-zinc-500">Opciones</span>
+    <span class="inline-flex items-center gap-1.5 text-xs font-bold text-[#FFB300] group-hover:translate-x-1 transition-transform">
+      Ver modificadores
+      <lucide-icon name="arrow-right" class="w-3.5 h-3.5" />
     </span>
   </div>
 </div>

@@ -1,55 +1,63 @@
 <div class="space-y-4">
   <!-- Filtro de Fecha Segmentado -->
-  <div class="inline-flex p-1 gap-1 rounded-lg bg-black/40 border border-white/5 overflow-x-auto scrollbar-hide flex-nowrap max-w-full">
+  <div class="inline-flex p-1 gap-1 rounded-2xl bg-[#141414] border border-white/10 overflow-x-auto scrollbar-hide flex-nowrap max-w-full">
     <button (click)="setDateFilter.emit('today')" 
-      [class.bg-white/10]="dateFilterType() === 'today'"
+      [class.bg-[#FFB300]/15]="dateFilterType() === 'today'"
       [class.text-[#FFB300]]="dateFilterType() === 'today'"
+      [class.border]="dateFilterType() === 'today'"
+      [class.border-[#FFB300]/25]="dateFilterType() === 'today'"
       [class.text-zinc-400]="dateFilterType() !== 'today'"
       [class.hover:text-zinc-200]="dateFilterType() !== 'today'"
-      class="shrink-0 px-4 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition duration-200 active:scale-95 whitespace-nowrap">
+      class="shrink-0 px-3.5 sm:px-4 h-9 rounded-xl text-xs font-bold uppercase tracking-wider transition duration-200 active:scale-95 whitespace-nowrap cursor-pointer">
       Hoy
     </button>
     <button (click)="setDateFilter.emit('week')" 
-      [class.bg-white/10]="dateFilterType() === 'week'"
+      [class.bg-[#FFB300]/15]="dateFilterType() === 'week'"
       [class.text-[#FFB300]]="dateFilterType() === 'week'"
+      [class.border]="dateFilterType() === 'week'"
+      [class.border-[#FFB300]/25]="dateFilterType() === 'week'"
       [class.text-zinc-400]="dateFilterType() !== 'week'"
       [class.hover:text-zinc-200]="dateFilterType() !== 'week'"
-      class="shrink-0 px-4 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition duration-200 active:scale-95 whitespace-nowrap">
+      class="shrink-0 px-3.5 sm:px-4 h-9 rounded-xl text-xs font-bold uppercase tracking-wider transition duration-200 active:scale-95 whitespace-nowrap cursor-pointer">
       Última semana
     </button>
     <button (click)="setDateFilter.emit('month')" 
-      [class.bg-white/10]="dateFilterType() === 'month'"
+      [class.bg-[#FFB300]/15]="dateFilterType() === 'month'"
       [class.text-[#FFB300]]="dateFilterType() === 'month'"
+      [class.border]="dateFilterType() === 'month'"
+      [class.border-[#FFB300]/25]="dateFilterType() === 'month'"
       [class.text-zinc-400]="dateFilterType() !== 'month'"
       [class.hover:text-zinc-200]="dateFilterType() !== 'month'"
-      class="shrink-0 px-4 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition duration-200 active:scale-95 whitespace-nowrap">
+      class="shrink-0 px-3.5 sm:px-4 h-9 rounded-xl text-xs font-bold uppercase tracking-wider transition duration-200 active:scale-95 whitespace-nowrap cursor-pointer">
       Último mes
     </button>
     <button (click)="setDateFilter.emit('custom')" 
-      [class.bg-white/10]="dateFilterType() === 'custom'"
+      [class.bg-[#FFB300]/15]="dateFilterType() === 'custom'"
       [class.text-[#FFB300]]="dateFilterType() === 'custom'"
+      [class.border]="dateFilterType() === 'custom'"
+      [class.border-[#FFB300]/25]="dateFilterType() === 'custom'"
       [class.text-zinc-400]="dateFilterType() !== 'custom'"
       [class.hover:text-zinc-200]="dateFilterType() !== 'custom'"
-      class="shrink-0 px-4 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition duration-200 active:scale-95 whitespace-nowrap">
+      class="shrink-0 px-3.5 sm:px-4 h-9 rounded-xl text-xs font-bold uppercase tracking-wider transition duration-200 active:scale-95 whitespace-nowrap cursor-pointer">
       Personalizado
     </button>
   </div>
 
   @if (dateFilterType() === 'custom') {
-  <div class="flex flex-wrap items-end gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5 animate-in fade-in duration-300">
-    <div class="space-y-1.5 flex-1 min-w-37.5">
-      <label class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Desde</label>
+  <div class="flex flex-wrap items-end gap-3 p-4 rounded-2xl bg-[#141414] border border-white/10 animate-in fade-in duration-300">
+    <div class="space-y-1.5 flex-1 min-w-[140px]">
+      <label class="text-[10px] text-zinc-400 font-bold uppercase tracking-wider block">Desde</label>
       <input type="date" [value]="customStartDate()" (change)="customStartChange.emit($any($event.target).value)"
-        class="block w-full bg-[#121212] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[#FFB300]/50 scheme-dark">
+        class="block w-full h-11 bg-[#1A1A1A] border border-white/10 rounded-xl px-3 text-sm text-white outline-none focus:border-[#FFB300]/50 scheme-dark">
     </div>
-    <div class="space-y-1.5 flex-1 min-w-37.5">
-      <label class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Hasta</label>
+    <div class="space-y-1.5 flex-1 min-w-[140px]">
+      <label class="text-[10px] text-zinc-400 font-bold uppercase tracking-wider block">Hasta</label>
       <input type="date" [value]="customEndDate()" (change)="customEndChange.emit($any($event.target).value)"
-        class="block w-full bg-[#121212] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[#FFB300]/50 scheme-dark">
+        class="block w-full h-11 bg-[#1A1A1A] border border-white/10 rounded-xl px-3 text-sm text-white outline-none focus:border-[#FFB300]/50 scheme-dark">
     </div>
     <button 
         (click)="applyFilter.emit()"
-        class="px-5 h-9 rounded-lg bg-[#FFB300] text-[#121212] font-bold text-xs uppercase tracking-wider hover:bg-[#FFC107] transition active:scale-95"
+        class="h-11 px-6 rounded-xl bg-[#FFB300] text-[#121212] font-bold text-xs uppercase tracking-wider hover:brightness-105 transition active:scale-95 cursor-pointer shrink-0"
       >
         Filtrar
       </button>
@@ -58,23 +66,22 @@
 
   <!-- ACCIONES MASIVAS -->
   @if (filteredCount() > 0) {
-    <div class="flex items-center gap-2 pt-2 animate-in fade-in slide-in-from-left-2">
-      <span class="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mr-2">Acciones rápidas ({{ filteredCount() }}):</span>
+    <div class="flex flex-wrap items-center gap-2 pt-2 animate-in fade-in slide-in-from-left-2">
+      <span class="text-[10px] sm:text-xs text-zinc-400 font-bold uppercase tracking-wider mr-1">Acciones rápidas ({{ filteredCount() }}):</span>
       <button 
         (click)="bulkUpdate.emit({ type: 'pedido', status: 'entregado' })"
-        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition text-[10px] font-bold uppercase tracking-wider"
+        class="flex items-center gap-1.5 px-3.5 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition text-[10px] sm:text-xs font-bold uppercase tracking-wider active:scale-95 cursor-pointer"
       >
-        <lucide-icon name="check-circle" class="w-3 h-3"></lucide-icon>
-        Entregar todo
+        <lucide-icon name="check-circle" class="w-3.5 h-3.5"></lucide-icon>
+        <span>Entregar todo</span>
       </button>
       <button 
         (click)="bulkUpdate.emit({ type: 'pago', status: 'pagado' })"
-        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FFB300]/10 text-[#FFB300] border border-[#FFB300]/20 hover:bg-[#FFB300]/20 transition text-[10px] font-bold uppercase tracking-wider"
+        class="flex items-center gap-1.5 px-3.5 h-9 rounded-xl bg-[#FFB300]/10 text-[#FFB300] border border-[#FFB300]/20 hover:bg-[#FFB300]/20 transition text-[10px] sm:text-xs font-bold uppercase tracking-wider active:scale-95 cursor-pointer"
       >
-        <lucide-icon name="dollar-sign" class="w-3 h-3"></lucide-icon>
-        Pagar todo
+        <lucide-icon name="dollar-sign" class="w-3.5 h-3.5"></lucide-icon>
+        <span>Pagar todo</span>
       </button>
     </div>
   }
 </div>
-

@@ -2,54 +2,47 @@
 
 <div class="min-h-screen bg-[#121212] text-[#F5F5F5] no-print">
 
-  <div class="max-w-7xl mx-auto px-5 py-6">
+  <div class="max-w-7xl mx-auto px-4 sm:px-5 py-4 sm:py-6">
 
     <!-- HEADER -->
-    <div class="flex items-center justify-between gap-4 mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 mb-5 sm:mb-6">
 
       <div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-none">
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white leading-tight">
           Órdenes
         </h1>
-        <p class="text-zinc-500 text-xs mt-2 font-medium tracking-wide">
+        <p class="text-zinc-400 text-xs mt-1 font-medium tracking-wide">
           {{ activeOrdersCount() }} órdenes activas · {{ pendingOrdersCount() }} pendientes
         </p>
       </div>
 
-      <div class="flex items-center gap-2">
-        <button (click)="refresh()" class="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 border border-white/5 active:scale-95 transition duration-200" title="Refrescar">
-          <lucide-icon name="refresh-cw" class="w-5 h-5" [class.animate-spin]="loading()"></lucide-icon>
+      <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
+        <!-- Refrescar -->
+        <button
+          (click)="refresh()"
+          type="button"
+          class="w-10 sm:w-11 h-10 sm:h-11 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10 active:scale-95 transition duration-200 flex items-center justify-center cursor-pointer shrink-0"
+          title="Refrescar órdenes"
+          aria-label="Refrescar órdenes">
+          <lucide-icon name="refresh-cw" class="w-4 h-4 sm:w-5 sm:h-5" [class.animate-spin]="loading()"></lucide-icon>
         </button>
 
-        <button (click)="goToRequests()" class="
-          inline-flex items-center gap-2
-          px-4 h-11
-          rounded-lg
-          bg-white/5 hover:bg-white/10
-          text-[#FFB300] border border-[#FFB300]/10
-          font-bold text-sm
-          active:scale-95
-          transition duration-200
-          "
+        <!-- Solicitudes -->
+        <button
+          (click)="goToRequests()"
+          type="button"
+          class="inline-flex items-center gap-2 px-3.5 sm:px-4 h-10 sm:h-11 rounded-xl bg-white/5 hover:bg-white/10 text-[#FFB300] border border-[#FFB300]/20 font-bold text-xs sm:text-sm active:scale-95 transition duration-200 cursor-pointer shrink-0"
           title="Ver Solicitudes">
-          <lucide-icon name="inbox" class="w-4 h-4" />
-          <span class="hidden sm:inline">Solicitudes</span>
+          <lucide-icon name="inbox" class="w-4 h-4 shrink-0" />
+          <span>Solicitudes</span>
         </button>
 
-        <button (click)="createNewOrder()" class="
-          inline-flex items-center gap-2
-          px-5 h-11
-          rounded-lg
-          bg-[#FFB300]
-          text-[#121212]
-          font-bold
-          text-sm
-          hover:bg-[#FFC107]
-          active:scale-95
-          transition duration-200
-          shadow-lg shadow-amber-500/10
-          ">
-          <lucide-icon name="plus" class="w-4 h-4" />
+        <!-- Nueva orden (Primary Action) -->
+        <button
+          (click)="createNewOrder()"
+          type="button"
+          class="inline-flex items-center gap-2 px-4 sm:px-5 h-10 sm:h-11 rounded-xl bg-[#FFB300] text-[#121212] font-bold text-xs sm:text-sm hover:brightness-105 active:scale-95 transition duration-200 shadow-lg shadow-amber-500/15 cursor-pointer shrink-0">
+          <lucide-icon name="plus" class="w-4 h-4 shrink-0" />
           <span>Nueva orden</span>
         </button>
       </div>
@@ -66,7 +59,7 @@
     }
 
     <!-- PESTAÑAS DE SERVICIO Y BOTÓN DE FILTROS -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
       <app-service-tabs 
         [serviceTypes]="serviceTypes()" 
         [selectedTypeId]="selectedTypeId()"
@@ -75,7 +68,8 @@
       
       <button 
         (click)="toggleFilters()"
-        class="shrink-0 flex items-center justify-center gap-2 px-4 h-10 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 active:scale-95 transition-all text-xs font-bold uppercase tracking-wider text-zinc-400 self-start sm:self-auto"
+        type="button"
+        class="shrink-0 flex items-center justify-center gap-2 px-3.5 sm:px-4 h-10 rounded-xl bg-[#18181A] border border-white/10 hover:bg-[#202022] active:scale-95 transition-all text-xs font-bold uppercase tracking-wider text-zinc-400 self-start sm:self-auto cursor-pointer"
         [class.text-[#FFB300]]="hasActiveFilters()"
         [class.border-[#FFB300]/30]="hasActiveFilters()"
       >
@@ -87,7 +81,7 @@
 
     <!-- ACORDEÓN DE FILTROS AVANZADOS -->
     @if (showFilters()) {
-      <div class="mb-8 p-5 rounded-xl bg-white/[0.01] border border-white/5 space-y-5 animate-in fade-in slide-in-from-top-3 duration-300">
+      <div class="mb-5 sm:mb-6 p-4 sm:p-5 rounded-2xl bg-[#18181A] border border-white/10 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
         <!-- Filtro de Fechas y Acciones Rápidas -->
         <app-order-filter-bar 
           [dateFilterType]="dateFilterType()"
@@ -101,7 +95,7 @@
           (bulkUpdate)="bulkUpdateStatus($event.type, $event.status)"
         />
 
-        <div class="border-t border-white/5"></div>
+        <div class="border-t border-white/10"></div>
 
         <!-- Filtros Rápidos por Estado -->
         <app-order-status-filter 
@@ -114,61 +108,65 @@
     }
 
     <!-- ENCABEZADO SECCIÓN -->
-    <div class="mb-6 border-b border-white/5 pb-3">
-      <h2 class="text-xs font-bold uppercase tracking-widest text-zinc-500">
+    <div class="mb-4 sm:mb-5 border-b border-white/10 pb-2.5 flex items-center justify-between">
+      <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-400">
         {{ selectedServiceName() }}
       </h2>
+      <span class="text-xs text-zinc-500 font-medium">
+        {{ filtered().length }} {{ filtered().length === 1 ? 'pedido' : 'pedidos' }}
+      </span>
     </div>
 
     <!-- ESTADO -->
     @if (loading()) {
       <!-- SKELETON LOADER -->
-      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
         @for (i of [1,2,3,4,5,6]; track i) {
-          <div class="rounded-xl border border-white/5 bg-gradient-to-b from-[#1C1C1E] to-[#161618] p-5 relative animate-pulse">
-            <div class="flex items-center justify-between mb-4">
-              <div class="h-6 w-20 bg-white/5 rounded-lg"></div>
-              <div class="flex flex-col items-end gap-1.5">
-                <div class="h-5 w-24 bg-white/5 rounded-md"></div>
-                <div class="h-4 w-16 bg-white/5 rounded-md"></div>
+          <div class="rounded-2xl border border-white/10 bg-[#1A1A1A] p-4 sm:p-5 relative animate-pulse space-y-4">
+            <div class="flex items-center justify-between mb-2">
+              <div class="h-6 w-20 bg-white/10 rounded-lg"></div>
+              <div class="flex items-center gap-1.5">
+                <div class="h-5 w-18 bg-white/10 rounded-md"></div>
+                <div class="h-5 w-18 bg-white/10 rounded-md"></div>
               </div>
             </div>
-            <div class="space-y-4">
+            <div class="space-y-2">
+              <div class="h-4 w-28 bg-white/5 rounded"></div>
               <div class="flex items-center justify-between">
-                <div class="space-y-1">
-                  <div class="h-3 w-16 bg-white/5 rounded"></div>
-                  <div class="h-4 w-32 bg-white/5 rounded"></div>
-                </div>
-                <div class="h-5 w-24 bg-white/5 rounded-lg"></div>
+                <div class="h-5 w-24 bg-white/10 rounded"></div>
+                <div class="h-4 w-20 bg-white/5 rounded"></div>
               </div>
-              <div class="h-8 w-full bg-white/5 rounded-lg"></div>
             </div>
+            <div class="h-10 w-full bg-white/5 rounded-xl pt-2"></div>
           </div>
         }
       </div>
     } @else {
 
     @if (filtered().length === 0) {
-      <div class="flex flex-col items-center justify-center py-24 px-4 text-center animate-in fade-in zoom-in-95 duration-500">
-        <div class="relative mb-6">
+      <div class="flex flex-col items-center justify-center py-16 sm:py-24 px-4 text-center animate-in fade-in zoom-in-95 duration-300">
+        <div class="relative mb-5">
           <div class="absolute inset-0 bg-[#FFB300]/10 blur-3xl rounded-full"></div>
-          <div class="relative flex items-center justify-center w-20 h-20 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-sm">
-            <lucide-icon name="receipt" class="w-10 h-10 text-zinc-600" />
+          <div class="relative flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-sm">
+            <lucide-icon name="receipt" class="w-8 h-8 sm:w-10 sm:h-10 text-zinc-500" />
           </div>
         </div>
-        <h3 class="text-lg font-bold text-white mb-2">No hay órdenes registradas</h3>
-        <p class="text-zinc-500 text-xs max-w-xs mx-auto leading-relaxed">
-          No encontramos pedidos para <span class="text-[#FFB300]/80 font-semibold">{{ selectedServiceName() }}</span> en este periodo.
+        <h3 class="text-base sm:text-lg font-bold text-white mb-1.5">No hay órdenes registradas</h3>
+        <p class="text-zinc-400 text-xs sm:text-sm max-w-xs mx-auto leading-relaxed">
+          No encontramos pedidos para <span class="text-[#FFB300] font-semibold">{{ selectedServiceName() }}</span> en este periodo.
         </p>
-        <button (click)="refresh()" class="mt-8 flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-bold uppercase tracking-wider transition-all active:scale-95 border border-white/5">
+        <button
+          (click)="refresh()"
+          type="button"
+          class="mt-6 flex items-center gap-2 px-5 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-bold uppercase tracking-wider transition-all active:scale-95 border border-white/10 cursor-pointer">
           <lucide-icon name="refresh-cw" class="w-4 h-4" [class.animate-spin]="loading()"></lucide-icon>
           Actualizar ahora
         </button>
       </div>
     } @else {
 
-    <!-- GRID -->
-    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <!-- GRID DE ÓRDENES -->
+    <div class="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
       @for (o of filtered(); track o.id) {
 
@@ -197,7 +195,7 @@
 <!-- Modal de Ticket Rápido (Overlay) -->
 @if (showQuickPrintModal()) {
   <div class="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 bg-black/90 backdrop-blur-md print:bg-white print:p-0">
-    <div class="relative w-full h-full sm:h-auto sm:max-w-lg sm:max-h-[90vh] overflow-y-auto rounded-none sm:rounded-3xl bg-[#121212] border-0 sm:border sm:border-white/10 p-4 sm:p-8 animate-in zoom-in-95 print:bg-white print:border-none print:p-0 print:max-w-none print:max-h-none print:overflow-visible">
+    <div class="relative w-full h-full sm:h-auto sm:max-w-lg sm:max-h-[90vh] overflow-y-auto rounded-none sm:rounded-3xl bg-[#121212] border-0 sm:border sm:border-white/10 p-4 sm:p-8 pb-[max(1rem,env(safe-area-inset-bottom))] animate-in zoom-in-95 print:bg-white print:border-none print:p-0 print:max-w-none print:max-h-none print:overflow-visible">
       
       @if (quickPrintOrderId(); as id) {
         <app-ticket-print 

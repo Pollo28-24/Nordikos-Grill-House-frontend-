@@ -9,6 +9,8 @@ import { UserFeedbackService } from '@core/services/user-feedback.service';
 import { Navbar } from '@shared/components/navbar/navbar';
 import { SupabaseService } from '@shared/data-access/supabase.service';
 import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
+import { OrderRequestLocation } from '@core/models/order.model';
+import { parseLocationMetadata, getGoogleMapsUrl, getDeliveryWhatsAppShareUrl } from '@core/utils/order-location.utils';
 
 @Component({
   selector: 'app-order-requests-page',
@@ -175,5 +177,33 @@ export class OrderRequestsPage implements OnInit, OnDestroy {
     
     const diffHours = Math.floor(diffMins / 60);
     return `Hace ${diffHours} h`;
+  }
+
+  // Location & Note Helpers
+  getCleanNote(note: string | null | undefined): string | null {
+    return parseLocationMetadata(note).cleanNote;
+  }
+
+  getRequestLocation(req: OrderRequest): OrderRequestLocation | null {
+    return parseLocationMetadata(req.nota_general).location;
+  }
+
+  getMapsUrl(req: OrderRequest): string | null {
+    const loc = this.getRequestLocation(req);
+    return getGoogleMapsUrl(loc, req.direccion_entrega);
+  }
+
+  getDeliveryWhatsAppUrl(req: OrderRequest): string {
+    const loc = this.getRequestLocation(req);
+    const cleanNote = this.getCleanNote(req.nota_general);
+    return getDeliveryWhatsAppShareUrl({
+      orderCode: req.request_code,
+      clientName: req.clientes?.nombre,
+      phone: req.clientes?.telefono,
+      address: req.direccion_entrega,
+      location: loc,
+      note: cleanNote,
+      total: req.total,
+    });
   }
 }

@@ -7,10 +7,12 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="inline-flex p-1 gap-1 rounded-lg bg-white/[0.02] border border-white/5 overflow-x-auto scrollbar-hide flex-nowrap max-w-full">
-      <button class="shrink-0 px-4 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95" 
-        [class.bg-white/10]="selectedTypeId() === null" 
+    <div class="inline-flex p-1 gap-1 rounded-2xl bg-[#18181A] border border-white/10 overflow-x-auto scrollbar-hide flex-nowrap max-w-full">
+      <button class="shrink-0 px-4 h-10 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 cursor-pointer" 
+        [class.bg-[#FFB300]/15]="selectedTypeId() === null" 
         [class.text-[#FFB300]]="selectedTypeId() === null"
+        [class.border]="selectedTypeId() === null"
+        [class.border-[#FFB300]/25]="selectedTypeId() === null"
         [class.text-zinc-400]="selectedTypeId() !== null"
         [class.hover:text-zinc-200]="selectedTypeId() !== null"
         (click)="selectType.emit(null)">
@@ -18,9 +20,11 @@ import { CommonModule } from '@angular/common';
       </button>
 
       @for (t of serviceTypes(); track t.id) {
-        <button class="shrink-0 px-4 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95" 
-          [class.bg-white/10]="selectedTypeId() === t.id" 
+        <button class="shrink-0 px-4 h-10 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 cursor-pointer" 
+          [class.bg-[#FFB300]/15]="selectedTypeId() === t.id" 
           [class.text-[#FFB300]]="selectedTypeId() === t.id"
+          [class.border]="selectedTypeId() === t.id"
+          [class.border-[#FFB300]/25]="selectedTypeId() === t.id"
           [class.text-zinc-400]="selectedTypeId() !== t.id"
           [class.hover:text-zinc-200]="selectedTypeId() !== t.id"
           (click)="selectType.emit(t.id)">

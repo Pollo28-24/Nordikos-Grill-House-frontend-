@@ -3,7 +3,9 @@ import {
   ChangeDetectionStrategy,
   inject,
   signal,
-  computed
+  computed,
+  viewChild,
+  ElementRef
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
@@ -12,6 +14,17 @@ import { LucideAngularModule } from 'lucide-angular';
 import { ProductsService } from '../../../../core/services/products.service';
 import { OrdersService } from '../../../../core/services/orders.service';
 import { CategoriesService } from '../../../../core/services/categories.service';
+
+export interface ModalSection {
+  id: string;
+  title: string;
+  type: 'variants' | 'modifier-group' | 'instructions';
+  isRequired: boolean;
+  isComplete: boolean;
+  count: number;
+  badge: string;
+  data?: any;
+}
 
 @Component({
   selector: 'app-new-order-products',
@@ -165,9 +178,12 @@ export class NewOrderProducts {
   showModal = signal(false);
   selectedProductForModal = signal<any>(null);
   selectedVariant = signal<any>(null);
-  selectedVariants = signal<any[]>([]); // New for multi-selection
+  selectedVariants = signal<any[]>([]); // Variant selections with qty
   selectedModifiers = signal<any[]>([]);
   productNote = signal<string>('');
+  activeSectionIndex = signal<number>(0);
+
+  readonly pagesContainer = viewChild<ElementRef<HTMLDivElement>>('pagesContainer');
 
   // Grouped modifiers for modal
   groupedModifiers = computed(() => {
@@ -178,8 +194,6 @@ export class NewOrderProducts {
     const groups: Record<string, { name: string; items: any[] }> = {};
     
     p.modifiers.forEach((m: any) => {
-      // Accessing the category name from the joined table
-      // Ensure we look into the nested modificador_categorias object
       const catName = m.modificador_categorias?.nombre || 'Extras opcionales';
       
       if (!groups[catName]) {
@@ -190,6 +204,103 @@ export class NewOrderProducts {
     
     // Convert to array and ensure categories are unique
     return Object.values(groups);
+  });
+
+  // Dynamic sections with status for navigation & pages
+  sections = computed<ModalSection[]>(() => {
+    const p = this.selectedProductForModal();
+    if (!p) return [];
+
+    const list: ModalSection[] = [];
+
+    // 1. Variantes (si el producto tiene variantes)
+    if (p.variants && p.variants.length > 0) {
+      const selectedVars = this.selectedVariants();
+      const isComplete = selectedVars.length > 0 && selectedVars.some(sv =>
+        p.variants.some((pv: any) => pv.id === sv.id && pv.disponible !== false)
+      );
+      list.push({
+        id: 'variants',
+        title: 'Opciones',
+        type: 'variants',
+        isRequired: true,
+        isComplete,
+        count: selectedVars.length,
+        badge: isComplete ? '✓' : 'Requerido *'
+      });
+    }
+
+    // 2. Modificadores agrupados por categoría
+    const groups = this.groupedModifiers();
+    groups.forEach((group, idx) => {
+      const selectedModsInGroup = this.selectedModifiers().filter(sm =>
+        group.items.some((gi: any) => gi.id === sm.id)
+      );
+      const count = selectedModsInGroup.reduce((acc, m) => acc + (Number(m.qty) || 1), 0);
+      list.push({
+        id: `mod-group-${idx}`,
+        title: group.name,
+        type: 'modifier-group',
+        isRequired: false,
+        isComplete: count > 0,
+        count,
+        badge: count > 0 ? `✓ (${count})` : '0',
+        data: group
+      });
+    });
+
+    // 3. Instrucciones / Nota
+    const hasNote = (this.productNote() || '').trim().length > 0;
+    list.push({
+      id: 'instructions',
+      title: 'Instrucciones',
+      type: 'instructions',
+      isRequired: false,
+      isComplete: hasNote,
+      count: hasNote ? 1 : 0,
+      badge: hasNote ? '✓' : '—'
+    });
+
+    return list;
+  });
+
+  // Semantic validation: Can add to order?
+  canAddToOrder = computed(() => {
+    const p = this.selectedProductForModal();
+    if (!p) return false;
+
+    // Si el producto tiene variantes, exige al menos 1 variante disponible seleccionada
+    if (p.variants && p.variants.length > 0) {
+      const selected = this.selectedVariants();
+      if (selected.length === 0) return false;
+      return selected.some(sv =>
+        p.variants.some((pv: any) => pv.id === sv.id && pv.disponible !== false)
+      );
+    }
+
+    // Producto simple: siempre válido
+    return true;
+  });
+
+  // Real-time live totals
+  modalBaseTotal = computed(() => {
+    const p = this.selectedProductForModal();
+    if (!p) return 0;
+    const variants = this.selectedVariants();
+    if (variants.length > 0) {
+      return variants.reduce((acc, v) => acc + ((Number(v.precio || 0) - Number(v.descuento || 0)) * (Number(v.qty) || 1)), 0);
+    }
+    return Number(p.precio || 0) - Number(p.descuento || 0);
+  });
+
+  modalExtrasTotal = computed(() => {
+    return this.selectedModifiers().reduce((acc, m) => {
+      return acc + (Number(m.precio || 0) * (Number(m.qty) || 1));
+    }, 0);
+  });
+
+  modalLiveTotal = computed(() => {
+    return this.modalBaseTotal() + this.modalExtrasTotal();
   });
 
   getProductPriceOriginal(p: any): string {
@@ -254,17 +365,40 @@ export class NewOrderProducts {
     }
     this.productNote.set('');
     this.selectedProductForModal.set(p);
-    this.selectedVariant.set(p.variants?.[0] || null);
-    this.selectedVariants.set([]); // Reset multi-selection
+    this.activeSectionIndex.set(0);
+
+    // Preseleccionar la primera variante disponible si tiene opciones
+    const firstAvailable = p.variants?.find((v: any) => v.disponible !== false);
+    if (firstAvailable) {
+      this.selectedVariants.set([{ ...firstAvailable, qty: 1 }]);
+      this.selectedVariant.set(firstAvailable);
+    } else {
+      this.selectedVariants.set([]);
+      this.selectedVariant.set(null);
+    }
+
     this.selectedModifiers.set([]);
     this.showModal.set(true);
+
+    setTimeout(() => {
+      const container = this.pagesContainer()?.nativeElement;
+      if (container) {
+        container.scrollLeft = 0;
+      }
+    }, 50);
   }
 
-  quickAdd(p: any) {
+  hasOptions(p: any): boolean {
+    const hasVariants = !!(p?.variants && p.variants.length > 0);
+    const hasModifiers = !!(p?.modifiers && p.modifiers.length > 0);
+    return hasVariants || hasModifiers;
+  }
+
+  quickAdd(p: any, event?: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+    }
     if (p.variants && p.variants.length > 0) {
-      // If has variants, we can't quick add the base product, 
-      // but we could add the first one or just open modal.
-      // The user wants click on card to add, let's add first variant or product.
       const firstVariant = p.variants[0];
       this.addVariant(firstVariant, p);
     } else {
@@ -284,9 +418,38 @@ export class NewOrderProducts {
     this.selectedVariants.set([]);
     this.selectedModifiers.set([]);
     this.productNote.set('');
+    this.activeSectionIndex.set(0);
+  }
+
+  scrollToSection(index: number) {
+    this.activeSectionIndex.set(index);
+    const container = this.pagesContainer()?.nativeElement;
+    if (!container) return;
+    const targetLeft = index * container.clientWidth;
+    container.scrollTo({
+      left: targetLeft,
+      behavior: 'smooth'
+    });
+  }
+
+  onPagesScroll(event: Event) {
+    const container = event.target as HTMLElement;
+    if (!container || container.clientWidth === 0) return;
+    const scrollLeft = container.scrollLeft;
+    const pageIndex = Math.round(scrollLeft / container.clientWidth);
+    if (pageIndex !== this.activeSectionIndex() && pageIndex >= 0 && pageIndex < this.sections().length) {
+      this.activeSectionIndex.set(pageIndex);
+    }
+  }
+
+  selectVariant(variant: any) {
+    if (variant.disponible === false) return;
+    this.selectedVariants.set([{ ...variant, qty: 1 }]);
+    this.selectedVariant.set(variant);
   }
 
   toggleVariant(variant: any) {
+    if (variant.disponible === false) return;
     const current = this.selectedVariants();
     const index = current.findIndex(v => v.id === variant.id);
     if (index >= 0) {
@@ -345,36 +508,88 @@ export class NewOrderProducts {
     return m ? m.qty : 0;
   }
 
+  readonly quickNotes: string[] = [
+    'Sin cebolla',
+    'Sin catsup',
+    'Sin tomate',
+    'Sin pepinillos',
+    'Sin lechuga',
+    'Sin mostaza',
+    'Sin aderezo',
+    'Sin ningún tipo de aderezo',
+    'Sin verdura',
+    'Sin queso amarillo',
+    'Sin queso manchego',
+    'Sin chile'
+  ];
+
+  isQuickNoteSelected(chip: string): boolean {
+    const note = (this.productNote() || '').toLowerCase();
+    return note.includes(chip.toLowerCase());
+  }
+
+  toggleQuickNote(chip: string) {
+    const current = (this.productNote() || '').trim();
+    if (!current) {
+      this.productNote.set(chip);
+      return;
+    }
+
+    const parts = current.split(',').map(s => s.trim()).filter(Boolean);
+    const existingIndex = parts.findIndex(p => p.toLowerCase() === chip.toLowerCase());
+
+    if (existingIndex >= 0) {
+      parts.splice(existingIndex, 1);
+      this.productNote.set(parts.join(', '));
+    } else {
+      parts.push(chip);
+      this.productNote.set(parts.join(', '));
+    }
+  }
+
+  addQuickNote(chip: string) {
+    this.toggleQuickNote(chip);
+  }
+
+  private generateTempId(): string {
+    return Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+  }
+
   confirmModalProduct() {
+    if (!this.canAddToOrder()) return;
+
     const p = this.selectedProductForModal();
     const variants = this.selectedVariants();
     const mods = this.selectedModifiers().map(m => ({
+      modificador_id: m.id,
       nombre_modificador: m.nombre,
-      cantidad: m.qty,
-      precio_unitario: m.precio
+      cantidad: Number(m.qty || 1),
+      precio_unitario: Number(m.precio || 0)
     }));
 
     if (variants.length > 0) {
-      // Add each selected variant to cart
+      // Add each selected variant to cart with unique tempId
       variants.forEach(v => {
         const cartItem: any = {
+          tempId: this.generateTempId(),
           variante_id: v.id,
           producto_id: p.id,
           nombre_producto: `${p.nombre} - ${v.nombre}`,
-          cantidad: v.qty,
-          nota: this.productNote(),
+          cantidad: Number(v.qty || 1),
+          nota: this.productNote().trim() || null,
           modificadores: mods
         };
         this.ordersService.cart.update(items => [...items, cartItem]);
       });
     } else {
-      // Standard product add
+      // Standard product add with unique tempId
       const v = this.selectedVariant();
       const cartItem: any = {
+        tempId: this.generateTempId(),
         producto_id: p.id,
         nombre_producto: v ? `${p.nombre} - ${v.nombre}` : p.nombre,
         cantidad: 1,
-        nota: this.productNote(),
+        nota: this.productNote().trim() || null,
         modificadores: mods
       };
       if (v) cartItem.variante_id = v.id;

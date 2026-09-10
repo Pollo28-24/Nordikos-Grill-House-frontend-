@@ -147,55 +147,81 @@ export class OrdersRequestsService {
 
   // Submit a new request from the public menu
   async submitRequest(payload: {
-    clientInfo: { nombre: string; telefono: string; email?: string; direccion?: string };
+    clientInfo?: { nombre?: string; telefono?: string; email?: string; direccion?: string };
     tipo_servicio_id: number;
     numero_mesa?: string | null;
     direccion_entrega?: string | null;
+    referencias?: string | null;
     nota_general?: string | null;
+    location?: { latitude: number; longitude: number; accuracy?: number } | null;
     items: any[];
   }) {
     try {
       this.loading.set(true);
       this.error.set(null);
 
-      // 1. Search or create client
-      let clienteId: number;
-      const { data: existingClient, error: clientFindError } = await this.api.findClientByPhone(payload.clientInfo.telefono);
-      if (clientFindError) throw clientFindError;
+      // 1. Search or create client only if phone is provided
+      let clienteId: number | null = null;
+      const phone = payload.clientInfo?.telefono?.trim();
 
-      if (existingClient) {
-        clienteId = existingClient.id;
-        // Optionally update client name, email, address if provided
-        const updates: any = {};
-        if (payload.clientInfo.nombre && payload.clientInfo.nombre !== existingClient.nombre) {
-          updates.nombre = payload.clientInfo.nombre;
+      if (phone) {
+        const { data: existingClient, error: clientFindError } = await this.api.findClientByPhone(phone);
+        if (clientFindError) throw clientFindError;
+
+        if (existingClient) {
+          clienteId = existingClient.id;
+          const updates: any = {};
+          if (payload.clientInfo?.nombre && payload.clientInfo.nombre !== existingClient.nombre) {
+            updates.nombre = payload.clientInfo.nombre;
+          }
+          if (payload.clientInfo?.email && payload.clientInfo.email !== existingClient.email) {
+            updates.email = payload.clientInfo.email;
+          }
+          if (payload.clientInfo?.direccion && payload.clientInfo.direccion !== existingClient.direccion) {
+            updates.direccion = payload.clientInfo.direccion;
+          }
+          if (Object.keys(updates).length > 0) {
+            await this.api.updateClient(existingClient.id, updates);
+          }
+        } else {
+          const { data: newClient, error: clientCreateError } = await this.api.createClient({
+            nombre: payload.clientInfo?.nombre || 'Cliente',
+            telefono: phone,
+            email: payload.clientInfo?.email,
+            direccion: payload.clientInfo?.direccion
+          });
+          if (clientCreateError) throw clientCreateError;
+          clienteId = newClient.id;
         }
-        if (payload.clientInfo.email && payload.clientInfo.email !== existingClient.email) {
-          updates.email = payload.clientInfo.email;
-        }
-        if (payload.clientInfo.direccion && payload.clientInfo.direccion !== existingClient.direccion) {
-          updates.direccion = payload.clientInfo.direccion;
-        }
-        if (Object.keys(updates).length > 0) {
-          await this.api.updateClient(clienteId, updates);
-        }
-      } else {
-        const { data: newClient, error: clientCreateError } = await this.api.createClient(payload.clientInfo);
-        if (clientCreateError) throw clientCreateError;
-        clienteId = newClient.id;
       }
 
       // Calculate total amount from items
       const totalAmount = payload.items.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
 
+      // Prepare clean physical delivery address (with references, NO GPS strings)
+      let finalAddress = payload.direccion_entrega?.trim() || null;
+      if (finalAddress && payload.referencias?.trim()) {
+        finalAddress = `${finalAddress} (Ref: ${payload.referencias.trim()})`;
+      }
+
+      // Prepare note general with optional customer name (for anonymous table) and clean location metadata JSON
+      let finalNote = payload.nota_general?.trim() || '';
+      if (payload.clientInfo?.nombre && !phone) {
+        finalNote = `Cliente: ${payload.clientInfo.nombre}${finalNote ? ' | ' + finalNote : ''}`;
+      }
+      if (payload.location) {
+        const metaJson = JSON.stringify({ location: payload.location });
+        finalNote = finalNote ? `${finalNote}\n[meta:${metaJson}]` : `[meta:${metaJson}]`;
+      }
+
       // 2. Create order request
       const { data: request, error: requestCreateError } = await this.api.createOrderRequest({
         cliente_id: clienteId,
         total: totalAmount,
-        nota_general: payload.nota_general || null,
+        nota_general: finalNote || null,
         tipo_servicio_id: payload.tipo_servicio_id,
         numero_mesa: payload.numero_mesa || null,
-        direccion_entrega: payload.direccion_entrega || null,
+        direccion_entrega: finalAddress,
         estado: 'pending'
       });
       if (requestCreateError) throw requestCreateError;
@@ -214,10 +240,6 @@ export class OrdersRequestsService {
 
       const { data: insertedItems, error: itemsInsertError } = await this.api.insertRequestItems(itemsToInsert);
       if (itemsInsertError) throw itemsInsertError;
-
-      // Since public cart items don't support modifiers directly yet, we check if they are passed.
-      // If modifiers are ever supported, insert them here.
-      // e.g. mapping mods to order_request_item_modificadores
 
       return { success: true, request_code: request.request_code };
     } catch (err: any) {

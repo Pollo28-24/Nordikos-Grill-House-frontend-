@@ -1,109 +1,126 @@
-<section class="h-full flex flex-col bg-[#0D0D0E] border-l border-white/5">
+<section class="h-full flex flex-col bg-[#121214] border-l border-white/5">
 
   <!-- Header (Modern POS style) -->
-  <div class="px-4 py-3 border-b border-white/5 bg-[#141416] flex items-center justify-between shrink-0">
-    <div class="flex items-center gap-2">
-      <lucide-icon name="shopping-bag" class="w-3.5 h-3.5 text-amber-500" />
-      <span class="text-[10px] font-bold text-zinc-450 uppercase tracking-widest">
-        {{ isEditingOrder() ? 'Editando Orden' : 'Nueva Orden' }}
+  <div class="px-4 py-3 border-b border-white/10 bg-[#161618] flex items-center justify-between shrink-0">
+    <div class="flex items-center gap-2 min-w-0">
+      <lucide-icon name="shopping-bag" class="w-4 h-4 text-amber-500 shrink-0" />
+      <span class="text-xs font-black text-white uppercase tracking-wider truncate">
+        {{ isEditingOrder() ? 'Editando #' + editingOrderId() : 'Carrito' }}
       </span>
-      <span class="px-1.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-bold text-zinc-450">
-        {{ cart().length }} {{ cart().length === 1 ? 'ítem' : 'ítems' }}
+      <span class="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-zinc-400 tabular-nums shrink-0">
+        {{ cartTotalUnits() }} {{ cartTotalUnits() === 1 ? 'ud' : 'uds' }} · {{ cart().length }} {{ cart().length === 1 ? 'ítem' : 'ítems' }}
       </span>
     </div>
     @if (cart().length > 0) {
       <button
-        class="text-[9px] font-bold text-zinc-500 hover:text-red-500 uppercase tracking-wider transition-all cursor-pointer"
+        class="h-8 px-2.5 rounded-lg text-xs font-bold text-red-400/80 hover:text-red-400 hover:bg-red-500/10 active:scale-95 transition-all cursor-pointer flex items-center gap-1 shrink-0"
         (click)="clearCart()"
+        title="Vaciar todo el carrito"
       >
-        VACIAR
+        <lucide-icon name="trash-2" class="w-3.5 h-3.5" />
+        <span>VACIAR</span>
       </button>
     }
   </div>
 
-  <!-- Lista -->
-  <div class="flex-1 overflow-y-auto px-4 py-3 space-y-2 custom-scrollbar">
+  <!-- Lista de ítems -->
+  <div class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2.5 custom-scrollbar">
 
     @if (cart().length === 0) {
-      <div class="py-12 flex flex-col items-center justify-center opacity-25">
-        <lucide-icon name="shopping-cart" class="w-8 h-8 mb-2 text-zinc-500 animate-pulse" />
-        <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Carrito Vacío</p>
+      <div class="py-16 flex flex-col items-center justify-center text-center px-4">
+        <div class="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center mb-3">
+          <lucide-icon name="shopping-bag" class="w-7 h-7 text-zinc-600 animate-pulse" />
+        </div>
+        <p class="text-xs font-black uppercase tracking-widest text-zinc-400">Carrito Vacío</p>
+        <p class="text-[11px] text-zinc-600 mt-1 max-w-[200px]">
+          Selecciona productos del menú para agregarlos a la orden.
+        </p>
       </div>
     } @else {
 
       @for (item of cart(); track item.tempId) {
-        <div class="group relative bg-[#121212] border border-white/10 rounded-xl p-2.5 transition-all hover:border-amber-500/30">
+        <div class="group bg-[#161618] border border-white/10 hover:border-white/20 rounded-xl p-3 sm:p-3.5 transition-all shadow-sm">
           
-          <!-- Fila superior: Nombre de producto y eliminar -->
-          <div class="flex justify-between items-start gap-3">
+          <!-- Fila 1: Nombre de producto y botón de eliminar -->
+          <div class="flex justify-between items-start gap-2.5">
             <div class="flex-1 min-w-0">
-              <h3 class="text-xs font-bold text-zinc-100 uppercase tracking-tight truncate" [title]="item.nombre_producto">
+              <h3 class="text-xs sm:text-sm font-bold text-zinc-100 uppercase tracking-tight line-clamp-1" [title]="item.nombre_producto">
                 {{ item.nombre_producto || (item.variante_id ? 'VAR #' + item.variante_id : 'PROD #' + item.producto_id) }}
               </h3>
               
-              <!-- Modificadores -->
+              <!-- Modificadores agregados -->
               @if (item.modificadores && item.modificadores.length > 0) {
-                <div class="flex flex-wrap gap-1 mt-1">
+                <div class="flex flex-wrap gap-1 mt-1.5">
                   @for (m of item.modificadores; track m.nombre_modificador) {
-                    <span class="text-[8px] text-emerald-400 bg-emerald-500/5 font-bold uppercase tracking-wider border border-emerald-500/10 px-1 rounded-sm">
+                    <span class="text-[9px] text-emerald-400 bg-emerald-500/10 font-bold uppercase tracking-wider border border-emerald-500/20 px-1.5 py-0.5 rounded">
                       +{{ m.nombre_modificador }}
+                      @if (m.precio_unitario && m.precio_unitario > 0) {
+                        (+${{ m.precio_unitario | number:'1.2-2' }})
+                      }
                     </span>
                   }
                 </div>
               }
             </div>
+
+            <!-- Botón Eliminar con touch target ergonómico -->
             <button 
               (click)="remove(item)" 
-              class="text-zinc-600 hover:text-red-500 transition-colors shrink-0 p-0.5"
-              title="Quitar"
+              class="w-8 h-8 -mr-1 -mt-1 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 active:scale-90 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+              title="Quitar ítem"
             >
-              <lucide-icon name="trash-2" class="w-3.5 h-3.5" />
+              <lucide-icon name="trash-2" class="w-4 h-4" />
             </button>
           </div>
 
-          <!-- Fila inferior: Cantidad, Nota y Precio -->
-          <div class="flex items-center justify-between gap-3 mt-2.5">
+          <!-- Fila 2: Stepper de cantidad y Precio -->
+          <div class="flex items-center justify-between gap-3 mt-2.5 pt-2.5 border-t border-white/5">
             <!-- Control de Cantidad -->
-            <div class="flex items-center bg-black/30 rounded-md border border-zinc-700/50 overflow-hidden shrink-0">
-              <button (click)="decrement(item)" class="w-7 h-7 flex items-center justify-center bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 transition-colors border-r border-zinc-700/50 active:scale-90 cursor-pointer">
-                <lucide-icon name="minus" class="w-3 h-3" />
+            <div class="flex items-center bg-[#1F1F23] rounded-lg border border-white/10 overflow-hidden shadow-inner shrink-0">
+              <button 
+                (click)="decrement(item)" 
+                class="w-8 h-8 flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/10 active:scale-90 transition cursor-pointer"
+                title="Disminuir"
+              >
+                <lucide-icon name="minus" class="w-3.5 h-3.5" />
               </button>
-              <span class="w-8 text-center text-[11px] font-bold text-white flex items-center justify-center bg-black/10">
+              <span class="w-9 text-center text-xs font-black text-white tabular-nums select-none">
                 {{ item.cantidad }}
               </span>
-              <button (click)="increment(item)" class="w-7 h-7 flex items-center justify-center bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 transition-colors border-l border-zinc-700/50 active:scale-90 cursor-pointer">
-                <lucide-icon name="plus" class="w-3 h-3" />
+              <button 
+                (click)="increment(item)" 
+                class="w-8 h-8 flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/10 active:scale-90 transition cursor-pointer"
+                title="Aumentar"
+              >
+                <lucide-icon name="plus" class="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <!-- Nota del producto integrada -->
-            <div class="relative flex-1 min-w-0">
-              <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                <lucide-icon name="message-square" class="w-3.5 h-3.5 text-zinc-500" />
-              </div>
-              <input type="text"
-                [value]="item.nota || ''"
-                (input)="updateItemNote(item, $event)"
-                placeholder="Instrucciones..."
-                class="w-full pl-7 pr-2 h-7 rounded bg-[#1C1C1F] border border-zinc-800 text-[10px] text-zinc-200 placeholder:text-zinc-500 outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/10 focus:bg-zinc-900/60 transition-all"
-              />
-            </div>
-
-            <!-- Precio (Alineado a la derecha) -->
-            <div class="shrink-0 flex items-center gap-1.5 text-right">
+            <!-- Precio (Alineado a la derecha en Gold #FFB300) -->
+            <div class="shrink-0 text-right">
               @if (originalLineTotal(item) > lineTotal(item)) {
-                <div class="flex flex-col items-end leading-none">
-                  <del class="text-[8px] text-zinc-600 font-medium">${{ originalLineTotal(item) | number:'1.2-2' }}</del>
-                  <span class="text-[12px] font-bold text-emerald-400 tracking-tight">
-                    ${{ lineTotal(item) | number:'1.2-2' }}
-                  </span>
-                </div>
-              } @else {
-                <span class="text-[13px] font-bold text-emerald-400 tracking-tight">
-                  ${{ lineTotal(item) | number:'1.2-2' }}
-                </span>
+                <del class="text-[10px] text-zinc-500 font-medium block tabular-nums leading-none mb-0.5">
+                  ${{ originalLineTotal(item) | number:'1.2-2' }}
+                </del>
               }
+              <span class="text-sm sm:text-base font-black text-[#FFB300] tracking-tight tabular-nums">
+                ${{ lineTotal(item) | number:'1.2-2' }}
+              </span>
             </div>
+          </div>
+
+          <!-- Fila 3: Instrucción/Nota específica del ítem -->
+          <div class="relative mt-2">
+            <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+              <lucide-icon name="message-square" class="w-3.5 h-3.5 text-zinc-500" />
+            </div>
+            <input 
+              type="text"
+              [value]="item.nota || ''"
+              (input)="updateItemNote(item, $event)"
+              placeholder="Instrucción (ej. sin cebolla, término medio)..."
+              class="w-full pl-8 pr-2.5 h-8 rounded-lg bg-[#111113] border border-white/5 hover:border-white/15 text-xs text-zinc-200 placeholder:text-zinc-600 outline-none focus:border-[#FFB300]/50 focus:ring-1 focus:ring-[#FFB300]/20 transition-all"
+            />
           </div>
 
         </div>
@@ -111,62 +128,110 @@
     }
   </div>
 
-  <!-- Formulario y Totales (Compacto) -->
-  <div class="shrink-0 bg-[#101012] border-t border-white/5 p-4 space-y-4">
+  <!-- Formulario de Checkout y Totales -->
+  <div class="shrink-0 bg-[#141416] border-t border-white/10 p-3 sm:p-4 space-y-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
     
-    <form [formGroup]="form" class="grid grid-cols-3 gap-2">
+    <form [formGroup]="form" class="space-y-2.5">
+      <!-- CLIENTE: Desactivado temporalmente en carrito (se asigna en detalle de orden) -->
+      <!--
       <div>
-        <label class="text-[8px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Cliente</label>
-        <select formControlName="cliente_id" class="w-full h-8 bg-[#1C1C1F] border border-zinc-800 rounded-md px-1.5 text-[10px] text-zinc-200 outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/10 transition-all cursor-pointer">
-          <option [value]="null" class="bg-zinc-950 text-zinc-300">CONSUMIDOR FINAL</option>
+        <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Cliente</label>
+        <select 
+          formControlName="cliente_id" 
+          class="w-full h-9 bg-[#1C1C20] border border-white/10 rounded-lg px-2.5 text-xs text-zinc-200 outline-none focus:border-[#FFB300]/50 focus:ring-1 focus:ring-[#FFB300]/20 transition cursor-pointer"
+        >
+          <option [value]="null" class="bg-zinc-900 text-zinc-300">CONSUMIDOR FINAL</option>
           @for (c of clients(); track c.id) {
-            <option [value]="c.id" class="bg-zinc-950 text-zinc-300">{{ c.nombre }}</option>
+            <option [value]="c.id" class="bg-zinc-900 text-zinc-300">{{ c.nombre }} {{ c.telefono ? '(' + c.telefono + ')' : '' }}</option>
           }
         </select>
       </div>
+      -->
 
+      <!-- MÉTODO DE PAGO: Desactivado temporalmente en carrito (defaults a Efectivo, editable en detalle de orden) -->
+      <!--
       <div>
-        <label class="text-[8px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Pago</label>
-        <select formControlName="metodo_pago_id" class="w-full h-8 bg-[#1C1C1F] border border-zinc-800 rounded-md px-1.5 text-[10px] text-zinc-200 outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/10 transition-all cursor-pointer">
+        <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Método de Pago</label>
+        <select 
+          formControlName="metodo_pago_id" 
+          class="w-full h-9 bg-[#1C1C20] border border-white/10 rounded-lg px-2.5 text-xs text-zinc-200 outline-none focus:border-[#FFB300]/50 focus:ring-1 focus:ring-[#FFB300]/20 transition cursor-pointer"
+        >
           @for (m of paymentMethods(); track m.id) {
-            <option [value]="m.id" class="bg-zinc-950 text-zinc-300">{{ m.nombre }}</option>
+            <option [value]="m.id" class="bg-zinc-900 text-zinc-300">{{ m.nombre }}</option>
           }
         </select>
       </div>
+      -->
 
+      <!-- Tipo de Servicio y Nota General (Configuración Operacional Rápida) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div>
+          <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Tipo de Servicio</label>
+          <select 
+            formControlName="tipo_servicio_id" 
+            class="w-full h-9 bg-[#1C1C20] border border-white/10 rounded-lg px-2.5 text-xs text-zinc-200 outline-none focus:border-[#FFB300]/50 focus:ring-1 focus:ring-[#FFB300]/20 transition cursor-pointer"
+          >
+            @for (s of serviceTypes(); track s.id) {
+              <option [value]="s.id" class="bg-zinc-900 text-zinc-300">{{ s.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Nota General</label>
+          <input 
+            type="text" 
+            formControlName="nota_general" 
+            placeholder="Indicaciones de la orden..." 
+            class="w-full h-9 bg-[#1C1C20] border border-white/10 rounded-lg px-2.5 text-xs text-zinc-200 placeholder:text-zinc-600 outline-none focus:border-[#FFB300]/50 focus:ring-1 focus:ring-[#FFB300]/20 transition"
+          />
+        </div>
+      </div>
+
+      <!-- PROPINA: Desactivada temporalmente en carrito (se gestiona al cobrar en detalle) -->
+      <!--
       <div>
-        <label class="text-[8px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Servicio</label>
-        <select formControlName="tipo_servicio_id" class="w-full h-8 bg-[#1C1C1F] border border-zinc-800 rounded-md px-1.5 text-[10px] text-zinc-200 outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/10 transition-all cursor-pointer">
-          @for (s of serviceTypes(); track s.id) {
-            <option [value]="s.id" class="bg-zinc-950 text-zinc-300">{{ s.nombre }}</option>
-          }
-        </select>
+        <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Propina ($)</label>
+        <input 
+          type="number" 
+          min="0" 
+          step="0.5" 
+          [value]="propina()" 
+          (input)="updateTip($event)" 
+          placeholder="0.00" 
+          class="w-full h-9 bg-[#1C1C20] border border-white/10 rounded-lg px-2 text-xs text-zinc-200 font-bold tabular-nums outline-none focus:border-[#FFB300]/50 focus:ring-1 focus:ring-[#FFB300]/20 transition" 
+        />
       </div>
-
-      <div class="col-span-3">
-        <label class="text-[8px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Nota General</label>
-        <input type="text" formControlName="nota_general" placeholder="Indicaciones generales del pedido..." class="w-full h-8 bg-[#1C1C1F] border border-zinc-800 rounded-md px-2 text-[10px] text-zinc-200 placeholder:text-zinc-500 outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/10 transition-all">
-      </div>
+      -->
     </form>
 
     <!-- Totales -->
-    <div class="pt-3 border-t border-white/5 space-y-2">
-      <div class="flex items-center justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-        <span>Subtotal</span>
-        <span class="font-extrabold text-zinc-400">${{ total() - (propina() || 0) | number:'1.2-2' }}</span>
-      </div>
+    <div class="pt-2 border-t border-white/10 space-y-1.5">
+      @if (propina() > 0) {
+        <div class="flex items-center justify-between text-xs text-zinc-400">
+          <span>Subtotal</span>
+          <span class="font-bold text-zinc-300 tabular-nums">${{ subtotal() | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex items-center justify-between text-xs text-zinc-400">
+          <span>Propina</span>
+          <span class="font-bold text-emerald-400 tabular-nums">+${{ propina() | number:'1.2-2' }}</span>
+        </div>
+      }
       
-      <div class="flex items-center justify-between bg-[#1C1C1F] border border-white/10 rounded-xl px-3 py-2.5 shadow-sm">
-        <span class="text-xs font-bold text-white uppercase tracking-wider">Total Orden</span>
-        <span class="text-2xl font-black text-emerald-400 tracking-tight">
+      <div class="flex items-center justify-between bg-[#1C1C20] border border-white/10 rounded-xl px-3.5 py-2.5 shadow-sm">
+        <div>
+          <span class="text-xs font-black text-white uppercase tracking-wider block">Total Orden</span>
+          <span class="text-[10px] text-zinc-500 font-medium">{{ cartTotalUnits() }} {{ cartTotalUnits() === 1 ? 'unidad' : 'unidades' }}</span>
+        </div>
+        <span class="text-2xl sm:text-3xl font-black text-[#FFB300] tracking-tight tabular-nums">
           ${{ total() | number:'1.2-2' }}
         </span>
       </div>
     </div>
 
-    <!-- Botón Confirmar -->
+    <!-- Botón Confirmar / Actualizar con Altura 52px y acento Nordikos -->
     <button
-      class="w-full h-14 rounded-xl bg-emerald-500 text-zinc-950 font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/10 hover:bg-emerald-400 active:scale-[0.98] disabled:bg-zinc-900 disabled:text-zinc-700 disabled:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer"
+      class="w-full h-13 rounded-xl bg-[#FFB300] text-zinc-950 font-black text-xs sm:text-sm uppercase tracking-widest shadow-lg shadow-[#FFB300]/10 hover:brightness-110 active:scale-[0.98] disabled:bg-zinc-800 disabled:text-zinc-600 disabled:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer select-none"
       [disabled]="creating() || cart().length === 0 || form.invalid"
       (click)="submit()"
     >
@@ -175,7 +240,7 @@
         <span>PROCESANDO...</span>
       } @else {
         <lucide-icon [name]="isEditingOrder() ? 'save' : 'check-circle'" class="w-4 h-4 text-zinc-950" />
-        <span>{{ isEditingOrder() ? 'ACTUALIZAR ORDEN' : 'CONFIRMAR ORDEN' }}</span>
+        <span>{{ isEditingOrder() ? 'ACTUALIZAR ORDEN #' + editingOrderId() : 'CONFIRMAR ORDEN' }}</span>
       }
     </button>
   </div>

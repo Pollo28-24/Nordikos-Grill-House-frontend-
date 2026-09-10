@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, input, output, computed } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
-import { OrderStatus, PaymentStatus } from '@core/models/order.model';
-import { OrderListItem } from '@core/models/order.model';
+import { OrderStatus, PaymentStatus, OrderListItem } from '@core/models/order.model';
+import { parseLocationMetadata } from '@core/utils/order-location.utils';
 
 @Component({
   selector: 'app-order-card',
@@ -22,12 +22,26 @@ export class OrderCard {
   updateStatus = output<OrderStatus>();
   updatePaymentStatus = output<PaymentStatus>();
 
+  serviceInfo = computed(() => {
+    const name = (this.order().tipo_servicio_nombre || '').toLowerCase();
+    if (name.includes('mesa')) {
+      return { type: 'mesa', icon: 'utensils', label: this.order().tipo_servicio_nombre || 'En mesa' };
+    }
+    if (name.includes('llevar')) {
+      return { type: 'llevar', icon: 'shopping-bag', label: this.order().tipo_servicio_nombre || 'Para llevar' };
+    }
+    if (name.includes('delivery') || name.includes('domicilio')) {
+      return { type: 'delivery', icon: 'bike', label: this.order().tipo_servicio_nombre || 'Delivery' };
+    }
+    return { type: 'other', icon: 'receipt', label: this.order().tipo_servicio_nombre || 'Servicio' };
+  });
+
   cardClasses = computed(() => {
     const o = this.order();
     const isActive = this.active();
     const urgency = this.urgencyLevel;
 
-    let classes = 'group rounded-xl border p-4 transition-all duration-300 hover:border-white/10 hover:shadow-lg relative cursor-pointer w-full box-border touch-manipulation shadow-md bg-gradient-to-b ';
+    let classes = 'group rounded-2xl border p-4 sm:p-5 transition-all duration-300 hover:border-white/15 hover:shadow-lg relative cursor-pointer w-full box-border touch-manipulation shadow-md bg-gradient-to-b ';
 
     if (o.estado_pedido === 'cancelado') {
       classes += 'opacity-55 from-[#161212] to-[#100d0d] ';
@@ -98,5 +112,9 @@ export class OrderCard {
     const current = this.currentTime();
     const start = new Date(o.fecha_creacion).getTime();
     return Math.floor((current - start) / 60000);
+  }
+
+  get cleanNote(): string | null {
+    return parseLocationMetadata(this.order().nota_general).cleanNote;
   }
 }

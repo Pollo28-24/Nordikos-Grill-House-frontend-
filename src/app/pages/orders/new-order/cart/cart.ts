@@ -46,19 +46,26 @@ export class NewOrderCart {
 
   cart = this.ordersService.cart;
   creating = this.ordersService.creating;
+  editingOrderId = this.ordersService.editingOrderId;
+  isEditingOrder = computed(() => this.ordersService.editingOrderId() !== null);
 
   propina = signal(0);
 
-  total = computed(() => {
+  cartTotalUnits = computed(() =>
+    this.cart().reduce((acc: number, item: any) => acc + (Number(item.cantidad) || 0), 0)
+  );
+
+  subtotal = computed(() => {
     const prods = this.productsService.products();
-    const itemsTotal = this.cart().reduce((acc: number, item: any) => {
+    return this.cart().reduce((acc: number, item: any) => {
       const unit = this.getUnitPrice(item, prods);
       const qty = Number(item.cantidad ?? 0);
       return acc + unit * qty;
     }, 0);
+  });
 
-    return itemsTotal + this.propina();
-
+  total = computed(() => {
+    return this.subtotal() + this.propina();
   });
 
   paymentMethods = signal<PaymentMethod[]>([]);
@@ -134,8 +141,11 @@ export class NewOrderCart {
       this.serviceTypes.set(servicios ?? []);
       this.clients.set(clientes ?? []);
 
+      // Por defecto asignar método de pago en Efectivo (id 1 o el primero disponible)
+      const cashMethod = (pagos ?? []).find((p: any) => p.nombre?.toLowerCase().includes('efectivo')) || pagos?.[0];
+
       this.form.patchValue({
-        metodo_pago_id: this.paymentMethods()[0]?.id ?? null,
+        metodo_pago_id: cashMethod?.id ?? 1,
         tipo_servicio_id: this.serviceTypes()[0]?.id ?? null,
       });
 
@@ -228,8 +238,6 @@ export class NewOrderCart {
     return unit * qty;
   }
 
-  isEditingOrder = computed(() => this.ordersService.editingOrderId() !== null);
-
   async submit() {
     if (this.form.invalid || this.cart().length === 0) {
       this.toastService.show('Formulario inválido o carrito vacío', 'error');
@@ -246,10 +254,10 @@ export class NewOrderCart {
   async createNewOrder() {
     const dto: OrderCreateDto = {
       cliente_id: this.form.value.cliente_id || null,
-      metodo_pago_id: Number(this.form.value.metodo_pago_id),
+      metodo_pago_id: Number(this.form.value.metodo_pago_id || 1),
       tipo_servicio_id: Number(this.form.value.tipo_servicio_id),
       turno_id: null,
-      propina: this.propina(),
+      propina: 0,
       nota_general: this.form.value.nota_general || null,
       items: this.cart(),
       client_request_id: crypto.randomUUID(),

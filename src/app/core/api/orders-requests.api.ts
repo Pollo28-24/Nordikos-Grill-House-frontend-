@@ -31,7 +31,7 @@ export class OrdersRequestsApi {
   }
 
   async createOrderRequest(request: {
-    cliente_id: number | string;
+    cliente_id?: number | string | null;
     total: number;
     nota_general: string | null;
     tipo_servicio_id: number | string;

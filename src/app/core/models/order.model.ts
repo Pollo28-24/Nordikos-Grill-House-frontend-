@@ -84,3 +84,23 @@ export interface OrderListItem {
   tipo_servicio_nombre: string;
   order_items: OrderItemSimple[];
 }
+
+export interface OrderRequestLocation {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+}
+
+export interface CheckoutDraft {
+  nombre: string;
+  telefono: string;
+  email?: string;
+  direccion: string;
+  referencias?: string;
+  tipo_servicio_id: number | null;
+  numero_mesa: string;
+  nota_general: string;
+  location?: OrderRequestLocation | null;
+  manualAddressMode?: boolean;
+}
+

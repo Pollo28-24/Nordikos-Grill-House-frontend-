@@ -11,19 +11,19 @@ export type PaymentStatusFilterValue = 'all' | 'pendiente' | 'pagado';
   imports: [CommonModule, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="space-y-4 animate-in fade-in slide-in-from-top-1 duration-300">
+    <div class="space-y-3.5 animate-in fade-in slide-in-from-top-1 duration-200">
       <!-- Fila 1: Pedidos -->
-      <div class="flex flex-col md:flex-row md:items-center gap-3">
-        <div class="flex items-center gap-1.5 shrink-0 text-zinc-500 text-[10px] font-bold uppercase tracking-wider md:w-24">
-          <lucide-icon name="list-ordered" class="w-3.5 h-3.5 text-zinc-500"></lucide-icon>
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+        <div class="flex items-center gap-1.5 shrink-0 text-zinc-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider sm:w-20">
+          <lucide-icon name="list-ordered" class="w-3.5 h-3.5 text-[#FFB300]"></lucide-icon>
           <span>Pedido</span>
         </div>
-        <div class="inline-flex p-1 gap-1 rounded-lg bg-black/40 border border-white/5 overflow-x-auto scrollbar-hide flex-nowrap max-w-full">
+        <div class="inline-flex p-1 gap-1 rounded-2xl bg-[#141414] border border-white/10 overflow-x-auto scrollbar-hide flex-nowrap max-w-full">
           @for (chip of orderChips; track chip.value) {
             <button 
               (click)="toggleStatus(chip.value)"
               [class]="getOrderChipClasses(chip.value)"
-              class="shrink-0 flex items-center gap-1.5 px-3.5 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 touch-manipulation whitespace-nowrap"
+              class="shrink-0 flex items-center gap-1.5 px-3.5 h-9 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 touch-manipulation whitespace-nowrap cursor-pointer"
             >
               <lucide-icon [name]="chip.icon" class="w-3.5 h-3.5"></lucide-icon>
               <span>{{ chip.label }}</span>
@@ -33,17 +33,17 @@ export type PaymentStatusFilterValue = 'all' | 'pendiente' | 'pagado';
       </div>
 
       <!-- Fila 2: Pagos -->
-      <div class="flex flex-col md:flex-row md:items-center gap-3">
-        <div class="flex items-center gap-1.5 shrink-0 text-zinc-500 text-[10px] font-bold uppercase tracking-wider md:w-24">
-          <lucide-icon name="dollar-sign" class="w-3.5 h-3.5 text-zinc-500"></lucide-icon>
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+        <div class="flex items-center gap-1.5 shrink-0 text-zinc-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider sm:w-20">
+          <lucide-icon name="dollar-sign" class="w-3.5 h-3.5 text-[#FFB300]"></lucide-icon>
           <span>Pago</span>
         </div>
-        <div class="inline-flex p-1 gap-1 rounded-lg bg-black/40 border border-white/5 overflow-x-auto scrollbar-hide flex-nowrap max-w-full">
+        <div class="inline-flex p-1 gap-1 rounded-2xl bg-[#141414] border border-white/10 overflow-x-auto scrollbar-hide flex-nowrap max-w-full">
           @for (chip of paymentChips; track chip.value) {
             <button 
               (click)="togglePayment(chip.value)"
               [class]="getPaymentChipClasses(chip.value)"
-              class="shrink-0 flex items-center gap-1.5 px-3.5 h-8 rounded-md text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 touch-manipulation whitespace-nowrap"
+              class="shrink-0 flex items-center gap-1.5 px-3.5 h-9 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 touch-manipulation whitespace-nowrap cursor-pointer"
             >
               <lucide-icon [name]="chip.icon" class="w-3.5 h-3.5"></lucide-icon>
               <span>{{ chip.label }}</span>

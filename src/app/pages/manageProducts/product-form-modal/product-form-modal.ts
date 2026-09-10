@@ -18,6 +18,13 @@ type PriceMode = 'simple' | 'variant';
   styles: `
     :host {
       display: block;
+      width: 100%;
+      height: 100%;
+    }
+    @media (min-width: 768px) {
+      :host {
+        height: auto;
+      }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

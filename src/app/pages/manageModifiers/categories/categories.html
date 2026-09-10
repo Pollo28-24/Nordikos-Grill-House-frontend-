@@ -1,31 +1,31 @@
 <app-navbar />
 
-<section class="min-h-screen bg-[#121212] text-[#F5F5F5] p-4 sm:p-8">
+<section class="min-h-screen bg-[#121212] text-[#F5F5F5] px-4 sm:px-6 pb-[max(6rem,env(safe-area-inset-bottom))] pt-6">
   <div class="max-w-5xl mx-auto">
     
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
       <div>
-        <h1 class="text-3xl font-black tracking-tight uppercase">Categorías de Modificadores</h1>
-        <p class="text-zinc-500 text-sm mt-1">Organiza los extras y cambios de tus productos</p>
+        <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">Categorías de Modificadores</h1>
+        <p class="text-zinc-400 text-xs sm:text-sm mt-1">Organiza y agrupa los extras, términos y cambios de tus productos</p>
       </div>
       <button 
         (click)="openForm()"
-        class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 transition active:scale-95 shadow-lg shadow-amber-500/20"
+        class="h-11 px-5 rounded-xl bg-[#FFB300] text-[#121212] font-bold text-xs uppercase tracking-wider hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-2 shadow-lg shadow-[#FFB300]/10 cursor-pointer select-none w-full sm:w-auto shrink-0"
       >
-        <lucide-icon name="plus" class="w-5 h-5" />
-        Nueva Categoría
+        <lucide-icon name="plus" class="w-4.5 h-4.5" />
+        <span>Nueva Categoría</span>
       </button>
     </div>
 
     <!-- Loading State -->
     @if (loading()) {
-      <div class="flex flex-col items-center justify-center py-20 gap-4">
-        <lucide-icon name="loader-2" class="w-10 h-10 text-amber-500 animate-spin" />
-        <p class="text-zinc-500 font-medium italic">Cargando categorías...</p>
+      <div class="flex flex-col items-center justify-center py-20 gap-3 text-zinc-400">
+        <lucide-icon name="loader-2" class="w-10 h-10 text-[#FFB300] animate-spin" />
+        <p class="text-sm font-medium">Cargando categorías...</p>
       </div>
     } @else {
-      <!-- List -->
+      <!-- List Grid -->
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         @for (c of categories(); track c.id) {
           <app-modifier-category-card
@@ -37,10 +37,12 @@
         }
       </div>
 
+      <!-- Empty State -->
       @if (categories().length === 0) {
-        <div class="text-center py-20 bg-[#181818] rounded-3xl border border-white/5 border-dashed">
-          <lucide-icon name="folder-x" class="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-          <p class="text-zinc-500 font-medium">No hay categorías registradas</p>
+        <div class="text-center py-16 sm:py-20 px-4 bg-[#1A1A1A] rounded-2xl border border-white/5 border-dashed">
+          <lucide-icon name="folder-x" class="w-12 h-12 text-zinc-600 mx-auto mb-3" />
+          <p class="text-base font-bold text-zinc-300">No hay categorías registradas</p>
+          <p class="text-xs text-zinc-500 mt-1">Crea la primera para empezar a organizar tus modificadores</p>
         </div>
       }
     }
@@ -50,69 +52,75 @@
 
 <!-- Modal Form -->
 @if (showForm()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-    <div class="bg-[#181818] w-full max-w-lg rounded-3xl border border-white/10 shadow-2xl animate-in zoom-in-95 duration-200">
-      <div class="p-6 border-b border-white/5 flex items-center justify-between">
-        <h2 class="text-xl font-bold text-white">{{ editingId() ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
-        <button (click)="showForm.set(false)" class="p-2 rounded-full hover:bg-white/5 text-zinc-400 transition">
-          <lucide-icon name="x" class="w-6 h-6" />
+  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+    <div class="bg-[#1A1A1A] w-full max-w-lg rounded-t-3xl sm:rounded-2xl border-t sm:border border-white/10 shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div class="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between">
+        <h2 class="text-lg sm:text-xl font-black text-white flex items-center gap-2.5">
+          <lucide-icon name="layers" class="w-5 h-5 text-[#FFB300]" />
+          <span>{{ editingId() ? 'Editar Categoría' : 'Nueva Categoría' }}</span>
+        </h2>
+        <button 
+          (click)="showForm.set(false)" 
+          class="w-10 h-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] text-zinc-400 hover:text-white flex items-center justify-center transition cursor-pointer"
+          title="Cerrar modal"
+        >
+          <lucide-icon name="x" class="w-5 h-5" />
         </button>
       </div>
 
-      <form [formGroup]="form" (ngSubmit)="save()" class="p-6 space-y-6">
-        <div class="space-y-2">
-          <label class="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-zinc-500">
+      <form [formGroup]="form" (ngSubmit)="save()" class="p-5 sm:p-6 space-y-4 sm:space-y-5">
+        <div class="space-y-1.5">
+          <label class="block text-[10px] sm:text-xs font-bold uppercase tracking-widest text-zinc-400">
             Nombre de la Categoría
-            <div class="relative group flex">
-              <lucide-icon name="help-circle" class="w-3.5 h-3.5 hover:text-amber-500 cursor-help transition-colors" />
-              <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2 bg-[#2A2A2A] text-xs text-[#F5F5F5] rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-xl z-50 pointer-events-none border border-[#3A3A3A] font-normal normal-case tracking-normal">
-                El nombre con el que agruparás los extras (Ej: "Salsas", "Términos de carne", "Extras").
-              </div>
-            </div>
           </label>
           <input 
             type="text" 
             formControlName="nombre"
             placeholder="Ej: Extras, Salsas, Términos..."
-            class="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/5 text-white outline-none focus:border-amber-500/50 transition"
+            class="w-full h-11 px-4 rounded-xl bg-[#121212] border border-white/10 text-white text-sm outline-none focus:border-[#FFB300] transition placeholder-zinc-600"
           >
+          <p class="text-[11px] text-zinc-500">
+            El nombre con el que agruparás los extras en el menú (Ej: "Salsas", "Términos").
+          </p>
         </div>
 
-        <div class="space-y-2">
-          <label class="text-xs font-black uppercase tracking-widest text-zinc-500">Descripción (Opcional)</label>
+        <div class="space-y-1.5">
+          <label class="block text-[10px] sm:text-xs font-bold uppercase tracking-widest text-zinc-400">
+            Descripción (Opcional)
+          </label>
           <textarea 
             formControlName="descripcion"
-            placeholder="Describe qué tipo de modificadores contiene..."
-            class="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/5 text-white outline-none focus:border-amber-500/50 transition h-24 resize-none"
+            placeholder="Describe qué tipo de modificadores contiene esta categoría..."
+            class="w-full px-4 py-3 rounded-xl bg-[#121212] border border-white/10 text-white text-sm outline-none focus:border-[#FFB300] transition h-20 resize-none placeholder-zinc-600"
           ></textarea>
         </div>
 
-        <div class="flex items-center justify-between p-4 rounded-2xl bg-black/20 border border-white/5">
+        <div class="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/10">
           <div>
             <p class="text-sm font-bold text-white">¿Visible en el POS?</p>
-            <p class="text-xs text-zinc-500">Activa o desactiva la categoría rápidamente</p>
+            <p class="text-xs text-zinc-400">Activa o desactiva la categoría en la toma de pedidos</p>
           </div>
           <input 
             type="checkbox" 
             formControlName="visible"
-            class="w-6 h-6 rounded-lg bg-zinc-800 border-zinc-700 text-amber-500 focus:ring-amber-500/20"
+            class="w-6 h-6 rounded-lg bg-[#121212] border-white/20 text-[#FFB300] focus:ring-[#FFB300]/20 cursor-pointer"
           >
         </div>
 
-        <div class="pt-4 flex gap-3">
+        <div class="pt-2 flex items-center gap-2.5">
           <button 
             type="button"
             (click)="showForm.set(false)"
-            class="flex-1 px-6 py-4 rounded-2xl bg-white/5 text-zinc-400 font-bold hover:bg-white/10 transition"
+            class="flex-1 h-11 px-5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] text-zinc-300 hover:text-white border border-white/10 font-bold text-xs uppercase tracking-wider transition active:scale-95 cursor-pointer"
           >
             Cancelar
           </button>
           <button 
             type="submit"
             [disabled]="form.invalid"
-            class="flex-2 px-6 py-4 rounded-2xl bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg shadow-amber-500/20"
+            class="flex-1 h-11 px-6 rounded-xl bg-[#FFB300] hover:brightness-110 active:bg-amber-400 text-[#121212] font-bold text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition shadow-md shadow-[#FFB300]/10 active:scale-95 cursor-pointer"
           >
-            {{ editingId() ? 'Actualizar Categoría' : 'Crear Categoría' }}
+            {{ editingId() ? 'Actualizar' : 'Crear' }}
           </button>
         </div>
       </form>

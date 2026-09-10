@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 
 import { CommonModule, DecimalPipe } from '@angular/common';
-import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterOutlet, RouterLinkActive, Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 
 import { OrdersService } from '@core/services/orders.service';
@@ -29,7 +29,7 @@ import { NewOrderCart } from './cart/cart';
   templateUrl: './new-order.html'
 })
 export class NewOrder {
-
+  private router = inject(Router);
   public ordersService = inject(OrdersService);
   public productsService = inject(ProductsService);
 
@@ -62,6 +62,18 @@ export class NewOrder {
     }
     return total;
   });
+
+  goBack() {
+    const editId = this.editingOrderId();
+    if (editId) {
+      this.ordersService.clearCart();
+      this.ordersService.editingOrderId.set(null);
+      this.router.navigate([`/orders/${editId}`]);
+    } else {
+      this.ordersService.clearCart();
+      this.router.navigate(['/orders']);
+    }
+  }
 
   navToBrowse() {
     // Logic for browse button

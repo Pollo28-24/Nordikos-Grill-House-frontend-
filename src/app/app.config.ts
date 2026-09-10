@@ -101,7 +101,8 @@ import {
   AlertCircle,
   BookOpen,
   LayoutDashboard,
-  Copy
+  Copy,
+  ArrowRight
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -210,7 +211,8 @@ providers: [
         AlertCircle,
         BookOpen,
         LayoutDashboard,
-        Copy
+        Copy,
+        ArrowRight
       }),
     ),
   ],

@@ -1,37 +1,47 @@
-<div class="h-screen bg-[#0D0D0E] text-zinc-100 flex flex-col overflow-hidden">
+<div class="h-screen bg-[#121212] text-[#F5F5F5] flex flex-col overflow-hidden">
 
-  <!-- TOP BAR (ULTRA COMPACT) -->
-  <header class="h-12 shrink-0 bg-[#101012] border-b border-white/5 px-4 flex items-center justify-between z-40">
-    <div class="flex items-center gap-3">
-      <a
-        routerLink="/orders"
-        class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 flex items-center justify-center transition"
+  <!-- TOP BAR (Ergonómica 56px con touch target 40-44px) -->
+  <header class="h-14 shrink-0 bg-[#1A1A1A] border-b border-white/10 px-4 sm:px-5 flex items-center justify-between z-40">
+    <div class="flex items-center gap-3 min-w-0">
+      <button
+        (click)="goBack()"
+        class="w-10 h-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] text-zinc-300 hover:text-white border border-white/10 flex items-center justify-center transition active:scale-95 shrink-0 cursor-pointer select-none"
         title="Volver"
       >
-        <lucide-icon name="arrow-left" class="w-4 h-4" />
-      </a>
-      <div class="h-4 w-px bg-white/10 mx-1"></div>
-      <h1 class="text-xs font-black tracking-widest text-white uppercase">
-        {{ editingOrderId() ? 'Editando #' + editingOrderId() : 'Nueva Orden' }}
-      </h1>
+        <lucide-icon name="arrow-left" class="w-4.5 h-4.5" />
+      </button>
+      
+      <div class="h-5 w-px bg-white/10 mx-0.5 shrink-0"></div>
+      
+      <div class="flex items-center gap-2 min-w-0">
+        <h1 class="text-xs sm:text-sm font-black tracking-wider text-white uppercase truncate">
+          {{ editingOrderId() ? 'Editando #' + editingOrderId() : 'Nueva Orden' }}
+        </h1>
+        @if (editingOrderId()) {
+          <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[#FFB300] text-[10px] font-black uppercase tracking-wider shrink-0">
+            Edición
+          </span>
+        }
+      </div>
     </div>
 
-    <div class="flex items-center gap-3">
-      <div class="hidden md:flex items-center gap-2 px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span class="text-[9px] text-emerald-500 font-black uppercase tracking-widest">POS Activo</span>
+    <div class="flex items-center gap-2.5 shrink-0">
+      <div class="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.6)]"></span>
+        <span class="text-[10px] sm:text-xs text-emerald-400 font-bold uppercase tracking-wider">POS Activo</span>
       </div>
 
-      <!-- MOBILE CART BUTTON -->
+      <!-- MOBILE CART BUTTON (44px Touch Target) -->
       <a 
         routerLink="/orders/new/cart"
-        class="lg:hidden relative flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-xl bg-amber-500 text-zinc-950 shadow-lg"
+        class="lg:hidden relative flex items-center gap-2 h-11 px-3.5 rounded-xl bg-[#FFB300] hover:brightness-110 active:scale-95 text-[#121212] font-black shadow-md shadow-[#FFB300]/10 transition select-none cursor-pointer"
+        title="Ver Carrito"
       >
-        <span class="text-xs font-black tracking-tighter">${{ cartTotal() | number:'1.2-2' }}</span>
-        <div class="h-3.5 w-px bg-black/20"></div>
-        <lucide-icon name="shopping-cart" class="w-4 h-4" />
+        <span class="text-xs sm:text-sm font-black tracking-tight tabular-nums">${{ cartTotal() | number:'1.2-2' }}</span>
+        <div class="h-4 w-px bg-black/20"></div>
+        <lucide-icon name="shopping-cart" class="w-4 h-4 text-[#121212]" />
         @if (cartCount() > 0) {
-          <span class="absolute -top-1 -right-1 min-w-4 h-4 px-1 flex items-center justify-center text-[9px] font-black rounded-full bg-white text-amber-600 border border-amber-500 shadow-sm">
+          <span class="min-w-5 h-5 px-1 flex items-center justify-center text-[10px] font-black rounded-full bg-[#121212] text-[#FFB300] border border-[#FFB300] shadow-sm tabular-nums">
             {{ cartCount() }}
           </span>
         }
@@ -44,23 +54,28 @@
     <!-- LEFT PANEL (PRODUCTS) -->
     <main class="flex-1 flex flex-col relative overflow-hidden">
       
-      <!-- MOBILE STEP TABS -->
-      <div class="lg:hidden flex bg-[#141416] border border-white/5 p-1 mx-4 mt-3 rounded-xl gap-1 shadow-inner shadow-black/40">
+      <!-- MOBILE STEP TABS (40px) -->
+      <div class="lg:hidden flex bg-[#1A1A1A] border border-white/10 p-1 mx-3 sm:mx-4 mt-2.5 mb-1 rounded-xl gap-1 shadow-sm shrink-0">
         <a
           routerLink="/orders/new/browse"
-          routerLinkActive="bg-amber-500 text-zinc-950 font-black shadow-lg shadow-amber-500/10 border-amber-400"
-          class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider text-zinc-450 hover:text-white transition-all border border-transparent"
+          routerLinkActive="bg-[#FFB300] text-[#121212] font-black shadow-sm"
+          class="flex-1 h-10 flex items-center justify-center gap-2 rounded-lg text-xs font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all select-none"
         >
-          <lucide-icon name="layout-grid" class="w-3.5 h-3.5" />
-          Menú
+          <lucide-icon name="layout-grid" class="w-4 h-4" />
+          <span>Menú</span>
         </a>
         <a
           routerLink="/orders/new/cart"
-          routerLinkActive="bg-amber-500 text-zinc-950 font-black shadow-lg shadow-amber-500/10 border-amber-400"
-          class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider text-zinc-450 hover:text-white transition-all border border-transparent"
+          routerLinkActive="bg-[#FFB300] text-[#121212] font-black shadow-sm"
+          class="flex-1 h-10 flex items-center justify-center gap-2 rounded-lg text-xs font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all select-none"
         >
-          <lucide-icon name="shopping-bag" class="w-3.5 h-3.5" />
-          Carrito
+          <lucide-icon name="shopping-bag" class="w-4 h-4" />
+          <span>Carrito</span>
+          @if (cartCount() > 0) {
+            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-black tabular-nums" [class]="'bg-[#121212] text-[#FFB300] border border-[#FFB300]'">
+              {{ cartCount() }}
+            </span>
+          }
         </a>
       </div>
 
@@ -71,7 +86,7 @@
     </main>
 
     <!-- RIGHT PANEL (CART - DESKTOP ONLY) -->
-    <aside class="hidden lg:flex w-104 shrink-0 border-l border-white/5 bg-[#101012] flex-col overflow-hidden">
+    <aside class="hidden lg:flex w-96 xl:w-104 shrink-0 border-l border-white/10 bg-[#1A1A1A] flex-col overflow-hidden">
       <app-new-order-cart class="h-full" />
     </aside>
 

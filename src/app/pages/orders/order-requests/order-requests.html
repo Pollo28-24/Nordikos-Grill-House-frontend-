@@ -177,10 +177,46 @@
                     </span>
                   }
                 </div>
-                @if (req.direccion_entrega) {
-                  <div class="flex items-start gap-2 text-[10px] text-zinc-450 border-t border-white/5 pt-1.5 mt-1.5">
-                    <lucide-icon name="map-pin" class="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5"></lucide-icon>
-                    <span class="leading-relaxed font-medium italic">{{ req.direccion_entrega }}</span>
+                @if (req.direccion_entrega || getRequestLocation(req)) {
+                  <div class="border-t border-white/5 pt-2 mt-2 space-y-2">
+                    <div class="flex items-start gap-2 text-[11px] text-zinc-300">
+                      <lucide-icon name="map-pin" class="w-3.5 h-3.5 text-orange-500 shrink-0 mt-0.5"></lucide-icon>
+                      <div class="flex-1 min-w-0">
+                        <span class="font-medium text-zinc-300 leading-snug">{{ req.direccion_entrega || 'Ubicación GPS registrada' }}</span>
+                        @if (getRequestLocation(req); as loc) {
+                          <span class="block text-[10px] text-emerald-400 font-medium mt-0.5">
+                            📍 GPS: {{ loc.latitude | number:'1.4-4' }}, {{ loc.longitude | number:'1.4-4' }}
+                          </span>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Botones de Acción de Ubicación -->
+                    <div class="flex items-center gap-2 pt-0.5">
+                      @if (getMapsUrl(req); as mapsUrl) {
+                        <a 
+                          [href]="mapsUrl" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 text-[10px] font-bold transition active:scale-95"
+                          title="Abrir ubicación en Google Maps"
+                        >
+                          <lucide-icon name="map-pin" class="w-3 h-3 text-blue-400"></lucide-icon>
+                          <span>Ver en Maps</span>
+                        </a>
+                      }
+
+                      <a 
+                        [href]="getDeliveryWhatsAppUrl(req)" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold transition active:scale-95"
+                        title="Compartir entrega por WhatsApp"
+                      >
+                        <lucide-icon name="share-2" class="w-3 h-3 text-emerald-400"></lucide-icon>
+                        <span>WhatsApp</span>
+                      </a>
+                    </div>
                   </div>
                 }
               </div>
@@ -207,11 +243,11 @@
                 }
               </div>
 
-              <!-- GENERAL NOTES -->
-              @if (req.nota_general) {
+              <!-- GENERAL NOTES (Limpia de metadatos GPS) -->
+              @if (getCleanNote(req.nota_general); as cleanNote) {
                 <div class="mb-4 bg-orange-500/5 border border-orange-500/10 rounded-lg p-2.5 pl-3">
                   <p class="text-[10px] font-bold text-orange-400 uppercase tracking-wider mb-0.5">Nota General:</p>
-                  <p class="text-[11px] text-orange-200 font-medium italic">"{{ req.nota_general }}"</p>
+                  <p class="text-[11px] text-orange-200 font-medium italic">"{{ cleanNote }}"</p>
                 </div>
               }
 
