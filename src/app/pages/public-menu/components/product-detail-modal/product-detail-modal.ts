@@ -22,6 +22,27 @@ export class ProductDetailModal {
   variantQuantities = signal<Record<string, number>>({});
   productNote = signal<string>('');
 
+  readonly quickChips: string[] = [
+    'Sin cebolla',
+    'Sin tomate',
+    'Sin chile',
+    'Sin verdura',
+    'Sin pepinillos',
+    'Sin mayonesa',
+    'Sin mostaza',
+    'Sin catsup',
+    'Sin Aderezo',
+    'Sin ningún tipo de aderezo',
+    'Bien cocida la carne',
+    'Sin queso amarillo',
+    'Sin queso manchego',
+    'Sin queso quesillo'
+  ];
+
+  totalVariantsSelected = computed(() => {
+    return Object.values(this.variantQuantities()).reduce((acc, q) => acc + q, 0);
+  });
+
   constructor() {
     effect(() => {
       const p = this.product();
@@ -36,7 +57,16 @@ export class ProductDetailModal {
         initialQuantities[p.variants[0].id] = 1;
       }
       this.variantQuantities.set(initialQuantities);
-    },);
+    });
+  }
+
+  addNoteChip(chip: string) {
+    const current = this.productNote().trim();
+    if (!current) {
+      this.productNote.set(chip);
+    } else if (!current.toLowerCase().includes(chip.toLowerCase())) {
+      this.productNote.set(`${current}, ${chip}`);
+    }
   }
 
   updateSelectedQuantity(amount: number) {

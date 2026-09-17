@@ -1,58 +1,60 @@
-<section class="py-24 md:py-32 bg-nord-dark text-nord-cream">
-  <div class="max-w-6xl mx-auto px-6">
+<section class="py-16 sm:py-20 md:py-28 lg:py-32 bg-nord-dark text-nord-cream">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
     
     <!-- Section Header -->
-    <div appRevealOnScroll class="reveal-init text-center max-w-2xl mx-auto mb-16 md:mb-24">
-      <span class="text-nord-gold uppercase tracking-widest text-xs font-semibold mb-3 block">Recomendaciones del Chef</span>
-      <h2 class="font-serif text-3xl md:text-5xl font-bold mb-6 text-nord-cream">
+    <div appRevealOnScroll class="reveal-init text-center max-w-2xl mx-auto mb-10 sm:mb-14 md:mb-20">
+      <span class="text-nord-gold uppercase tracking-widest text-[11px] sm:text-xs font-semibold mb-2 sm:mb-3 block">Recomendaciones del Chef</span>
+      <h2 class="font-serif text-2xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 text-nord-cream">
         Platillos <span class="text-nord-ember">Destacados</span>
       </h2>
-      <div class="h-0.5 w-16 bg-nord-ember mx-auto mb-6 rounded-full"></div>
-      <p class="font-sans text-sm md:text-base text-nord-cream-muted">
-        Los favoritos absolutos de nuestros clientes. Preparados al instante con fuego real y pasión artesanal.
+      <div class="h-0.5 w-14 sm:w-16 bg-nord-ember mx-auto mb-4 sm:mb-6 rounded-full"></div>
+      <p class="font-sans text-xs sm:text-sm md:text-base text-nord-cream-muted leading-relaxed">
+        Los favoritos absolutos de nuestros comensales. Preparados al instante con fuego real y pasión artesanal.
       </p>
     </div>
 
     <!-- Featured Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16">
       @for (dish of dishes(); track dish.name; let i = $index) {
-        <div 
+        <a 
+          routerLink="/menu"
           appRevealOnScroll
           [revealDelay]="i * 150"
-          class="reveal-scale bg-nord-charcoal border border-nord-gold/5 rounded-2xl overflow-hidden group hover:border-nord-gold/30 hover:shadow-2xl transition-all duration-500 flex flex-col justify-between"
+          class="reveal-scale bg-nord-charcoal border border-nord-gold/10 rounded-2xl overflow-hidden group hover:border-nord-gold/30 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between cursor-pointer"
         >
           <!-- Image -->
-          <div class="relative overflow-hidden aspect-video sm:aspect-square md:aspect-video">
+          <div class="relative overflow-hidden aspect-[16/10] sm:aspect-video w-full bg-nord-dark">
             <img 
               [src]="dish.image" 
               [alt]="dish.name" 
               class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              loading="lazy"
             />
             <!-- Dark gradient overlay on image -->
-            <div class="absolute inset-0 bg-gradient-to-t from-nord-charcoal via-transparent to-transparent opacity-80"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-nord-charcoal via-black/20 to-transparent opacity-85"></div>
             
             <!-- Price Tag overlay -->
-            <div class="absolute top-4 right-4 px-4 py-1.5 bg-nord-dark/85 backdrop-blur-md rounded-lg border border-nord-gold/20 text-nord-gold font-sans font-bold text-sm">
+            <div class="absolute top-3 right-3 sm:top-4 sm:right-4 px-3.5 py-1 bg-nord-dark/90 backdrop-blur-md rounded-lg border border-nord-gold/30 text-nord-gold font-sans font-bold text-xs sm:text-sm shadow-md">
               {{ dish.price }}
             </div>
           </div>
 
           <!-- Content -->
-          <div class="p-6 md:p-8 flex flex-col justify-between flex-grow">
+          <div class="p-5 sm:p-6 md:p-7 flex flex-col justify-between flex-grow">
             <div>
-              <h3 class="font-serif text-xl md:text-2xl font-bold text-nord-cream mb-3 group-hover:text-nord-gold transition-colors duration-300">
+              <h3 class="font-serif text-lg sm:text-xl md:text-2xl font-bold text-nord-cream mb-2 group-hover:text-nord-gold transition-colors duration-300">
                 {{ dish.name }}
               </h3>
-              <p class="font-sans text-sm text-nord-cream-muted leading-relaxed mb-6">
+              <p class="font-sans text-xs sm:text-sm text-nord-cream-muted leading-relaxed mb-5 line-clamp-3">
                 {{ dish.desc }}
               </p>
             </div>
             
-            <div class="flex items-center gap-2 text-xs font-semibold text-nord-ember tracking-wider group-hover:translate-x-1 transition-transform duration-300">
-              VER DETALLE DEL MENÚ <span>→</span>
+            <div class="min-h-[40px] flex items-center gap-2 text-xs font-semibold text-nord-ember tracking-wider group-hover:translate-x-1.5 transition-transform duration-300">
+              VER DETALLE EN EL MENÚ <span class="text-sm">→</span>
             </div>
           </div>
-        </div>
+        </a>
       }
     </div>
 
@@ -60,7 +62,7 @@
     <div appRevealOnScroll class="reveal-init text-center">
       <a 
         routerLink="/menu"
-        class="inline-block px-8 py-4 bg-nord-ember hover:bg-nord-ember/90 text-nord-cream font-sans font-semibold text-sm rounded-lg shadow-lg hover:shadow-nord-ember/25 transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer"
+        class="inline-flex items-center justify-center min-h-[48px] px-8 py-3.5 sm:py-4 bg-nord-ember hover:bg-nord-ember/90 text-nord-cream font-sans font-semibold text-sm rounded-xl shadow-lg hover:shadow-nord-ember/25 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 cursor-pointer"
       >
         🍽️ Ver Menú Completo
       </a>

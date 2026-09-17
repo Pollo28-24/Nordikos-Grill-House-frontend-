@@ -1,37 +1,37 @@
-<section class="py-24 md:py-32 bg-radial-dark text-nord-cream relative overflow-hidden">
+<section class="py-16 sm:py-20 md:py-28 lg:py-32 bg-radial-dark text-nord-cream relative overflow-hidden">
   <!-- Ambient glow background decoration -->
-  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-nord-ember/5 rounded-full filter blur-[120px] pointer-events-none"></div>
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-nord-ember/5 rounded-full filter blur-[100px] sm:blur-[120px] pointer-events-none"></div>
 
-  <div class="max-w-6xl mx-auto px-6 relative z-10">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
     <!-- Section Header -->
-    <div appRevealOnScroll class="reveal-init text-center max-w-2xl mx-auto mb-16 md:mb-24">
-      <span class="text-nord-gold uppercase tracking-widest text-xs font-semibold mb-3 block">El Ritual Del Fuego</span>
-      <h2 class="font-serif text-3xl md:text-5xl font-bold mb-6 text-nord-cream leading-tight">
+    <div appRevealOnScroll class="reveal-init text-center max-w-2xl mx-auto mb-10 sm:mb-14 md:mb-20">
+      <span class="text-nord-gold uppercase tracking-widest text-[11px] sm:text-xs font-semibold mb-2 sm:mb-3 block">El Ritual Del Fuego</span>
+      <h2 class="font-serif text-2xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 text-nord-cream leading-tight">
         La Experiencia <span class="text-nord-ember text-shadow-gold">Nórdicos</span>
       </h2>
-      <div class="h-0.5 w-16 bg-nord-ember mx-auto mb-6 rounded-full"></div>
-      <p class="font-sans text-sm md:text-base text-nord-cream-muted leading-relaxed">
+      <div class="h-0.5 w-14 sm:w-16 bg-nord-ember mx-auto mb-4 sm:mb-6 rounded-full"></div>
+      <p class="font-sans text-xs sm:text-sm md:text-base text-nord-cream-muted leading-relaxed">
         No vendemos solo comida; rendimos tributo al fuego. Creamos una atmósfera donde cada elemento está diseñado para deleitar tus sentidos.
       </p>
     </div>
 
     <!-- Grid Layout -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
       @for (pilar of pilares; track pilar.title; let i = $index) {
         <div 
           appRevealOnScroll
           [revealDelay]="i * 100"
-          class="reveal-scale glass-panel p-8 rounded-2xl flex flex-col sm:flex-row gap-6 items-start hover:border-nord-gold/30 hover:bg-nord-charcoal/50 transition-all duration-500"
+          class="reveal-scale glass-panel p-5 sm:p-7 md:p-8 rounded-2xl flex flex-row gap-4 sm:gap-6 items-start hover:border-nord-gold/30 hover:bg-nord-charcoal/50 transition-all duration-300 border border-nord-gold/10 bg-nord-charcoal/40"
         >
           <!-- Icon Circle -->
-          <div class="w-16 h-16 rounded-xl bg-nord-charcoal border border-nord-gold/10 flex items-center justify-center text-3xl shrink-0 shadow-lg">
+          <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl bg-nord-charcoal border border-nord-gold/15 flex items-center justify-center text-2xl sm:text-3xl shrink-0 shadow-md">
             {{ pilar.icon }}
           </div>
           
           <!-- Text -->
-          <div>
-            <h3 class="font-serif text-xl font-bold text-nord-gold mb-3">{{ pilar.title }}</h3>
-            <p class="font-sans text-sm text-nord-cream-muted leading-relaxed">
+          <div class="min-w-0 flex-1">
+            <h3 class="font-serif text-base sm:text-lg md:text-xl font-bold text-nord-gold mb-1.5 sm:mb-2">{{ pilar.title }}</h3>
+            <p class="font-sans text-xs sm:text-sm text-nord-cream-muted leading-relaxed">
               {{ pilar.desc }}
             </p>
           </div>

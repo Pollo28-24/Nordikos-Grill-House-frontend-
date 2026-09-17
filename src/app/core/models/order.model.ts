@@ -104,3 +104,46 @@ export interface CheckoutDraft {
   manualAddressMode?: boolean;
 }
 
+export interface CustomerProfile {
+  nombre: string;
+  telefono: string;
+  email?: string;
+  direccion?: string;
+  referencias?: string;
+  location?: OrderRequestLocation | null;
+}
+
+export interface ClientSubmittedOrderItem {
+  id: string;
+  product_id: string;
+  nombre: string;
+  precio: number;
+  cantidad: number;
+  imagen_url?: string;
+  variante?: {
+    id: string;
+    nombre: string;
+    precio: number;
+  };
+  nota?: string;
+}
+
+export interface ClientSubmittedOrder {
+  request_code: string;
+  created_at: string;
+  service_name: string;
+  service_code: 'mesa' | 'llevar' | 'delivery';
+  items: ClientSubmittedOrderItem[];
+  total: number;
+  cliente: {
+    nombre: string;
+    telefono: string;
+    email?: string;
+    direccion?: string;
+    referencias?: string;
+    numero_mesa?: string;
+  };
+  nota_general?: string | null;
+  location?: OrderRequestLocation | null;
+}
+

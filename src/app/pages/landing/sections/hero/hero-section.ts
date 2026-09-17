@@ -14,11 +14,15 @@ import { RouterLink } from '@angular/router';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeroSection {
-  scrollToAbout(event: Event) {
+  scrollToSection(id: string, event: Event) {
     event.preventDefault();
-    const element = document.getElementById('experiencia');
+    const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  }
+
+  scrollToAbout(event: Event) {
+    this.scrollToSection('experiencia', event);
   }
 }

@@ -12,8 +12,10 @@ import { CategoryNav } from './components/category-nav/category-nav';
 import { ProductCard } from './components/product-card/product-card';
 import { ProductDetailModal } from './components/product-detail-modal/product-detail-modal';
 import { PublicCheckout } from './components/public-checkout/public-checkout';
+import { PublicOrdersModal } from './components/public-orders-modal/public-orders-modal';
 import { Product } from '@core/models/product.model';
 import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
+import { ClientOrdersService } from '@core/services/client-orders.service';
 
 @Component({
   selector: 'app-public-menu',
@@ -28,6 +30,7 @@ import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
     ProductCard,
     ProductDetailModal,
     PublicCheckout,
+    PublicOrdersModal,
     CurrencyMxnPipe,
   ],
   templateUrl: './public-menu.html'
@@ -36,6 +39,7 @@ export class PublicMenu implements OnInit {
   public categoriesService = inject(CategoriesService);
   public productsService = inject(ProductsService);
   public cartService = inject(PublicCartService);
+  public clientOrdersService = inject(ClientOrdersService);
   private meta = inject(Meta);
   private title = inject(Title);
 
@@ -182,13 +186,27 @@ export class PublicMenu implements OnInit {
   // Modern Checkout component state
   isCheckoutOpen = signal(false);
 
+  // Historial de pedidos del cliente
+  isOrdersModalOpen = signal(false);
+
   openCheckout() {
     this.isCartOpen.set(false);
+    this.isOrdersModalOpen.set(false);
     this.isCheckoutOpen.set(true);
   }
 
   closeCheckout() {
     this.isCheckoutOpen.set(false);
+  }
+
+  openOrdersModal() {
+    this.isCartOpen.set(false);
+    this.isCheckoutOpen.set(false);
+    this.isOrdersModalOpen.set(true);
+  }
+
+  closeOrdersModal() {
+    this.isOrdersModalOpen.set(false);
   }
 
   onOrderSubmitted(_event: { request_code: string }) {

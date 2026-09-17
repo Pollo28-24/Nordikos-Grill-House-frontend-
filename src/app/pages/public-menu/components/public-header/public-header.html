@@ -38,18 +38,8 @@
         >
       </div>
 
-      <!-- USER & CART TOGGLES -->
+      <!-- CART TOGGLE -->
       <div class="flex items-center gap-2">
-        <!-- USER TOGGLE -->
-        <button 
-          (click)="onUserClick.emit()"
-          class="relative p-2.5 bg-white border border-[#E2D7B7]/80 rounded-full shadow-sm hover:shadow-md hover:bg-gray-50 transition-all active:scale-95 shrink-0 text-gray-700"
-          title="Editar datos de entrega"
-        >
-          <lucide-icon name="user" class="h-5 w-5"></lucide-icon>
-        </button>
-        
-        <!-- CART TOGGLE -->
         <button 
           (click)="onCartClick.emit()"
           class="relative p-2.5 bg-white border border-[#E2D7B7]/80 rounded-full shadow-sm hover:shadow-md hover:bg-gray-50 transition-all active:scale-95 shrink-0 text-gray-700"

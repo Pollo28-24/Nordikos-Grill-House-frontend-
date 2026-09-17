@@ -1,31 +1,31 @@
-<section class="py-20 md:py-28 bg-nord-dark text-nord-cream border-t border-nord-gold/5">
-  <div class="max-w-6xl mx-auto px-6">
+<section class="py-16 sm:py-20 md:py-28 bg-nord-dark text-nord-cream border-t border-nord-gold/10">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
     
     <!-- Header -->
-    <div appRevealOnScroll class="reveal-init text-center max-w-2xl mx-auto mb-16">
-      <span class="text-nord-gold uppercase tracking-widest text-xs font-semibold mb-3 block">Nuestros Cimientos</span>
-      <h2 class="font-serif text-2xl md:text-4xl font-bold mb-4 text-nord-cream">Los Valores que Nos Guían</h2>
+    <div appRevealOnScroll class="reveal-init text-center max-w-2xl mx-auto mb-10 sm:mb-14 md:mb-16">
+      <span class="text-nord-gold uppercase tracking-widest text-[11px] sm:text-xs font-semibold mb-2 sm:mb-3 block">Nuestros Cimientos</span>
+      <h2 class="font-serif text-2xl sm:text-3xl md:text-4xl font-bold mb-4 text-nord-cream">Los Valores que Nos Guían</h2>
       <div class="h-0.5 w-12 bg-nord-ember mx-auto rounded-full"></div>
     </div>
 
-    <!-- Values Grid (4 Columns) -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+    <!-- Values Grid (2 Columns on mobile, 4 on desktop) -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 md:gap-8">
       @for (val of valores; track val.title; let i = $index) {
         <div 
           appRevealOnScroll
-          [revealDelay]="i * 100"
-          class="reveal-scale glass-panel p-8 rounded-xl text-center group hover:bg-nord-charcoal/50 hover:border-nord-gold/20 transition-all duration-300 flex flex-col items-center justify-start h-full"
+          [revealDelay]="i * 80"
+          class="reveal-scale glass-panel p-4 sm:p-6 md:p-8 rounded-xl text-center group hover:bg-nord-charcoal/60 hover:border-nord-gold/30 transition-all duration-300 flex flex-col items-center justify-start h-full border border-nord-gold/10"
         >
-          <!-- Giant Icon -->
-          <div class="text-5xl md:text-6xl mb-6 transform group-hover:scale-110 transition-transform duration-300 select-none">
+          <!-- Icon -->
+          <div class="text-4xl sm:text-5xl md:text-6xl mb-3 sm:mb-6 transform group-hover:scale-110 transition-transform duration-300 select-none">
             {{ val.icon }}
           </div>
           <!-- Title -->
-          <h4 class="font-serif text-lg md:text-xl font-bold mb-3 text-nord-gold group-hover:text-nord-ember transition-colors duration-300">
+          <h4 class="font-serif text-sm sm:text-lg md:text-xl font-bold mb-1.5 sm:mb-3 text-nord-gold group-hover:text-nord-ember transition-colors duration-300">
             {{ val.title }}
           </h4>
           <!-- Description -->
-          <p class="font-sans text-xs md:text-sm text-nord-cream-muted leading-relaxed">
+          <p class="font-sans text-[11px] sm:text-xs md:text-sm text-nord-cream-muted leading-relaxed">
             {{ val.desc }}
           </p>
         </div>

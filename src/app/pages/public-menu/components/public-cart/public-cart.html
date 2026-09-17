@@ -1,52 +1,94 @@
 <div class="fixed inset-0 z-50 flex justify-end">
   
-  <!-- Backdrop -->
+  <!-- Backdrop con fade suave -->
   <div 
-    class="absolute inset-0 cart-backdrop"
+    class="absolute inset-0 cart-backdrop transition-opacity duration-300"
     (click)="close.emit()"
   ></div>
 
-  <!-- Content -->
-  <div class="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+  <!-- Drawer Container (Full width en mobile <640px, max-w-md en desktop) -->
+  <div class="relative w-full sm:max-w-md bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 select-none">
     
     <!-- Header -->
-    <div class="p-5 border-b border-gray-100 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <lucide-icon name="shopping-cart" class="h-5 w-5 text-orange-500"></lucide-icon>
-        <h2 class="text-lg font-bold">Tu Carrito</h2>
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-500">
+          <lucide-icon name="shopping-cart" class="h-5 w-5"></lucide-icon>
+        </div>
+        <div class="flex items-center gap-2">
+          <h2 class="text-base sm:text-lg font-black text-gray-900 tracking-tight">Tu Carrito</h2>
+          @if (items().length > 0) {
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-orange-100 text-orange-700">
+              {{ items().length }} {{ items().length === 1 ? 'ítem' : 'ítems' }}
+            </span>
+          }
+        </div>
       </div>
-      <button (click)="close.emit()" class="p-2 hover:bg-gray-100 rounded-full transition">
-        <lucide-icon name="x" class="h-6 w-6 text-gray-500"></lucide-icon>
+
+      <button 
+        (click)="close.emit()" 
+        class="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-100 active:scale-90 transition text-gray-400 hover:text-gray-700 cursor-pointer touch-manipulation"
+        title="Cerrar carrito"
+        aria-label="Cerrar carrito"
+      >
+        <lucide-icon name="x" class="h-5 w-5"></lucide-icon>
       </button>
     </div>
 
-    <!-- Info Message -->
-    <div class="px-5 py-3 bg-orange-50/50 border-b border-orange-100 flex items-start gap-3">
-      <lucide-icon name="info" class="h-4 w-4 text-orange-500 mt-0.5 shrink-0"></lucide-icon>
-      <p class="text-[11px] leading-relaxed text-orange-800 font-semibold">
-        Por favor, revisá tu pedido y asegurate de que todos los productos y especificaciones estén correctos antes de enviarlo. ¡Muchas gracias!
+    <!-- Banner informativo -->
+    <div class="px-5 py-2.5 bg-amber-50/70 border-b border-amber-100/80 flex items-start gap-2.5 shrink-0">
+      <lucide-icon name="info" class="h-4 w-4 text-amber-600 mt-0.5 shrink-0"></lucide-icon>
+      <p class="text-[11px] leading-relaxed text-amber-900 font-medium">
+        Revisá tu pedido y notas especiales antes de confirmar. ¡Lo preparamos al instante!
       </p>
     </div>
 
-    <!-- Items -->
-    <div class="grow overflow-y-auto p-5 space-y-4">
+    <!-- Acceso a Mis Pedidos Enviados (si existen órdenes previas) -->
+    @if (clientOrdersService.hasOrders()) {
+      <div class="px-5 py-2.5 bg-[#F8F5EE] border-b border-[#E2D7B7]/60 shrink-0">
+        <button 
+          (click)="viewOrders.emit()" 
+          class="w-full flex items-center justify-between px-3 py-2 bg-white hover:bg-orange-50/80 text-orange-950 border border-[#E2D7B7] rounded-xl text-xs font-bold transition active:scale-98 shadow-xs cursor-pointer touch-manipulation"
+        >
+          <div class="flex items-center gap-2">
+            <lucide-icon name="receipt" class="w-4 h-4 text-orange-600"></lucide-icon>
+            <span>Mis Pedidos Enviados</span>
+            <span class="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-full text-[10px] font-black">
+              {{ clientOrdersService.ordersCount() }}
+            </span>
+          </div>
+          <span class="text-[11px] text-orange-600 font-semibold flex items-center gap-0.5">
+            Ver detalle <lucide-icon name="chevron-right" class="w-3.5 h-3.5"></lucide-icon>
+          </span>
+        </button>
+      </div>
+    }
+
+    <!-- Lista de Items -->
+    <div class="grow overflow-y-auto p-4 sm:p-5 space-y-3.5 custom-scrollbar">
       @if (items().length === 0) {
-        <div class="h-full flex flex-col items-center justify-center text-center opacity-50">
-          <lucide-icon name="shopping-bag" class="h-16 w-16 mb-4"></lucide-icon>
-          <p class="text-gray-500">Tu carrito está vacío</p>
+        <div class="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6">
+          <div class="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-300 mb-3">
+            <lucide-icon name="shopping-bag" class="h-8 w-8"></lucide-icon>
+          </div>
+          <h3 class="text-sm font-bold text-gray-700 mb-1">Tu carrito está vacío</h3>
+          <p class="text-xs text-gray-400 max-w-xs mb-5 leading-relaxed">
+            Agregá tus platillos favoritos del menú para comenzar tu orden.
+          </p>
           <button 
             (click)="close.emit()"
-            class="mt-4 text-orange-500 font-semibold"
+            class="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition cursor-pointer touch-manipulation"
           >
-            Seguir explorando
+            Explorar el Menú
           </button>
         </div>
       } @else {
         @for (item of items(); track item.id) {
-          <div class="flex gap-4 bg-gray-50 p-3 rounded-2xl border border-gray-100">
-            <div class="h-20 w-20 rounded-xl overflow-hidden bg-white shrink-0">
+          <div class="flex gap-3.5 bg-[#F8F5EE]/60 p-3 sm:p-3.5 rounded-2xl border border-[#E2D7B7]/50 shadow-xs hover:border-orange-500/30 transition-colors">
+            <!-- Thumbnail -->
+            <div class="h-20 w-20 rounded-xl overflow-hidden bg-white shrink-0 border border-black/5 relative">
               @if (item.imagen_url) {
-                <img [src]="item.imagen_url" class="w-full h-full object-cover">
+                <img [src]="item.imagen_url" [alt]="item.nombre" class="w-full h-full object-cover">
               } @else {
                 <div class="w-full h-full flex items-center justify-center text-gray-300">
                   <lucide-icon name="image" class="h-6 w-6"></lucide-icon>
@@ -54,89 +96,109 @@
               }
             </div>
             
-            <div class="grow flex flex-col justify-between py-1">
+            <!-- Item Details & Controls -->
+            <div class="grow flex flex-col justify-between min-w-0">
               <div>
-                <h4 class="text-sm font-bold text-gray-900">{{ item.nombre }}</h4>
+                <div class="flex items-start justify-between gap-1">
+                  <h4 class="text-xs sm:text-sm font-bold text-gray-900 truncate leading-snug">{{ item.nombre }}</h4>
+                  <button 
+                    (click)="remove.emit(item.id)"
+                    class="w-7 h-7 -mr-1 -mt-1 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 active:scale-90 transition shrink-0 cursor-pointer"
+                    title="Eliminar producto"
+                  >
+                    <lucide-icon name="trash-2" class="h-3.5 w-3.5"></lucide-icon>
+                  </button>
+                </div>
+
                 @if (item.variante) {
-                  <p class="text-[10px] text-gray-400 font-medium italic mb-1 uppercase tracking-wide">
+                  <span class="inline-block text-[10px] text-orange-700 bg-orange-100/70 px-2 py-0.5 rounded-md font-bold uppercase tracking-wide mt-0.5 mb-1">
                     {{ item.variante.nombre }}
-                  </p>
-                }
-                @if (item.descuento && item.descuento > 0 && item.precio_original) {
-                  <div class="flex items-center gap-1.5 mt-1">
-                    <del class="text-[10px] text-gray-400 font-medium">{{ item.precio_original | currencyMxn }}</del>
-                    <span class="text-xs text-orange-600 font-bold">{{ item.precio | currencyMxn }}</span>
-                  </div>
-                } @else {
-                  <p class="text-xs text-orange-600 font-semibold mt-1">{{ item.precio | currencyMxn }}</p>
+                  </span>
                 }
 
-                <!-- Note Input -->
-                <div class="mt-2">
-                  <textarea
-                    [(ngModel)]="item.nota"
+                <!-- Price -->
+                <div class="flex items-baseline gap-1.5 mt-0.5">
+                  @if (item.descuento && item.descuento > 0 && item.precio_original) {
+                    <span class="text-xs font-black text-orange-600 tabular-nums">{{ item.precio | currencyMxn }}</span>
+                    <del class="text-[10px] text-gray-400 font-medium tabular-nums">{{ item.precio_original | currencyMxn }}</del>
+                  } @else {
+                    <span class="text-xs font-black text-gray-900 tabular-nums">{{ item.precio | currencyMxn }}</span>
+                  }
+                </div>
+
+                <!-- Note Input (Compacto y elegante) -->
+                <div class="relative mt-2">
+                  <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400">
+                    <lucide-icon name="message-square" class="h-3 w-3"></lucide-icon>
+                  </div>
+                  <input
+                    type="text"
+                    [ngModel]="item.nota"
                     (ngModelChange)="notaChange.emit({ id: item.id, nota: $event })"
-                    placeholder="Agregar nota (ej: sin cebolla)..."
-                    class="w-full text-xs p-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 resize-none"
-                    rows="2"
-                  ></textarea>
+                    placeholder="Instrucción (ej: sin cebolla)..."
+                    class="w-full text-xs pl-7 pr-2.5 h-8 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-gray-800 placeholder-gray-400 transition"
+                  />
                 </div>
               </div>
               
-              <div class="flex items-center justify-between mt-2">
-                <!-- Qty Controls -->
-                <div class="flex items-center bg-white rounded-lg border border-gray-200 p-1">
+              <!-- Cantidad Stepper -->
+              <div class="flex items-center justify-between mt-2.5 pt-2 border-t border-black/5">
+                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Cantidad</span>
+
+                <div class="flex items-center bg-white rounded-lg border border-gray-200 shadow-inner overflow-hidden">
                   <button 
                     (click)="quantityChange.emit({ id: item.id, delta: -1 })"
-                    class="p-1 hover:bg-gray-50 rounded"
+                    class="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:scale-90 transition cursor-pointer touch-manipulation"
+                    title="Disminuir"
                   >
                     <lucide-icon name="minus" class="h-3 w-3"></lucide-icon>
                   </button>
-                  <span class="w-8 text-center text-xs font-bold">{{ item.cantidad }}</span>
+                  <span class="w-8 text-center text-xs font-black text-gray-900 tabular-nums select-none">{{ item.cantidad }}</span>
                   <button 
                     (click)="quantityChange.emit({ id: item.id, delta: 1 })"
-                    class="p-1 hover:bg-gray-50 rounded"
+                    class="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:scale-90 transition cursor-pointer touch-manipulation"
+                    title="Aumentar"
                   >
                     <lucide-icon name="plus" class="h-3 w-3"></lucide-icon>
                   </button>
                 </div>
-
-                <button 
-                  (click)="remove.emit(item.id)"
-                  class="text-red-500 p-2 hover:bg-red-50 rounded-full transition"
-                >
-                  <lucide-icon name="trash-2" class="h-4 w-4"></lucide-icon>
-                </button>
               </div>
+
             </div>
           </div>
         }
       }
     </div>
 
-    <!-- Footer -->
+    <!-- Footer con Safe Area para Android -->
     @if (items().length > 0) {
-      <div class="p-6 border-t border-gray-100 space-y-4">
-        <div class="flex items-center justify-between text-gray-500 text-sm">
-          <span>Subtotal</span>
-          <span>{{ total() | currencyMxn }}</span>
+      <div class="p-5 sm:p-6 border-t border-gray-100 bg-white space-y-3.5 shrink-0 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+        <div class="flex items-center justify-between text-xs text-gray-500 font-medium">
+          <span>Subtotal estimado</span>
+          <span class="tabular-nums font-semibold">{{ total() | currencyMxn }}</span>
         </div>
-        <div class="flex items-center justify-between text-lg font-bold">
-          <span>Total</span>
-          <span class="text-orange-600">{{ total() | currencyMxn }}</span>
+        
+        <div class="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
+          <div>
+            <span class="text-xs font-black text-gray-900 uppercase tracking-wider block">Total</span>
+            <span class="text-[10px] text-gray-400 font-medium">Impuestos incluidos</span>
+          </div>
+          <span class="text-lg sm:text-xl font-black text-orange-600 tabular-nums tracking-tight">{{ total() | currencyMxn }}</span>
         </div>
 
+        <!-- Botón Principal -->
         <button 
           (click)="checkout.emit()"
-          class="w-full h-12 rounded-xl bg-orange-500 text-white font-bold text-sm shadow-lg shadow-orange-500/20 hover:bg-orange-600 active:scale-95 transition flex items-center justify-center gap-2 mt-2"
+          class="w-full h-12 sm:h-13 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black text-xs sm:text-sm tracking-wide shadow-lg shadow-orange-500/20 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
         >
           <lucide-icon name="send" class="h-4 w-4"></lucide-icon>
-          <span>Enviar Orden al Mesero</span>
+          <span>Confirmar y Enviar al Mesero</span>
         </button>
         
+        <!-- Botón Vaciar -->
         <button 
           (click)="clear.emit()"
-          class="w-full py-2 text-gray-400 text-xs font-medium hover:text-red-500 transition"
+          class="w-full py-1 text-gray-400 text-[11px] font-semibold hover:text-red-500 transition cursor-pointer touch-manipulation text-center"
         >
           Vaciar carrito
         </button>

@@ -7,8 +7,9 @@ import { OrdersRequestsApi } from '@core/api/orders-requests.api';
 import { ToastService } from '@core/services/toast.service';
 import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
 import { CartItem } from '@core/services/public-cart.service';
-import { OrderRequestLocation, CheckoutDraft } from '@core/models/order.model';
+import { OrderRequestLocation, CheckoutDraft, ClientSubmittedOrder, CustomerProfile } from '@core/models/order.model';
 import { getGoogleMapsUrl } from '@core/utils/order-location.utils';
+import { ClientOrdersService } from '@core/services/client-orders.service';
 
 export type CheckoutStep = 'service' | 'data' | 'payment' | 'success';
 export type ServiceCode = 'mesa' | 'llevar' | 'delivery';
@@ -26,6 +27,7 @@ export class PublicCheckout implements OnInit {
   private requestsApi = inject(OrdersRequestsApi);
   private toastService = inject(ToastService);
   private platformId = inject(PLATFORM_ID);
+  readonly clientOrdersService = inject(ClientOrdersService);
 
   private readonly DRAFT_STORAGE_KEY = 'nordikos_checkout_draft';
 
@@ -36,11 +38,13 @@ export class PublicCheckout implements OnInit {
 
   close = output<void>();
   orderSubmitted = output<{ request_code: string }>();
+  openOrdersHistory = output<void>();
 
   // State Signals
   step = signal<CheckoutStep>('service');
   serviceTypes = signal<{ id: number; nombre: string }[]>([]);
   selectedServiceId = signal<number | null>(null);
+  currentSubmittedOrder = signal<ClientSubmittedOrder | null>(null);
   
   // Geolocation state
   geoStatus = signal<'idle' | 'requesting' | 'success' | 'denied' | 'error'>('idle');
@@ -120,12 +124,28 @@ export class PublicCheckout implements OnInit {
     try {
       const saved = localStorage.getItem(this.DRAFT_STORAGE_KEY);
       if (!saved) {
-        // Si no hay borrador, pre-seleccionamos el primer servicio por defecto
+        // Pre-seleccionamos el primer servicio por defecto
         const first = this.serviceTypes()[0];
         if (first) {
           this.selectedServiceId.set(first.id);
           this.checkoutForm.patchValue({ tipo_servicio_id: first.id }, { emitEvent: false });
           this.applyValidators(this.serviceCode());
+        }
+
+        // Si no hay borrador activo, precargamos el perfil guardado del cliente
+        const profile = this.clientOrdersService.getCustomerProfile();
+        if (profile) {
+          this.checkoutForm.patchValue({
+            nombre: profile.nombre || '',
+            telefono: profile.telefono || '',
+            email: profile.email || '',
+            direccion: profile.direccion || '',
+            referencias: profile.referencias || '',
+          }, { emitEvent: false });
+          if (profile.location) {
+            this.capturedLocation.set(profile.location);
+            this.geoStatus.set('success');
+          }
         }
         return;
       }
@@ -176,6 +196,18 @@ export class PublicCheckout implements OnInit {
         manualAddressMode: this.manualAddressMode(),
       };
       localStorage.setItem(this.DRAFT_STORAGE_KEY, JSON.stringify(draft));
+
+      // Persistir perfil de cliente de manera permanente
+      if (val.nombre.trim() || val.telefono.trim() || val.direccion.trim()) {
+        this.clientOrdersService.saveCustomerProfile({
+          nombre: val.nombre.trim(),
+          telefono: val.telefono.trim(),
+          email: val.email.trim(),
+          direccion: val.direccion.trim(),
+          referencias: val.referencias.trim(),
+          location: this.capturedLocation(),
+        });
+      }
     } catch (e) {
       console.warn('Error guardando borrador del checkout:', e);
     }
@@ -339,6 +371,49 @@ export class PublicCheckout implements OnInit {
       if (res.success && res.request_code) {
         this.submittedTotal.set(this.total());
         this.successRequestCode.set(res.request_code);
+
+        const submittedOrder: ClientSubmittedOrder = {
+          request_code: res.request_code,
+          created_at: new Date().toISOString(),
+          service_name: this.selectedService()?.nombre || 'Pedido',
+          service_code: code,
+          items: this.items().map(i => ({
+            id: i.id,
+            product_id: i.product_id,
+            nombre: i.nombre,
+            precio: i.precio,
+            cantidad: i.cantidad,
+            imagen_url: i.imagen_url,
+            variante: i.variante,
+            nota: i.nota,
+          })),
+          total: this.total(),
+          cliente: {
+            nombre: val.nombre.trim() || (code === 'mesa' ? 'Mesa ' + val.numero_mesa.trim() : 'Cliente'),
+            telefono: val.telefono.trim(),
+            email: val.email?.trim() || undefined,
+            direccion: code === 'delivery' ? val.direccion.trim() : undefined,
+            referencias: code === 'delivery' ? val.referencias.trim() : undefined,
+            numero_mesa: code === 'mesa' ? val.numero_mesa.trim() : undefined,
+          },
+          nota_general: val.nota_general.trim() || null,
+          location: code === 'delivery' ? this.capturedLocation() : null,
+        };
+
+        // Guardar orden en historial del cliente
+        this.clientOrdersService.addOrder(submittedOrder);
+
+        // Guardar permanentemente datos del cliente para que no tenga que rellenar el formulario otra vez
+        this.clientOrdersService.saveCustomerProfile({
+          nombre: val.nombre.trim(),
+          telefono: val.telefono.trim(),
+          email: val.email.trim(),
+          direccion: val.direccion.trim(),
+          referencias: val.referencias.trim(),
+          location: this.capturedLocation(),
+        });
+
+        this.currentSubmittedOrder.set(submittedOrder);
         this.clearDraft();
         this.orderSubmitted.emit({ request_code: res.request_code });
         this.step.set('success');
@@ -352,26 +427,39 @@ export class PublicCheckout implements OnInit {
     }
   }
 
-  // Reiniciar estado para permitir un nuevo pedido
+  // Reiniciar estado para permitir un nuevo pedido sin borrar los datos del cliente
   resetCheckout() {
     this.step.set('service');
     this.successRequestCode.set('');
     this.submittedTotal.set(0);
     this.isSubmitting.set(false);
-    this.geoStatus.set('idle');
-    this.capturedLocation.set(null);
-    this.manualAddressMode.set(false);
+    this.currentSubmittedOrder.set(null);
+
+    // Recuperamos los datos del cliente guardados para mantenerlos listos
+    const profile = this.clientOrdersService.getCustomerProfile();
+    const currentVal = this.checkoutForm.getRawValue();
+
     this.checkoutForm.reset({
-      nombre: '',
-      telefono: '',
-      email: '',
+      nombre: profile?.nombre || currentVal.nombre || '',
+      telefono: profile?.telefono || currentVal.telefono || '',
+      email: profile?.email || currentVal.email || '',
       tipo_servicio_id: this.serviceTypes()[0]?.id || null,
       numero_mesa: '',
-      direccion: '',
-      referencias: '',
+      direccion: profile?.direccion || currentVal.direccion || '',
+      referencias: profile?.referencias || currentVal.referencias || '',
       nota_general: '',
       metodo_pago: 'efectivo',
     });
+
+    if (profile?.location) {
+      this.capturedLocation.set(profile.location);
+      this.geoStatus.set('success');
+    } else {
+      this.geoStatus.set('idle');
+      this.capturedLocation.set(null);
+    }
+    this.manualAddressMode.set(false);
+
     if (this.serviceTypes()[0]) {
       this.selectedServiceId.set(this.serviceTypes()[0].id);
       this.applyValidators(this.serviceCode());
@@ -392,6 +480,11 @@ export class PublicCheckout implements OnInit {
   }
 
   getWhatsAppShareUrl(): string {
+    const order = this.currentSubmittedOrder();
+    if (order) {
+      return this.clientOrdersService.getWhatsAppShareUrl(order);
+    }
+
     const code = this.successRequestCode();
     const sName = this.selectedService()?.nombre || 'Pedido';
     const amount = this.submittedTotal() > 0 ? this.submittedTotal() : this.total();
@@ -412,5 +505,9 @@ export class PublicCheckout implements OnInit {
     }
 
     return `https://wa.me/5219512224034?text=${encodeURIComponent(message)}`;
+  }
+
+  getMapsUrl(location?: OrderRequestLocation | null, address?: string | null): string | null {
+    return getGoogleMapsUrl(location, address);
   }
 }

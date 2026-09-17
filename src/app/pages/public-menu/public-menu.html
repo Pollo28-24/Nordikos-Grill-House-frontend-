@@ -1,6 +1,6 @@
 <div class="min-h-screen bg-[#E2D7B7] text-gray-900 font-sans pb-32">
 
-  <app-public-header [cartCount]="cartService.totalItems()" [searchQuery]="searchQuery()" [cartBumping]="cartBumping()" (onSearchChange)="searchQuery.set($event)" (onCartClick)="toggleCart()" (onUserClick)="openUserCheckout()"></app-public-header>
+  <app-public-header [cartCount]="cartService.totalItems()" [searchQuery]="searchQuery()" [cartBumping]="cartBumping()" (onSearchChange)="searchQuery.set($event)" (onCartClick)="toggleCart()"></app-public-header>
 
   <!-- HERO -->
   <div class="max-w-7xl mx-auto px-5 mt-6">
@@ -107,19 +107,33 @@
     (onAddToCart)="addFromModal($event)"></app-product-detail-modal>
   }
 
-  <!-- FLOATING CART BUTTON (BOTTOM MOBILE) -->
+  <!-- FLOATING CART BUTTON (BOTTOM MOBILE) CON SAFE AREA INSET -->
   @if (cartService.totalItems() > 0) {
-  <div class="fixed bottom-6 left-0 right-0 z-40 px-5 flex justify-center">
+  <div class="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-40 px-4 sm:px-5 flex justify-center pointer-events-none">
     <button (click)="toggleCart()"
-      class="w-full max-w-md bg-zinc-900 text-white h-14 rounded-2xl shadow-2xl flex items-center justify-between px-6 active:scale-95 transition transform duration-200"
+      class="w-full max-w-md bg-zinc-900 text-white h-14 rounded-2xl shadow-2xl flex items-center justify-between px-5 sm:px-6 active:scale-95 transition transform duration-200 pointer-events-auto border border-white/10 cursor-pointer touch-manipulation"
       [class.animate-bump]="cartBumping()">
       <div class="flex items-center gap-3">
-        <div class="bg-orange-500 text-white text-xs font-bold h-6 w-6 flex items-center justify-center rounded-full">
+        <div class="bg-orange-500 text-white text-xs font-bold h-6 min-w-6 px-1.5 flex items-center justify-center rounded-full">
           {{ cartService.totalItems() }}
         </div>
         <span class="font-semibold">Ver Carrito</span>
       </div>
       <span class="font-bold text-orange-400">{{ cartService.totalAmount() | currencyMxn }}</span>
+    </button>
+  </div>
+  }
+
+  <!-- FLOATING BOTÓN MIS PEDIDOS ENVIADOS (SI EL CARRITO ESTÁ VACÍO Y HAY PEDIDOS PREVIOS) -->
+  @if (cartService.totalItems() === 0 && clientOrdersService.hasOrders()) {
+  <div class="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-40 px-4 sm:px-5 flex justify-center pointer-events-none">
+    <button (click)="openOrdersModal()"
+      class="bg-zinc-900/95 backdrop-blur-md text-white h-12 rounded-full shadow-2xl flex items-center gap-2.5 px-5 active:scale-95 transition transform duration-200 pointer-events-auto border border-white/10 cursor-pointer touch-manipulation">
+      <lucide-icon name="receipt" class="w-4 h-4 text-orange-400"></lucide-icon>
+      <span class="text-xs font-bold">Mis Pedidos Enviados</span>
+      <span class="bg-orange-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
+        {{ clientOrdersService.ordersCount() }}
+      </span>
     </button>
   </div>
   }
@@ -135,6 +149,7 @@
     (clear)="cartService.clearCart()"
     (checkout)="openCheckout()"
     (notaChange)="cartService.updateNota($event.id, $event.nota)"
+    (viewOrders)="openOrdersModal()"
   ></app-public-cart>
   }
 
@@ -145,6 +160,13 @@
     [total]="cartService.totalAmount()"
     (close)="closeCheckout()"
     (orderSubmitted)="onOrderSubmitted($event)"
+    (openOrdersHistory)="openOrdersModal()"
   ></app-public-checkout>
+
+  <!-- MODAL DE HISTORIAL DE PEDIDOS DEL CLIENTE -->
+  <app-public-orders-modal
+    [isOpen]="isOrdersModalOpen()"
+    (close)="closeOrdersModal()"
+  ></app-public-orders-modal>
 
 </div>

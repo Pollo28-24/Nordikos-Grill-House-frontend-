@@ -1,9 +1,10 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { CartItem } from '@core/services/public-cart.service';
 import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
+import { ClientOrdersService } from '@core/services/client-orders.service';
 
 @Component({
   selector: 'app-public-cart',
@@ -18,6 +19,8 @@ import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
   `]
 })
 export class PublicCart {
+  readonly clientOrdersService = inject(ClientOrdersService);
+
   items     = input<CartItem[]>([]);
   total     = input<number>(0);
 
@@ -27,4 +30,5 @@ export class PublicCart {
   clear          = output<void>();
   checkout       = output<void>();
   notaChange     = output<{ id: string; nota: string }>();
+  viewOrders     = output<void>();
 }

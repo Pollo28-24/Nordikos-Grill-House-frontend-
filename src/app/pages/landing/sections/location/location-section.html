@@ -1,57 +1,58 @@
-<section id="ubicacion" class="py-24 md:py-32 bg-nord-dark text-nord-cream overflow-hidden border-t border-nord-gold/5">
-  <div class="max-w-6xl mx-auto px-6">
+<section id="ubicacion" class="py-16 sm:py-20 md:py-28 lg:py-32 bg-nord-dark text-nord-cream overflow-hidden border-t border-nord-gold/10">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 lg:gap-20 items-center">
       
       <!-- Left Column: Contact info & text -->
       <div 
         appRevealOnScroll 
         class="reveal-left flex flex-col justify-center"
       >
-        <span class="text-nord-gold uppercase tracking-widest text-xs font-semibold mb-3 block">Ubicación y Horarios</span>
-        <h2 class="font-serif text-3xl md:text-5xl font-bold text-nord-cream mb-6">
+        <span class="text-nord-gold uppercase tracking-widest text-[11px] sm:text-xs font-semibold mb-2 sm:mb-3 block">Ubicación y Horarios</span>
+        <h2 class="font-serif text-2xl sm:text-4xl md:text-5xl font-bold text-nord-cream mb-4 sm:mb-6">
           ¿Dónde se enciende <br class="hidden sm:inline"/>
           <span class="text-nord-ember">el carbón?</span>
         </h2>
         
-        <div class="h-0.5 w-16 bg-nord-ember mb-10 rounded-full"></div>
+        <div class="h-0.5 w-14 sm:w-16 bg-nord-ember mb-8 sm:mb-10 rounded-full"></div>
 
         <!-- Info Items -->
-        <div class="space-y-8 mb-10">
+        <div class="space-y-6 sm:space-y-8 mb-6 sm:mb-10">
           <!-- Item 1: Address -->
-          <div class="flex items-start gap-4 group cursor-pointer" (click)="openGoogleMaps()">
-            <div class="w-12 h-12 rounded-xl bg-nord-charcoal border border-nord-gold/5 flex items-center justify-center text-xl text-nord-ember group-hover:bg-nord-ember group-hover:text-nord-cream transition-all duration-300 shrink-0 shadow-md">
+          <div class="flex items-start gap-3 sm:gap-4 group cursor-pointer p-2 -ml-2 rounded-xl hover:bg-nord-charcoal/40 active:bg-nord-charcoal/60 transition-colors" (click)="openGoogleMaps()">
+            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-nord-charcoal border border-nord-gold/15 flex items-center justify-center text-xl text-nord-ember group-hover:bg-nord-ember group-hover:text-nord-cream transition-all duration-300 shrink-0 shadow-md">
               📍
             </div>
             <div>
-              <h4 class="font-serif text-lg font-bold text-nord-gold mb-1 group-hover:text-nord-ember transition-colors duration-300">Nuestra Dirección</h4>
-              <p class="font-sans text-xs md:text-sm text-nord-cream-muted leading-relaxed">{{ address }}</p>
-              <span class="text-xs text-nord-ember font-semibold tracking-wider">VER EN GOOGLE MAPS →</span>
+              <h4 class="font-serif text-base sm:text-lg font-bold text-nord-gold mb-1 group-hover:text-nord-ember transition-colors duration-300">Nuestra Dirección</h4>
+              <p class="font-sans text-xs sm:text-sm text-nord-cream-muted leading-relaxed mb-1">{{ address }}</p>
+              <span class="text-xs text-nord-ember font-semibold tracking-wider inline-flex items-center gap-1">VER EN GOOGLE MAPS →</span>
             </div>
           </div>
 
           <!-- Item 2: Phone / WhatsApp -->
-          <div class="flex items-start gap-4 group cursor-pointer" (click)="openWhatsApp()">
-            <div class="w-12 h-12 rounded-xl bg-nord-charcoal border border-nord-gold/5 flex items-center justify-center text-xl text-nord-ember group-hover:bg-nord-ember group-hover:text-nord-cream transition-all duration-300 shrink-0 shadow-md">
+          <div class="flex items-start gap-3 sm:gap-4 group cursor-pointer p-2 -ml-2 rounded-xl hover:bg-nord-charcoal/40 active:bg-nord-charcoal/60 transition-colors" (click)="openWhatsApp()">
+            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-nord-charcoal border border-nord-gold/15 flex items-center justify-center text-xl text-nord-ember group-hover:bg-nord-ember group-hover:text-nord-cream transition-all duration-300 shrink-0 shadow-md">
               💬
             </div>
             <div>
-              <h4 class="font-serif text-lg font-bold text-nord-gold mb-1 group-hover:text-nord-ember transition-colors duration-300">WhatsApp & Pedidos</h4>
-              <p class="font-sans text-xs md:text-sm text-nord-cream-muted leading-relaxed">{{ phone }}</p>
-              <span class="text-xs text-nord-gold font-semibold tracking-wider">ESCRIBIR POR WHATSAPP →</span>
+              <h4 class="font-serif text-base sm:text-lg font-bold text-nord-gold mb-1 group-hover:text-nord-ember transition-colors duration-300">WhatsApp & Pedidos</h4>
+              <p class="font-sans text-xs sm:text-sm text-nord-cream-muted leading-relaxed mb-1">{{ phone }}</p>
+              <span class="text-xs text-nord-gold font-semibold tracking-wider inline-flex items-center gap-1">ESCRIBIR POR WHATSAPP →</span>
             </div>
           </div>
 
           <!-- Item 3: Hours -->
-          <div class="flex items-start gap-4">
-            <div class="w-12 h-12 rounded-xl bg-nord-charcoal border border-nord-gold/5 flex items-center justify-center text-xl text-nord-ember shrink-0 shadow-md">
+          <div class="flex items-start gap-3 sm:gap-4 p-2 -ml-2">
+            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-nord-charcoal border border-nord-gold/15 flex items-center justify-center text-xl text-nord-ember shrink-0 shadow-md">
               🕒
             </div>
             <div>
-              <h4 class="font-serif text-lg font-bold text-nord-gold mb-1">Horario de Atención</h4>
-              <p class="font-sans text-xs md:text-sm text-nord-cream-muted leading-relaxed">
-                Lunes a Domingo: <span class="text-nord-cream font-semibold">7:00 PM - 10:00 PM</span><br/>
-                Todos los días encendemos el fuego a las 7 PM en punto. Te recomendamos llegar temprano para asegurar tu lugar y disfrutar de la experiencia completa.
+              <h4 class="font-serif text-base sm:text-lg font-bold text-nord-gold mb-1">Horario de Atención</h4>
+              <p class="font-sans text-xs sm:text-sm text-nord-cream-muted leading-relaxed">
+                Jueves a Domingo: <span class="text-nord-cream font-semibold">7:00 PM - 10:00 PM</span><br/>
+                <span class="text-nord-ember font-medium">Lunes a Miércoles: Cerrado</span> (preparación y curado artesanal).<br/>
+                Te recomendamos llegar temprano para disfrutar de la experiencia al grill completa.
               </p>
             </div>
           </div>
@@ -65,43 +66,43 @@
       >
         <div 
           (click)="openGoogleMaps()"
-          class="bg-nord-charcoal p-8 rounded-2xl relative overflow-hidden group cursor-pointer border border-nord-gold/5 hover:border-nord-gold/20 transition-all duration-500 hover:shadow-2xl shadow-xl flex flex-col items-center justify-center text-center h-[350px] md:h-[450px]"
+          class="bg-nord-charcoal/80 p-6 sm:p-8 rounded-2xl relative overflow-hidden group cursor-pointer border border-nord-gold/10 hover:border-nord-gold/30 transition-all duration-300 hover:shadow-2xl shadow-xl flex flex-col items-center justify-center text-center h-[290px] sm:h-[360px] md:h-[440px]"
         >
           <!-- Background stylized grill graphic/map pattern -->
           <div 
-            class="absolute inset-0 bg-cover bg-center opacity-10 filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-1000"
+            class="absolute inset-0 bg-cover bg-center opacity-15 filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-1000"
             style="background-image: url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=800');"
           ></div>
           
           <!-- Radial gradient for depth -->
-          <div class="absolute inset-0 bg-gradient-to-b from-transparent via-nord-dark/80 to-nord-dark z-0"></div>
+          <div class="absolute inset-0 bg-gradient-to-b from-transparent via-nord-dark/85 to-nord-dark z-0"></div>
 
           <!-- Pulsing Locator -->
-          <div class="relative z-10 mb-6 flex flex-col items-center">
+          <div class="relative z-10 mb-4 sm:mb-6 flex flex-col items-center">
             <!-- Ripple Ring 2 -->
-            <div class="absolute w-20 h-20 rounded-full bg-nord-ember/15 animate-ping duration-1000"></div>
+            <div class="absolute w-16 sm:w-20 h-16 sm:h-20 rounded-full bg-nord-ember/15 animate-ping duration-1000"></div>
             <!-- Ripple Ring 1 -->
-            <div class="absolute w-14 h-14 rounded-full bg-nord-gold/20 animate-ping"></div>
+            <div class="absolute w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-nord-gold/20 animate-ping"></div>
             <!-- Marker Core -->
-            <div class="w-12 h-12 rounded-full bg-nord-ember border-2 border-nord-cream flex items-center justify-center text-2xl shadow-lg transform group-hover:scale-105 transition-transform duration-300">
+            <div class="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-nord-ember border-2 border-nord-cream flex items-center justify-center text-xl sm:text-2xl shadow-lg transform group-hover:scale-105 transition-transform duration-300">
               🔥
             </div>
           </div>
 
           <!-- Text -->
-          <div class="relative z-10 px-4 mb-8">
-            <h3 class="font-serif text-2xl font-bold text-nord-cream mb-2">Nórdicos Grill House</h3>
-            <p class="font-sans text-xs md:text-sm text-nord-cream-muted max-w-sm mx-auto leading-relaxed">
-              Estamos ubicados en San Pablo Huixtepec, Oaxaca. Hacé clic para abrir indicaciones de Google Maps y llegar sin perderte.
+          <div class="relative z-10 px-4 mb-6 sm:mb-8">
+            <h3 class="font-serif text-xl sm:text-2xl font-bold text-nord-cream mb-1.5 sm:mb-2">Nórdicos Grill House</h3>
+            <p class="font-sans text-xs sm:text-sm text-nord-cream-muted max-w-sm mx-auto leading-relaxed">
+              Estamos ubicados en San Pablo Huixtepec, Oaxaca. Tocá para abrir indicaciones en Google Maps y llegar directo.
             </p>
           </div>
 
           <!-- Action Button -->
           <button 
             (click)="$event.stopPropagation(); openGoogleMaps()"
-            class="relative z-10 px-8 py-3.5 bg-nord-gold text-nord-dark font-sans font-semibold text-sm rounded-lg hover:bg-nord-ember hover:text-nord-cream transition-all duration-300 transform group-hover:-translate-y-0.5 group-hover:shadow-lg hover:shadow-nord-ember/25 flex items-center gap-2 cursor-pointer"
+            class="relative z-10 min-h-[44px] px-7 py-3 bg-nord-gold text-nord-dark font-sans font-bold text-xs sm:text-sm rounded-xl hover:bg-nord-ember hover:text-nord-cream active:scale-95 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg"
           >
-            🗺️ Cómo Llegar
+            🗺️ Cómo Llegar en Maps
           </button>
         </div>
       </div>
