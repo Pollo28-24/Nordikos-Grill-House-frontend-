@@ -16,24 +16,22 @@ import { RevealOnScrollDirective } from '@shared/directives/reveal-on-scroll.dir
 export class ExperienceSection {
   pilares = [
     {
+      step: '01 • EL RITUAL',
       icon: '🔥',
-      title: 'Brasas Auténticas',
-      desc: 'El encanto del carbón vegetal y madera de encino seleccionada que impregna a nuestros ingredientes de un ahumado artesanal incomparable.'
+      title: 'Carbón y Madera de Encino',
+      desc: 'Brasas vivas de carbón vegetal y leña de encino seleccionada. Cocinamos con paciencia para impregnar cada corte con ese ahumado rústico y profundo que ninguna parrilla a gas puede igualar.'
     },
     {
+      step: '02 • EL ORIGEN',
       icon: '🥩',
-      title: 'Cortes Seleccionados',
-      desc: 'Carne proveniente de productores sustentables, con un marmoleo ideal y maduración precisa para asegurar jugosidad extrema.'
+      title: 'Origen y Calidad Selecta',
+      desc: 'Carne de res con marmoleo superior y maduración precisa. Trabajamos con productores responsables para garantizar terneza, jugosidad extrema y vegetales frescos cosechados en Oaxaca.'
     },
     {
-      icon: '🍷',
-      title: 'Ambiente Acogedor',
-      desc: 'Un espacio íntimo y refinado que combina calidez de hogar con la mística del fuego para crear veladas memorables con los tuyos.'
-    },
-    {
-      icon: '⭐',
-      title: 'Servicio Excepcional',
-      desc: 'Atención personalizada y atenta enfocada en que te sientas como el invitado de honor en cada una de tus visitas.'
+      step: '03 • EL ENCUENTRO',
+      icon: '🤝',
+      title: 'La Mesa Compartida',
+      desc: 'Nórdicos nació para ser un punto de reunión. Una atmósfera cálida y sin prisas, diseñada para celebrar momentos memorables, brindar y disfrutar de la comida hecha con el corazón.'
     }
   ];
 }

@@ -37,13 +37,36 @@ export class OrdersRequestsApi {
     tipo_servicio_id: number | string;
     numero_mesa?: string | null;
     direccion_entrega?: string | null;
+    referencias?: string | null;
+    metodo_pago_id?: number | string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    accuracy?: number | null;
     estado?: string;
   }) {
-    return this.supabase
+    const insertData: any = { ...request };
+    // Si referencias no está definido o es vacío, no enviarlo para evitar errores en tablas sin migrar
+    if (!insertData.referencias) {
+      delete insertData.referencias;
+    }
+
+    const res = await this.supabase
       .from('order_requests')
-      .insert(request)
+      .insert(insertData)
       .select()
       .single();
+
+    // Fallback defensivo si la columna aún no existe en el schema cache de Supabase
+    if (res.error && res.error.message?.includes('referencias')) {
+      delete insertData.referencias;
+      return this.supabase
+        .from('order_requests')
+        .insert(insertData)
+        .select()
+        .single();
+    }
+
+    return res;
   }
 
   async insertRequestItems(items: any[]) {
@@ -60,18 +83,34 @@ export class OrdersRequestsApi {
       .then();
   }
 
-  getRequestsQuery(status?: string) {
-    let query = this.supabase
-      .from('order_requests')
-      .select(`
-        id, request_code, estado, total, nota_general, tipo_servicio_id, numero_mesa, direccion_entrega, motivo_rechazo, created_at,
+  getRequestsQuery(status?: string, withReferencias = true) {
+    const fields = withReferencias
+      ? `
+        id, request_code, estado, total, nota_general, tipo_servicio_id, numero_mesa, direccion_entrega,
+        referencias, metodo_pago_id, latitude, longitude, accuracy, motivo_rechazo, created_at,
         clientes (id, nombre, telefono, email, direccion),
         tipos_servicio (nombre),
+        metodos_pago (id, nombre),
         order_request_items (
           id, cantidad, precio_unitario, nombre_producto, total, nota, producto_id, variante_id,
           order_request_item_modificadores (id, nombre_modificador, cantidad, precio_unitario)
         )
-      `)
+      `
+      : `
+        id, request_code, estado, total, nota_general, tipo_servicio_id, numero_mesa, direccion_entrega,
+        metodo_pago_id, latitude, longitude, accuracy, motivo_rechazo, created_at,
+        clientes (id, nombre, telefono, email, direccion),
+        tipos_servicio (nombre),
+        metodos_pago (id, nombre),
+        order_request_items (
+          id, cantidad, precio_unitario, nombre_producto, total, nota, producto_id, variante_id,
+          order_request_item_modificadores (id, nombre_modificador, cantidad, precio_unitario)
+        )
+      `;
+
+    let query = (this.supabase as any)
+      .from('order_requests')
+      .select(fields)
       .order('created_at', { ascending: false });
 
     if (status) {
@@ -93,6 +132,13 @@ export class OrdersRequestsApi {
       .from('order_requests')
       .update({ estado: 'rejected', motivo_rechazo: reason })
       .eq('id', requestId);
+  }
+
+  getPaymentMethods() {
+    return this.supabase
+      .from('metodos_pago')
+      .select('id, nombre')
+      .order('id');
   }
 
   getServiceTypes() {

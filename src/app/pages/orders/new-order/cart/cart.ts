@@ -5,27 +5,9 @@ import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { OrdersService } from '../../../../core/services/orders.service';
 import { ProductsService } from '../../../../core/services/products.service';
-import { SupabaseService } from '../../../../shared/data-access/supabase.service';
-import { OrderCreateDto } from '../../../../core/models/order.model';
+import { OrderCreateDto, PaymentMethod, ServiceType, Client } from '../../../../core/models/order.model';
 import { ToastService } from '../../../../core/services/toast.service';
 import { LoggerService } from '../../../../core/services/logger.service';
-
-interface PaymentMethod {
-  id: number;
-  nombre: string;
-  tipo?: string;
-}
-
-interface ServiceType {
-  id: number;
-  nombre: string;
-}
-
-interface Client {
-  id: number;
-  nombre: string;
-  telefono?: string;
-}
 
 @Component({
   selector: 'app-new-order-cart',
@@ -37,7 +19,6 @@ interface Client {
 export class NewOrderCart {
 
   public ordersService = inject(OrdersService);
-  private supabase = inject(SupabaseService).client;
   private fb = inject(FormBuilder);
   private toastService = inject(ToastService);
   private productsService = inject(ProductsService);
@@ -91,13 +72,9 @@ export class NewOrderCart {
     if (!orderId) return;
 
     try {
-      const { data: order, error } = await this.supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .single();
+      const { order, orderError } = await this.ordersService.getOrderById(orderId);
 
-      if (error) throw error;
+      if (orderError) throw orderError;
       if (order) {
         this.form.patchValue({
           cliente_id: order.cliente_id,
@@ -130,23 +107,25 @@ export class NewOrderCart {
         { data: servicios },
         { data: clientes },
       ] = await Promise.all([
-
-        this.supabase.from('metodos_pago').select('id,nombre,tipo').order('id'),
-        this.supabase.from('tipos_servicio').select('id,nombre').order('id'),
-        this.supabase.from('clientes').select('id,nombre,telefono').order('nombre').limit(100),
-
+        this.ordersService.getPaymentMethods(),
+        this.ordersService.getServiceTypes(),
+        this.ordersService.getClients(),
       ]);
 
-      this.paymentMethods.set(pagos ?? []);
-      this.serviceTypes.set(servicios ?? []);
-      this.clients.set(clientes ?? []);
+      const pagosList = (pagos as PaymentMethod[]) ?? [];
+      const serviciosList = (servicios as ServiceType[]) ?? [];
+      const clientesList = (clientes as Client[]) ?? [];
+
+      this.paymentMethods.set(pagosList);
+      this.serviceTypes.set(serviciosList);
+      this.clients.set(clientesList);
 
       // Por defecto asignar método de pago en Efectivo (id 1 o el primero disponible)
-      const cashMethod = (pagos ?? []).find((p: any) => p.nombre?.toLowerCase().includes('efectivo')) || pagos?.[0];
+      const cashMethod = pagosList.find((p) => p.nombre?.toLowerCase().includes('efectivo')) || pagosList[0];
 
       this.form.patchValue({
         metodo_pago_id: cashMethod?.id ?? 1,
-        tipo_servicio_id: this.serviceTypes()[0]?.id ?? null,
+        tipo_servicio_id: serviciosList[0]?.id ?? null,
       });
 
     } catch {

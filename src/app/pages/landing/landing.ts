@@ -4,16 +4,15 @@ import { RouterLink } from '@angular/router';
 
 // Section Imports
 import { HeroSection } from './sections/hero/hero-section';
-import { ExperienceSection } from './sections/experience/experience-section';
 import { FeaturedSection } from './sections/featured/featured-section';
-import { WhyUsSection } from './sections/why-us/why-us-section';
+import { MenuCategoriesSection } from './sections/menu-categories/menu-categories-section';
+import { ExperienceSection } from './sections/experience/experience-section';
 import { AboutSection } from './sections/about/about-section';
-import { StatsSection } from './sections/stats/stats-section';
 import { GallerySection } from './sections/gallery/gallery-section';
 import { TestimonialsSection } from './sections/testimonials/testimonials-section';
-import { ValuesSection } from './sections/values/values-section';
 import { LocationSection } from './sections/location/location-section';
 import { CtaSection } from './sections/cta/cta-section';
+import { MobileActions } from './mobile-actions/mobile-actions';
 
 @Component({
   selector: 'app-landing',
@@ -21,22 +20,21 @@ import { CtaSection } from './sections/cta/cta-section';
   imports: [
     RouterLink,
     HeroSection,
-    ExperienceSection,
     FeaturedSection,
-    WhyUsSection,
+    MenuCategoriesSection,
+    ExperienceSection,
     AboutSection,
-    StatsSection,
     GallerySection,
     TestimonialsSection,
-    ValuesSection,
     LocationSection,
-    CtaSection
+    CtaSection,
+    MobileActions
   ],
   templateUrl: './landing.html',
   styles: `
     :host {
       display: block;
-      background-color: #0B0B0B;
+      background-color: #050505;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -57,7 +55,11 @@ export class LandingPage implements OnInit {
     { url: 'assets/Galeria/iamgen publicidad 5.jpg', title: 'Del Fuego a tu Mesa' },
     { url: 'assets/Galeria/imagen publicidad 6.jpg', title: 'Acompañamientos Premium' },
     { url: 'assets/Galeria/iamgen publicidad 7.jpg', title: 'El Arte del Carbón' },
-    { url: 'assets/Galeria/bebida.jpg', title: 'Bebidas de la Casa' },
+    { url: 'assets/Galeria/imagen publicidad 8.jpg', title: 'Fuego y Pasión' },
+    { url: 'assets/Galeria/imagen publicidad 9.jpg', title: 'Parrillada al Punto' },
+    { url: 'assets/Galeria/imagen publicidad 10.jpg', title: 'Brasas de Encino' },
+    { url: 'assets/Galeria/bebida.jpg', title: 'Mixología Nórdicos' },
+    { url: 'assets/Galeria/imagen publicidad 11.jpg', title: 'Bebidas de la Casa' },
     { url: 'assets/Galeria/lcoal.jpg', title: 'Nuestro Local' },
     { url: 'assets/Galeria/local2.jpg', title: 'Espacio Nórdicos' }
   ];
@@ -76,6 +78,14 @@ export class LandingPage implements OnInit {
 
   toggleMobileMenu() {
     this.mobileMenuOpen.update(v => !v);
+  }
+
+  scrollToTop(event: Event) {
+    event.preventDefault();
+    this.mobileMenuOpen.set(false);
+    if (isPlatformBrowser(this.platformId)) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   scrollToSection(sectionId: string, event: Event) {

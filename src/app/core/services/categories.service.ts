@@ -10,6 +10,7 @@ import { LoggerService } from './logger.service';
 import { CategoriesApi } from '@core/api/categories.api';
 import { Category } from '@core/models/category.model';
 import { SupabaseService } from '@shared/data-access/supabase.service';
+import { SupabaseStorageService } from '@core/services/supabase-storage.service';
 
 @Injectable({
   providedIn: 'root',
@@ -17,6 +18,7 @@ import { SupabaseService } from '@shared/data-access/supabase.service';
 export class CategoriesService { // Actúa como el STATE / FACADE
   private readonly api = inject(CategoriesApi);
   private readonly supabase = inject(SupabaseService).client; // temporalmente para queries cross-domain
+  private readonly supabaseStorage = inject(SupabaseStorageService);
   private readonly toastService = inject(ToastService);
   private readonly productsService = inject(ProductsService);
   private readonly platformId = inject(PLATFORM_ID);
@@ -150,24 +152,52 @@ export class CategoriesService { // Actúa como el STATE / FACADE
     try {
       this._updatingId.set(id);
 
-      // Cross-domain fetch para borrar productos en cascada si no hay triggers en BD
+      // 1. Obtener productos de la categoría junto con sus fotos para purgar Storage
       const { data: products, error: productsError } = await this.supabase
         .from('productos')
-        .select('id')
+        .select('id, producto_fotos(url)')
         .eq('categoria_id', id);
 
       if (productsError) throw productsError;
 
       if (products && products.length > 0) {
-        const deletePromises = products.map((product: any) => this.productsService.delete(product.id));
-        await Promise.all(deletePromises);
+        // 2. Extraer y purgar fotos en Storage
+        const imagePaths: string[] = [];
+        for (const prod of products) {
+          if (prod.producto_fotos && Array.isArray(prod.producto_fotos)) {
+            for (const foto of prod.producto_fotos) {
+              const path = this.supabaseStorage.extractImagePathFromUrl(foto.url);
+              if (path) imagePaths.push(path);
+            }
+          }
+        }
+
+        if (imagePaths.length > 0) {
+          const deletePromises = imagePaths.map(path =>
+            this.supabaseStorage.deleteProductImage(path).catch(err => {
+              this.logger.warn('Error deleting image from storage during category cascade delete', err, 'CategoriesService');
+            })
+          );
+          await Promise.allSettled(deletePromises);
+        }
+
+        // 3. Batch delete de productos en BD en una sola operación
+        const { error: deleteProductsError } = await this.supabase
+          .from('productos')
+          .delete()
+          .eq('categoria_id', id);
+
+        if (deleteProductsError) throw deleteProductsError;
       }
 
-      // 1 solo llamado a BD para borrar categoría
-      const { error } = await this.api.delete(id);
-      if (error) throw error;
+      // 4. Borrar la categoría en BD
+      const { error: deleteCategoryError } = await this.api.delete(id);
+      if (deleteCategoryError) throw deleteCategoryError;
 
       this.toastService.show('Categoría eliminada correctamente', 'success');
+
+      // 5. Reload unificado al final (1 solo para productos, 1 solo para categorías)
+      this.productsService.reload();
       this.reload();
       return true;
 

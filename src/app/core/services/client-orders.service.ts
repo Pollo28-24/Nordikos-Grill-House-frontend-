@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { ClientSubmittedOrder, CustomerProfile, OrderRequestLocation } from '../models/order.model';
-import { getGoogleMapsUrl } from '../utils/order-location.utils';
+import { getGoogleMapsUrl, parseLocationMetadata } from '../utils/order-location.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -109,6 +109,16 @@ export class ClientOrdersService {
       }
     }
 
+    if (order.metodo_pago) {
+      const payMap: Record<string, string> = {
+        efectivo: '💵 Efectivo (Pago al recibir)',
+        tarjeta: '💳 Tarjeta (Terminal bancaria)',
+        transferencia: '📱 Transferencia SPEI'
+      };
+      const payLabel = payMap[order.metodo_pago.toLowerCase()] || order.metodo_pago;
+      lines.push(`💳 *Método de Pago:* ${payLabel}`);
+    }
+
     lines.push(`----------------------------------------`);
     lines.push(`🛒 *DETALLE DEL PEDIDO:*`);
 
@@ -116,6 +126,17 @@ export class ClientOrdersService {
       const variantStr = item.variante ? ` (${item.variante.nombre})` : '';
       const subtotal = (item.precio * item.cantidad).toFixed(2);
       lines.push(`• ${item.cantidad}x ${item.nombre}${variantStr} - $${subtotal}`);
+
+      // Desglose de extras y modificadores
+      if (item.modificadores && item.modificadores.length > 0) {
+        item.modificadores.forEach(m => {
+          const modPrice = Number(m.precio_unitario || 0);
+          const priceStr = modPrice > 0 ? ` (+$${(modPrice * m.cantidad).toFixed(2)})` : '';
+          const qtyStr = m.cantidad > 1 ? `${m.cantidad}x ` : '';
+          lines.push(`   + ${qtyStr}${m.nombre_modificador}${priceStr}`);
+        });
+      }
+
       if (item.nota?.trim()) {
         lines.push(`   ↳ _Nota: "${item.nota.trim()}"_`);
       }
@@ -123,8 +144,9 @@ export class ClientOrdersService {
 
     lines.push(`----------------------------------------`);
 
-    if (order.nota_general?.trim()) {
-      lines.push(`💬 *Nota General:* ${order.nota_general.trim()}`);
+    const parsedNote = parseLocationMetadata(order.nota_general);
+    if (parsedNote.cleanNote?.trim()) {
+      lines.push(`💬 *Nota General:* ${parsedNote.cleanNote.trim()}`);
       lines.push(`----------------------------------------`);
     }
 

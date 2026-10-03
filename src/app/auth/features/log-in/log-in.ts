@@ -257,7 +257,7 @@ export default class LogIn {
     return answer === String(expected);
   }
 
-  private registerFailedAttempt() {
+  private registerFailedAttempt(reason = 'failed') {
     const next = this.failedAttempts() + 1;
     this.failedAttempts.set(next);
     const base = Math.min(30000, Math.pow(2, Math.min(next, 6)) * 500);
@@ -272,7 +272,7 @@ export default class LogIn {
       this.form.get('challengeAnswer')?.reset();
     }
     this.persistThrottling();
-    this.logAuthEvent(false, 'failed');
+    this.logAuthEvent(false, reason);
   }
 
   private resetThrottling() {
@@ -280,7 +280,9 @@ export default class LogIn {
     this.lockUntil.set(null);
     this.challenge.set(null);
     this.form.get('challengeAnswer')?.reset();
-    this.persistThrottling();
+    try {
+      localStorage.removeItem('auth_throttle');
+    } catch {}
   }
 
   private persistThrottling() {
@@ -289,6 +291,7 @@ export default class LogIn {
         failedAttempts: this.failedAttempts(),
         lockUntil: this.lockUntil(),
         challenge: this.challenge(),
+        lastAttemptTs: Date.now(),
       };
       localStorage.setItem('auth_throttle', JSON.stringify(payload));
     } catch {}
@@ -299,6 +302,14 @@ export default class LogIn {
       const raw = localStorage.getItem('auth_throttle');
       if (!raw) return;
       const parsed = JSON.parse(raw);
+
+      // TTL de 15 minutos: si la última actividad fallida fue hace más de 15m, expirar ventana
+      const TTL_MS = 15 * 60 * 1000;
+      if (parsed?.lastAttemptTs && Date.now() - parsed.lastAttemptTs > TTL_MS) {
+        this.resetThrottling();
+        return;
+      }
+
       if (typeof parsed?.failedAttempts === 'number') {
         this.failedAttempts.set(parsed.failedAttempts);
       }
@@ -319,7 +330,6 @@ export default class LogIn {
     try {
       const entry = {
         type: 'login_attempt',
-        email: this.form.value.email ?? '',
         success,
         reason: reason ?? null,
         ts: new Date().toISOString(),
@@ -328,7 +338,8 @@ export default class LogIn {
       const raw = localStorage.getItem('auth_logs');
       const arr = raw ? JSON.parse(raw) : [];
       arr.push(entry);
-      localStorage.setItem('auth_logs', JSON.stringify(arr));
+      const limited = arr.slice(-20); // Limitar a los últimos 20 eventos para prevenir Storage Leak
+      localStorage.setItem('auth_logs', JSON.stringify(limited));
     } catch {}
   }
 
@@ -356,20 +367,40 @@ export default class LogIn {
         password: this.form.value.password ?? '',
       });
 
-      if (error) throw error;
+      if (error) {
+        this.handleAuthError(error);
+        return;
+      }
 
       this.toastService.show('🔥 Bienvenido a Nórdicos Grill House', 'success');
 
       this.router.navigateByUrl('/home');
       this.resetThrottling();
       this.logAuthEvent(true, 'success');
-    } catch {
-      this.toastService.show('Correo o contraseña incorrectos', 'error');
-
-      this.password?.reset();
-      this.registerFailedAttempt();
+    } catch (err) {
+      this.handleAuthError(err);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  private handleAuthError(error: any) {
+    this.password?.reset();
+
+    const isRateLimit =
+      error?.status === 429 ||
+      error?.message?.toLowerCase().includes('rate limit') ||
+      error?.message?.toLowerCase().includes('too many requests');
+
+    if (isRateLimit) {
+      this.toastService.show(
+        'Demasiados intentos en el servidor. Espera unos minutos antes de reintentar.',
+        'error'
+      );
+      this.registerFailedAttempt('rate_limit_429');
+    } else {
+      this.toastService.show('Correo o contraseña incorrectos', 'error');
+      this.registerFailedAttempt('invalid_credentials');
     }
   }
 }

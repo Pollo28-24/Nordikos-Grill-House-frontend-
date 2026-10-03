@@ -10,7 +10,7 @@ import { TicketPrintComponent } from '@features/tickets/components/ticket-print.
 import { TicketService } from '@features/tickets/services/ticket.service';
 
 import { OrderDetailHeader } from './components/order-detail-header/order-detail-header';
-import { OrderDetailSummary } from './components/order-detail-summary/order-detail-summary';
+import { OrderDetailSummary, ServiceTypeChangeEvent } from './components/order-detail-summary/order-detail-summary';
 import { OrderDetailItems } from './components/order-detail-items/order-detail-items';
 import { OrderDetailTotals } from './components/order-detail-totals/order-detail-totals';
 
@@ -28,6 +28,7 @@ import { OrderDetailTotals } from './components/order-detail-totals/order-detail
   ],
   templateUrl: './order-detail.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [TickService]
 })
 export class OrderDetail implements OnInit {
   private route = inject(ActivatedRoute);
@@ -43,47 +44,37 @@ export class OrderDetail implements OnInit {
     const id = this.orderId();
     return id ? Number(id) : null;
   });
-  order = signal<any>(null);
-  items = signal<any[]>([]);
+
+  // Estado local como respaldo / inicialización
+  private rawOrder = signal<any>(null);
+  private rawItems = signal<any[]>([]);
+
+  // Reactividad pura hacia el Aggregate Root del dominio
+  order = computed(() => {
+    const agg = this.ordersService.currentOrderAggregate();
+    const id = this.orderIdNumber();
+    if (agg && agg.id === id) {
+      return agg.getSnapshot();
+    }
+    return this.rawOrder();
+  });
+
+  items = computed(() => {
+    const agg = this.ordersService.currentOrderAggregate();
+    const id = this.orderIdNumber();
+    if (agg && agg.id === id) {
+      return [...agg.items];
+    }
+    return this.rawItems();
+  });
+
+  syncStatusMap = this.ordersService.orderSyncStatus;
+  orderLevelSync = this.ordersService.orderLevelSyncStatus;
+
   loading = signal(false);
   showTicket = signal(false);
   ticketType = signal<'account' | 'kitchen'>('account');
   autoPrint = signal<boolean>(true);
-
-  openTicket(type: 'account' | 'kitchen', autoPrint = true) {
-    this.ticketType.set(type);
-    this.autoPrint.set(autoPrint);
-    this.showTicket.set(true);
-  }
-
-  async shareTicketPDF() {
-    const id = this.orderIdNumber();
-    if (!id) return;
-    try {
-      const data = await this.ticketService.getTicketData(id);
-      if (data) {
-        await this.ticketService.shareTicketPDF(data);
-      } else {
-        this.feedback.showError('No se pudieron obtener los datos de la orden');
-      }
-    } catch (err) {
-      this.logger.error('Error sharing PDF', err, 'OrderDetail');
-      this.feedback.showError('Error al generar o compartir el PDF');
-    }
-  }
-
-  async onTicketReady() {
-    if (!this.autoPrint()) return;
-    
-    const id = this.orderId();
-    if (id) {
-      const data = await this.ticketService.getTicketData(Number(id));
-      if (data) {
-        this.ticketService.printTicket(data, this.ticketType());
-      }
-    }
-  }
-
   currentTime = this.tickService.currentTime;
 
   ngOnInit() {
@@ -100,46 +91,26 @@ export class OrderDetail implements OnInit {
     }
   }
 
-  getDuration(): string {
-    const order = this.order();
-    if (!order || !order.fecha_creacion) return '...';
-    
-    const current = this.currentTime();
-    const start = new Date(order.fecha_creacion).getTime();
-    const end = order.fecha_cierre ? new Date(order.fecha_cierre).getTime() : current;
-    
-    const diffMs = end - start;
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 60) {
-      const diffSecs = Math.floor((diffMs % 60000) / 1000);
-      return `${diffMins}m ${diffSecs}s`;
-    } else {
-      const diffHours = Math.floor(diffMins / 60);
-      const remainingMins = diffMins % 60;
-      return `${diffHours}h ${remainingMins}m`;
-    }
-  }
-
   async loadOrder(id: string) {
     try {
       this.loading.set(true);
-      
-      const { order, orderError, items, itemsError } = await this.ordersService.getOrderById(id);
-
-      if (orderError) throw orderError;
-      
-      if (!order) {
-        this.logger.warn('No se encontró la orden', { id }, 'OrderDetail');
-        this.feedback.showError('La orden no existe');
-        this.router.navigate(['/orders']);
-        return;
+      const agg = await this.ordersService.loadOrderAggregate(id);
+      if (agg) {
+        this.rawOrder.set(agg.getSnapshot());
+        this.rawItems.set([...agg.items]);
+      } else {
+        const { order, orderError, items, itemsError } = await this.ordersService.getOrderById(id);
+        if (orderError) throw orderError;
+        if (!order) {
+          this.logger.warn('No se encontró la orden', { id }, 'OrderDetail');
+          this.feedback.showError('La orden no existe');
+          this.router.navigate(['/orders']);
+          return;
+        }
+        this.rawOrder.set(order);
+        if (itemsError) throw itemsError;
+        this.rawItems.set(items || []);
       }
-
-      this.order.set(order);
-      
-      if (itemsError) throw itemsError;
-      this.items.set(items || []);
     } catch (error: any) {
       this.logger.error('Error loading order', error, 'OrderDetail');
       this.feedback.showError('Error al cargar la orden');
@@ -148,24 +119,53 @@ export class OrderDetail implements OnInit {
     }
   }
 
+  // -------------------------------------------------------------
+  // ACCIONES GRANULARES DE LÍNEA DE PRODUCTO (OPTIMISTIC UI)
+  // -------------------------------------------------------------
+
   async onIncrementItem(item: any) {
     const orderId = this.orderIdNumber();
     if (!orderId) return;
 
-    try {
-      const propina = Number(this.order()?.propina || 0);
-      await this.ordersService.incrementOrderItem(
-        orderId, 
-        item.id, 
-        item.cantidad, 
-        item.precio_unitario, 
-        propina
-      );
-      await this.loadOrder(String(orderId));
-      this.feedback.showSuccess(`Se agregó otro "${item.nombre_producto}"`);
-    } catch (err) {
-      this.logger.error('Error incrementing item', err, 'OrderDetail');
-      this.feedback.showError('Error al agregar producto');
+    const res = await this.ordersService.adjustItemQuantity(orderId, item.id, {
+      delta: 1,
+      reason: 'courtesy_modification',
+    });
+
+    if (!res.success) {
+      this.feedback.showError(res.error || 'No se pudo agregar el producto');
+    }
+  }
+
+  async onDecrementItem(item: any) {
+    const orderId = this.orderIdNumber();
+    if (!orderId) return;
+
+    if (item.cantidad > 1) {
+      const res = await this.ordersService.adjustItemQuantity(orderId, item.id, {
+        delta: -1,
+        reason: 'customer_removed',
+      });
+      if (!res.success) {
+        this.feedback.showError(res.error || 'No se pudo decrementar el producto');
+      }
+    } else {
+      // Cantidad es 1: confirmación explícita con motivo justificado para anular
+      this.feedback.confirmAndExecute({
+        title: '¿Quitar producto?',
+        message: `¿Deseas quitar "${item.nombre_producto}" de la orden?`,
+        confirmText: 'Quitar producto',
+        cancelText: 'Cancelar',
+        showInput: true,
+        inputPlaceholder: 'Motivo (ej. cliente canceló, error de comanda)...',
+        isDanger: true,
+        action: async (reason?: string) => {
+          const res = await this.ordersService.cancelOrderItem(orderId, item.id, 'customer_removed', reason?.trim());
+          if (!res.success) throw new Error(res.error || 'No se pudo quitar el producto');
+        },
+        successMsg: `Se quitó "${item.nombre_producto}"`,
+        errorMsg: 'Error al quitar producto'
+      });
     }
   }
 
@@ -174,29 +174,109 @@ export class OrderDetail implements OnInit {
     if (!orderId) return;
 
     this.feedback.confirmAndExecute({
-      title: '¿Quitar producto?',
-      message: `¿Estás seguro de que deseas quitar "${item.nombre_producto}" de la orden?`,
-      confirmText: 'Quitar producto',
+      title: '¿Anular producto completo?',
+      message: `Esta acción anulará las ${item.cantidad} unidades de "${item.nombre_producto}".`,
+      confirmText: 'Anular producto',
       cancelText: 'Cancelar',
+      showInput: true,
+      inputPlaceholder: 'Motivo de la anulación...',
       isDanger: true,
-      action: async () => {
-        const propina = Number(this.order()?.propina || 0);
-        await this.ordersService.cancelItemFromOrder(orderId, item.id, propina);
-        await this.loadOrder(String(orderId));
+      action: async (reason?: string) => {
+        const res = await this.ordersService.cancelOrderItem(orderId, item.id, 'customer_removed', reason?.trim());
+        if (!res.success) throw new Error(res.error || 'No se pudo anular el producto');
       },
-      successMsg: 'Producto quitado de la orden'
+      successMsg: `Línea de "${item.nombre_producto}" anulada`,
+      errorMsg: 'Error al anular producto'
     });
   }
 
-  goBack() {
-    this.router.navigate(['/orders']);
+  // -------------------------------------------------------------
+  // CAMBIO DINÁMICO DE TIPO DE SERVICIO
+  // -------------------------------------------------------------
+
+  async onChangeServiceType(event: ServiceTypeChangeEvent) {
+    const orderId = this.orderIdNumber();
+    if (!orderId) return;
+
+    try {
+      const res = await this.ordersService.changeOrderServiceType(
+        orderId,
+        event.serviceTypeId,
+        event.serviceCode,
+        {
+          numero_mesa: event.numeroMesa,
+          direccion_entrega: event.direccionEntrega,
+          newServiceName: event.serviceName,
+        }
+      );
+
+      if (res.success) {
+        this.feedback.showSuccess(`Servicio actualizado a "${event.serviceName}"`);
+      } else {
+        this.feedback.showError(res.error || 'No se pudo actualizar el servicio');
+      }
+    } catch (err: any) {
+      this.feedback.showError(err?.message || 'Error al cambiar servicio');
+    }
+  }
+
+  // -------------------------------------------------------------
+  // ACCIONES CONTEXTUALES DE ORDEN
+  // -------------------------------------------------------------
+
+  async confirmOrder() {
+    const id = this.orderIdNumber();
+    if (!id) return;
+
+    try {
+      await this.ordersService.updateOrderStatus(id, 'confirmado', null);
+      await this.loadOrder(String(id));
+      this.feedback.showSuccess('Comanda confirmada con éxito');
+    } catch (err: any) {
+      this.feedback.showError('Error al confirmar comanda');
+    }
+  }
+
+  async markAsDelivered() {
+    const id = this.orderIdNumber();
+    if (!id) return;
+
+    this.feedback.confirmAndExecute({
+      title: '¿Marcar como entregado?',
+      message: 'La comanda pasará a estado entregado y registrará su hora de cierre.',
+      confirmText: 'Sí, marcar entregado',
+      action: async () => {
+        await this.ordersService.updateOrderStatus(id, 'entregado', new Date().toISOString());
+        await this.loadOrder(String(id));
+      },
+      successMsg: 'Comanda marcada como entregada',
+      errorMsg: 'Error al actualizar comanda'
+    });
+  }
+
+  async registerPaymentPrompt() {
+    const id = this.orderIdNumber();
+    const currentOrder = this.order();
+    if (!id || !currentOrder) return;
+
+    const total = currentOrder.total;
+    this.feedback.confirmAndExecute({
+      title: '¿Registrar cobro?',
+      message: `Total a cobrar: $${total.toFixed(2)} MXN`,
+      confirmText: 'Cobro recibido',
+      cancelText: 'Cancelar',
+      action: async () => {
+        await this.ordersService.updatePaymentStatus(id, 'pagado');
+        await this.loadOrder(String(id));
+      },
+      successMsg: 'Pago registrado con éxito',
+      errorMsg: 'Error al registrar cobro'
+    });
   }
 
   async cancelOrder() {
     const id = this.orderId();
-    const order = this.order();
-    
-    if (!id || !order) return;
+    if (!id) return;
 
     this.feedback.confirmAndExecute({
       title: '¿Cancelar orden?',
@@ -224,6 +304,43 @@ export class OrderDetail implements OnInit {
       this.ordersService.clearCart();
       this.ordersService.editingOrderId.set(id);
       this.router.navigate(['/orders/new/browse']);
+    }
+  }
+
+  goBack() {
+    this.router.navigate(['/orders']);
+  }
+
+  openTicket(type: 'account' | 'kitchen', autoPrint = true) {
+    this.ticketType.set(type);
+    this.autoPrint.set(autoPrint);
+    this.showTicket.set(true);
+  }
+
+  async shareTicketPDF() {
+    const id = this.orderIdNumber();
+    if (!id) return;
+    try {
+      const data = await this.ticketService.getTicketData(id);
+      if (data) {
+        await this.ticketService.shareTicketPDF(data);
+      } else {
+        this.feedback.showError('No se pudieron obtener los datos de la orden');
+      }
+    } catch (err) {
+      this.logger.error('Error sharing PDF', err, 'OrderDetail');
+      this.feedback.showError('Error al generar o compartir el PDF');
+    }
+  }
+
+  async onTicketReady() {
+    if (!this.autoPrint()) return;
+    const id = this.orderId();
+    if (id) {
+      const data = await this.ticketService.getTicketData(Number(id));
+      if (data) {
+        this.ticketService.printTicket(data, this.ticketType());
+      }
     }
   }
 }

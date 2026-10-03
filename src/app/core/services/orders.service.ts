@@ -5,14 +5,28 @@ import { fromEvent } from 'rxjs';
 
 import { LoggerService } from '@core/services/logger.service';
 import { OrderDatabase } from '@core/services/order-db.service';
-import { OrderCreateDto, OrderCreateResponse, OrderCreateItem, OrderListItem } from '@core/models/order.model';
+import { OrderCreateDto, OrderCreateResponse, OrderCreateItem, OrderListItem, PaymentMethod, ServiceType, Client } from '@core/models/order.model';
 
 import { OrdersApi } from '@core/api/orders.api';
 import { CartState } from '@core/state/cart.state';
+import { OrdersRepository } from '@core/repositories/orders.repository';
+import { OrderAggregate } from '@core/domain/order/order.aggregate';
+import {
+  AdjustItemQuantityCommand,
+  CancelItemCommand,
+  ChangeOrderStatusCommand,
+  ChangeServiceTypeCommand,
+  CommandResult,
+  ItemAdjustmentReason,
+  RegisterPaymentCommand,
+  ServiceTypeCode,
+  SyncStatus,
+} from '@core/domain/order/order.types';
 
 @Injectable({ providedIn: 'root' })
 export class OrdersService {
   private readonly api = inject(OrdersApi);
+  private readonly repository = inject(OrdersRepository);
   private readonly cartState = inject(CartState);
   private readonly db = inject(OrderDatabase);
   private readonly platformId = inject(PLATFORM_ID);
@@ -24,6 +38,11 @@ export class OrdersService {
   error = signal<string | null>(null);
   lastOrder = signal<{ order_id: number; total: number } | null>(null);
   editingOrderId = signal<number | string | null>(null);
+
+  // --- SEÑALES DE DOMINIO Y OPTIMISTIC UI ---
+  currentOrderAggregate = signal<OrderAggregate | null>(null);
+  orderSyncStatus = signal<Record<number, SyncStatus>>({});
+  orderLevelSyncStatus = signal<SyncStatus>('SYNCED');
 
   orders = signal<OrderListItem[]>([]);
   loadingOrders = signal(false);
@@ -62,21 +81,7 @@ export class OrdersService {
       const { data, error } = await query;
       if (error) throw error;
       
-      const mappedOrders: OrderListItem[] = (data || []).map((o: any) => ({
-        id: o.id, numero_orden: o.numero_orden, nota_general: o.nota_general,
-        fecha_creacion: o.fecha_creacion, fecha_cierre: o.fecha_cierre, total: o.total,
-        estado_pedido: o.estado_pedido, estado_pago: o.estado_pago,
-        metodo_pago_id: o.metodo_pago_id, tipo_servicio_id: o.tipo_servicio_id, turno_id: o.turno_id,
-        cliente_nombre: o.clientes?.nombre || 'Consumidor Final',
-        tipo_servicio_nombre: o.tipos_servicio?.nombre || 'N/A',
-        order_items: (o.order_items || []).map((item: any) => ({
-          id: item.id, cantidad: item.cantidad, precio_unitario: item.precio_unitario,
-          nombre_producto: item.nombre_producto || 'Producto', nota: item.nota, producto_id: item.producto_id,
-          modificadores: (item.order_item_modificadores || []).map((m: any) => ({
-            id: m.id, nombre: m.nombre_modificador, cantidad: m.cantidad, precio_unitario: m.precio_unitario
-          }))
-        }))
-      }));
+      const mappedOrders: OrderListItem[] = (data || []).map((o: any) => this.mapOrderListItem(o));
       this.orders.set(mappedOrders);
     } catch (e: unknown) {
       const errorMsg = e instanceof Error ? e.message : 'Error cargando órdenes';
@@ -85,6 +90,38 @@ export class OrdersService {
     } finally {
       this.loadingOrders.set(false);
     }
+  }
+
+  private mapOrderListItem(o: any): OrderListItem {
+    return {
+      id: o.id,
+      numero_orden: o.numero_orden,
+      nota_general: o.nota_general,
+      fecha_creacion: o.fecha_creacion,
+      fecha_cierre: o.fecha_cierre,
+      total: o.total,
+      estado_pedido: o.estado_pedido,
+      estado_pago: o.estado_pago,
+      metodo_pago_id: o.metodo_pago_id,
+      tipo_servicio_id: o.tipo_servicio_id,
+      turno_id: o.turno_id,
+      cliente_nombre: o.clientes?.nombre || 'Consumidor Final',
+      tipo_servicio_nombre: o.tipos_servicio?.nombre || 'N/A',
+      order_items: (o.order_items || []).map((item: any) => ({
+        id: item.id,
+        cantidad: item.cantidad,
+        precio_unitario: item.precio_unitario,
+        nombre_producto: item.nombre_producto || 'Producto',
+        nota: item.nota,
+        producto_id: item.producto_id,
+        modificadores: (item.order_item_modificadores || []).map((m: any) => ({
+          id: m.id,
+          nombre: m.nombre_modificador,
+          cantidad: m.cantidad,
+          precio_unitario: m.precio_unitario
+        }))
+      }))
+    };
   }
 
   // ==========================================
@@ -218,22 +255,55 @@ export class OrdersService {
   subscribeRealtime() {
     if (this.channel) return;
     this.channel = this.api.getRealtimeChannel()
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload: any) => {
-          const current = this.orders();
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload: any) => {
           if (payload.eventType === 'INSERT') {
             const newOrder = payload.new;
-            this.orders.set([{
-              id: newOrder.id, numero_orden: newOrder.numero_orden, nota_general: newOrder.nota_general,
-              fecha_creacion: newOrder.fecha_creacion, fecha_cierre: newOrder.fecha_cierre, total: newOrder.total,
-              estado_pedido: newOrder.estado_pedido, estado_pago: newOrder.estado_pago,
-              metodo_pago_id: newOrder.metodo_pago_id, tipo_servicio_id: newOrder.tipo_servicio_id, turno_id: newOrder.turno_id,
-              cliente_nombre: 'Consumidor Final', tipo_servicio_nombre: 'N/A', order_items: []
-            }, ...current]);
+            try {
+              const { data, error } = await this.api.getOrderListItem(newOrder.id);
+              if (!error && data) {
+                const mapped = this.mapOrderListItem(data);
+                this.orders.update(current => {
+                  const index = current.findIndex(o => o.id === mapped.id);
+                  if (index >= 0) {
+                    const copy = [...current];
+                    copy[index] = mapped;
+                    return copy;
+                  }
+                  return [mapped, ...current];
+                });
+                return;
+              }
+              if (error) {
+                this.logger.error('Error fetching realtime order detail', error, 'OrdersService');
+              }
+            } catch (err) {
+              this.logger.error('Unexpected error fetching realtime order detail', err, 'OrdersService');
+            }
+
+            // Fallback de contingencia: sólo si la red falla se preservan los campos reales recibidos sin duplicar
+            this.orders.update(current => {
+              const index = current.findIndex(o => o.id === newOrder.id);
+              if (index >= 0) return current;
+              return [{
+                id: newOrder.id, numero_orden: newOrder.numero_orden, nota_general: newOrder.nota_general,
+                fecha_creacion: newOrder.fecha_creacion, fecha_cierre: newOrder.fecha_cierre, total: newOrder.total,
+                estado_pedido: newOrder.estado_pedido, estado_pago: newOrder.estado_pago,
+                metodo_pago_id: newOrder.metodo_pago_id, tipo_servicio_id: newOrder.tipo_servicio_id, turno_id: newOrder.turno_id,
+                cliente_nombre: 'Consumidor Final', tipo_servicio_nombre: 'N/A', order_items: []
+              }, ...current];
+            });
           } else if (payload.eventType === 'UPDATE') {
             const updatedOrder = payload.new;
             this.orders.update(orders => orders.map(o => o.id === updatedOrder.id ? {
-                ...o, estado_pedido: updatedOrder.estado_pedido, estado_pago: updatedOrder.estado_pago,
-                total: updatedOrder.total, fecha_cierre: updatedOrder.fecha_cierre
+                ...o,
+                estado_pedido: updatedOrder.estado_pedido ?? o.estado_pedido,
+                estado_pago: updatedOrder.estado_pago ?? o.estado_pago,
+                total: updatedOrder.total !== undefined ? updatedOrder.total : o.total,
+                fecha_cierre: updatedOrder.fecha_cierre !== undefined ? updatedOrder.fecha_cierre : o.fecha_cierre,
+                nota_general: updatedOrder.nota_general !== undefined ? updatedOrder.nota_general : o.nota_general,
+                metodo_pago_id: updatedOrder.metodo_pago_id ?? o.metodo_pago_id,
+                tipo_servicio_id: updatedOrder.tipo_servicio_id ?? o.tipo_servicio_id,
+                turno_id: updatedOrder.turno_id ?? o.turno_id
               } : o));
           } else if (payload.eventType === 'DELETE') {
             this.orders.update(orders => orders.filter(o => o.id !== payload.old?.id));
@@ -249,28 +319,244 @@ export class OrdersService {
   }
 
   // ==========================================
-  // UTILS & SIMPLE API CALLS
+  // DOMAIN & OPTIMISTIC ORCHESTRATION
+  // ==========================================
+  async loadOrderAggregate(orderId: number | string): Promise<OrderAggregate | null> {
+    const { aggregate, error } = await this.repository.getOrderAggregate(orderId);
+    if (error || !aggregate) {
+      this.logger.error('Error al cargar aggregate de orden', error, 'OrdersService');
+      return null;
+    }
+    this.currentOrderAggregate.set(aggregate);
+    this.orderSyncStatus.set({});
+    this.orderLevelSyncStatus.set('SYNCED');
+    return aggregate;
+  }
+
+  async adjustItemQuantity(
+    orderId: number,
+    itemId: number,
+    options: {
+      delta?: number;
+      targetQuantity?: number;
+      reason: ItemAdjustmentReason;
+      reasonNotes?: string;
+    }
+  ): Promise<CommandResult<{ newQuantity: number; newTotal: number }>> {
+    let aggregate = this.currentOrderAggregate();
+    if (!aggregate || aggregate.id !== orderId) {
+      aggregate = await this.loadOrderAggregate(orderId);
+      if (!aggregate) {
+        return { success: false, commandId: '', version: 0, error: 'Orden no disponible' };
+      }
+    }
+
+    const previousAggregate = aggregate;
+    const commandId = crypto.randomUUID();
+    const cmd: AdjustItemQuantityCommand = {
+      type: 'ADJUST_ITEM_QUANTITY',
+      commandId,
+      orderId,
+      itemId,
+      delta: options.delta,
+      targetQuantity: options.targetQuantity,
+      reason: options.reason,
+      reasonNotes: options.reasonNotes,
+    };
+
+    // 1. Ejecución PURA en Aggregate (Validación de invariantes)
+    const { aggregate: nextAggregate, result } = aggregate.execute<{ newQuantity: number; newTotal: number }>(cmd);
+    if (!result.success) {
+      return result;
+    }
+
+    // 2. OPTIMISTIC UI: Mutación inmediata en memoria local (0ms de latencia visual)
+    this.currentOrderAggregate.set(nextAggregate);
+    this.orderSyncStatus.update((s) => ({ ...s, [itemId]: 'SYNCING' }));
+
+    // 3. Persistencia asíncrona en Supabase mediante OrdersRepository
+    const targetItem = nextAggregate.items.find((i) => i.id === itemId);
+    const newQty = targetItem?.cantidad ?? 0;
+    const newLineTotal = targetItem?.total ?? 0;
+
+    const repoResult = await this.repository.persistItemQuantityAdjustment(
+      orderId,
+      itemId,
+      newQty,
+      newLineTotal,
+      nextAggregate.total,
+      options.reason,
+      commandId
+    );
+
+    if (repoResult.success) {
+      this.orderSyncStatus.update((s) => ({ ...s, [itemId]: 'SYNCED' }));
+      return result;
+    } else {
+      // 4. ROLLBACK garantizado en caso de fallo remoto o conflicto 409
+      this.logger.warn('Rollback ejecutado por fallo en persistencia de ajuste', repoResult.error, 'OrdersService');
+      this.currentOrderAggregate.set(previousAggregate);
+      this.orderSyncStatus.update((s) => ({ ...s, [itemId]: repoResult.syncStatus }));
+      return {
+        success: false,
+        commandId,
+        version: previousAggregate.version,
+        error: repoResult.error,
+      };
+    }
+  }
+
+  async cancelOrderItem(
+    orderId: number,
+    itemId: number,
+    reason: ItemAdjustmentReason,
+    reasonNotes?: string
+  ): Promise<CommandResult<{ cancelledItemId: number; newTotal: number }>> {
+    let aggregate = this.currentOrderAggregate();
+    if (!aggregate || aggregate.id !== orderId) {
+      aggregate = await this.loadOrderAggregate(orderId);
+      if (!aggregate) {
+        return { success: false, commandId: '', version: 0, error: 'Orden no disponible' };
+      }
+    }
+
+    const previousAggregate = aggregate;
+    const commandId = crypto.randomUUID();
+    const cmd: CancelItemCommand = {
+      type: 'CANCEL_ITEM',
+      commandId,
+      orderId,
+      itemId,
+      reason,
+      reasonNotes,
+    };
+
+    const { aggregate: nextAggregate, result } = aggregate.execute<{ cancelledItemId: number; newTotal: number }>(cmd);
+    if (!result.success) {
+      return result;
+    }
+
+    this.currentOrderAggregate.set(nextAggregate);
+    this.orderSyncStatus.update((s) => ({ ...s, [itemId]: 'SYNCING' }));
+
+    const repoResult = await this.repository.persistItemCancellation(
+      orderId,
+      itemId,
+      nextAggregate.total,
+      reason,
+      commandId
+    );
+
+    if (repoResult.success) {
+      this.orderSyncStatus.update((s) => ({ ...s, [itemId]: 'SYNCED' }));
+      return result;
+    } else {
+      this.currentOrderAggregate.set(previousAggregate);
+      this.orderSyncStatus.update((s) => ({ ...s, [itemId]: repoResult.syncStatus }));
+      return {
+        success: false,
+        commandId,
+        version: previousAggregate.version,
+        error: repoResult.error,
+      };
+    }
+  }
+
+  async changeOrderServiceType(
+    orderId: number,
+    newServiceTypeId: number,
+    newServiceCode: ServiceTypeCode,
+    options?: {
+      numero_mesa?: string | null;
+      direccion_entrega?: string | null;
+      newServiceName?: string;
+    }
+  ): Promise<CommandResult<{ newServiceType: string }>> {
+    let aggregate = this.currentOrderAggregate();
+    if (!aggregate || aggregate.id !== orderId) {
+      aggregate = await this.loadOrderAggregate(orderId);
+      if (!aggregate) {
+        return { success: false, commandId: '', version: 0, error: 'Orden no disponible' };
+      }
+    }
+
+    const previousAggregate = aggregate;
+    const commandId = crypto.randomUUID();
+    const cmd: ChangeServiceTypeCommand = {
+      type: 'CHANGE_SERVICE_TYPE',
+      commandId,
+      orderId,
+      newServiceTypeId,
+      newServiceCode,
+      newServiceName: options?.newServiceName,
+      numero_mesa: options?.numero_mesa,
+      direccion_entrega: options?.direccion_entrega,
+    };
+
+    const { aggregate: nextAggregate, result } = aggregate.execute<{ newServiceType: string }>(cmd);
+    if (!result.success) {
+      return result;
+    }
+
+    this.currentOrderAggregate.set(nextAggregate);
+    this.orderLevelSyncStatus.set('SYNCING');
+
+    const repoResult = await this.repository.persistServiceTypeChange(
+      orderId,
+      newServiceTypeId,
+      newServiceCode,
+      nextAggregate.numero_mesa ?? null,
+      nextAggregate.direccion_entrega ?? null,
+      commandId
+    );
+
+    if (repoResult.success) {
+      this.orderLevelSyncStatus.set('SYNCED');
+      return result;
+    } else {
+      this.currentOrderAggregate.set(previousAggregate);
+      this.orderLevelSyncStatus.set(repoResult.syncStatus);
+      return {
+        success: false,
+        commandId,
+        version: previousAggregate.version,
+        error: repoResult.error,
+      };
+    }
+  }
+
+  // ==========================================
+  // UTILS & API METHODS (Retrocompatible)
   // ==========================================
   async updateOrderStatus(orderId: number, status: string, closeDate: string | null) { return this.api.updateOrderStatus(orderId, status, closeDate); }
   async updatePaymentStatus(orderId: number, status: string) { return this.api.updatePaymentStatus(orderId, status); }
   async bulkUpdateOrderStatus(ids: number[], status: string, closeDate: string | null) { return this.api.bulkUpdateOrderStatus(ids, status, closeDate); }
   async bulkUpdatePaymentStatus(ids: number[], status: string) { return this.api.bulkUpdatePaymentStatus(ids, status); }
+  async getPaymentMethods() { return this.api.getPaymentMethods(); }
   async getServiceTypes() { return this.api.getServiceTypes(); }
+  async getClients(limit: number = 100) { return this.api.getClients(limit); }
   async getOrderById(id: string | number) { return this.api.getOrderById(id); }
 
   async cancelOrder(orderId: number, reason: string) {
     try {
       this.creating.set(true);
+      const commandId = crypto.randomUUID();
+      const repoResult = await this.repository.persistOrderCancellation(orderId, reason || 'Sin motivo especificado', commandId);
+      if (!repoResult.success) throw new Error(repoResult.error);
       
-      // Ya no modificamos la nota_general, solo obtenemos la actual para la API si fuera necesario
-      const { order: currentOrder } = await this.api.getOrderById(orderId);
-      const currentNote = currentOrder?.nota_general || '';
-      
-      // Enviamos el motivo únicamente a la nueva columna motivo_cancelacion
-      // Mantenemos la nota_general tal cual estaba sin añadir marcas de cancelación
-      const { error } = await this.api.cancelOrder(orderId, currentNote, reason || 'Sin motivo especificado');
-      if (error) throw error;
-      
+      const aggregate = this.currentOrderAggregate();
+      if (aggregate && aggregate.id === orderId) {
+        const cmd: ChangeOrderStatusCommand = {
+          type: 'CHANGE_ORDER_STATUS',
+          commandId,
+          orderId,
+          newStatus: 'cancelado',
+          reason,
+        };
+        const { aggregate: nextAggregate } = aggregate.execute(cmd);
+        this.currentOrderAggregate.set(nextAggregate);
+      }
+
       this.logger.info('Orden cancelada con éxito', { orderId, reason }, 'OrdersService');
       return { success: true };
     } catch (e: any) {
@@ -282,23 +568,8 @@ export class OrdersService {
   }
 
   async incrementOrderItem(orderId: number, itemId: number, currentQty: number, unitPrice: number, propina: number) {
-    const newQty = currentQty + 1;
-    const newLineTotal = newQty * unitPrice;
-
-    // 1. Update the order item quantity and total in the DB
-    const { error: itemError } = await this.api.updateOrderItemQuantity(itemId, newQty, newLineTotal);
-    if (itemError) throw itemError;
-
-    // 2. Fetch all active order items to calculate new order total
-    const { data: activeItems, error: fetchError } = await this.api.getActiveOrderItems(orderId);
-    if (fetchError) throw fetchError;
-
-    const newItemsTotal = (activeItems || []).reduce((sum: number, item: any) => sum + Number(item.total || 0), 0);
-    const newOrderTotal = newItemsTotal + propina;
-
-    // 3. Update the parent order total in the DB
-    const { error: updateTotalError } = await this.api.updateOrderTotal(orderId, newOrderTotal);
-    if (updateTotalError) throw updateTotalError;
+    const result = await this.adjustItemQuantity(orderId, itemId, { delta: 1, reason: 'courtesy_modification' });
+    if (!result.success) throw new Error(result.error || 'Error al incrementar producto');
   }
 
   // ==========================================

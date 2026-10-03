@@ -1,60 +1,53 @@
-<!-- Public Premium Navbar -->
+<!-- Public Premium Navbar (Dark Fire Luxury) -->
 <header 
   class="fixed top-0 left-0 w-full z-50 transition-all duration-300"
-  [class]="isScrolled() ? 'bg-nord-dark/95 border-b border-nord-gold/10 backdrop-blur-md py-3 shadow-lg' : 'bg-transparent py-4 sm:py-5'"
+  [class]="isScrolled() ? 'bg-nord-dark/95 border-b border-nord-border backdrop-blur-md py-3 shadow-[0_4px_30px_rgba(0,0,0,0.85)]' : 'bg-transparent py-4 sm:py-5'"
 >
   <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between">
     <!-- Brand Logo -->
-    <a href="#" (click)="scrollToSection('experiencia', $event)" class="flex items-center gap-2.5 group min-h-[44px] py-1 cursor-pointer">
-      <img 
-        src="assets/logo/logo 2 nordicos.jpg" 
-        alt="Nórdicos Grill Icon" 
-        class="h-9 sm:h-10 w-auto object-contain rounded-full border border-nord-gold/20 transition-transform duration-300 group-hover:scale-105"
-      />
-      <span class="font-serif text-base sm:text-lg font-bold text-nord-cream tracking-wider group-hover:text-nord-gold transition-colors duration-300">
-        NÓRDICOS
-      </span>
+    <a href="#" (click)="scrollToTop($event)" class="flex items-center gap-2.5 group min-h-[44px] py-1 cursor-pointer">
+      <div class="relative">
+        <img 
+          src="assets/logo/logo 2 nordicos.jpg" 
+          alt="Nórdicos Logo" 
+          class="h-9 sm:h-10 w-9 sm:w-10 object-cover rounded-full border border-nord-gold/30 transition-transform duration-300 group-hover:scale-105 shadow-[0_0_14px_rgba(255,106,0,0.35)]"
+        />
+        <div class="absolute inset-0 rounded-full bg-nord-fire/15 filter blur-xs pointer-events-none"></div>
+      </div>
+      <div class="flex flex-col">
+        <span class="font-serif text-base sm:text-lg font-bold text-nord-cream tracking-wider group-hover:text-nord-gold transition-colors duration-300 leading-tight">
+          NÓRDICOS
+        </span>
+        <span class="font-sans text-[9px] uppercase tracking-[0.25em] text-nord-gold/80 font-semibold leading-none">
+          GRILL HOUSE
+        </span>
+      </div>
     </a>
 
-    <!-- Desktop Navigation Links -->
+    <!-- Desktop Navigation Links (4 core links for focus) -->
     <nav class="hidden md:flex items-center gap-7 lg:gap-8">
       <a 
-        href="#" 
-        (click)="scrollToSection('experiencia', $event)"
-        class="font-sans text-xs font-semibold uppercase tracking-wider text-nord-cream/75 hover:text-nord-gold transition-colors duration-300 py-2 cursor-pointer"
-      >
-        Experiencia
-      </a>
-      <a 
-        href="#" 
+        href="#destacados" 
         (click)="scrollToSection('destacados', $event)"
         class="font-sans text-xs font-semibold uppercase tracking-wider text-nord-cream/75 hover:text-nord-gold transition-colors duration-300 py-2 cursor-pointer"
       >
-        Destacados
+        Favoritos
       </a>
       <a 
-        href="#" 
-        (click)="scrollToSection('porque', $event)"
+        routerLink="/menu"
         class="font-sans text-xs font-semibold uppercase tracking-wider text-nord-cream/75 hover:text-nord-gold transition-colors duration-300 py-2 cursor-pointer"
       >
-        Por qué
+        Menú
       </a>
       <a 
-        href="#" 
+        href="#historia" 
         (click)="scrollToSection('historia', $event)"
         class="font-sans text-xs font-semibold uppercase tracking-wider text-nord-cream/75 hover:text-nord-gold transition-colors duration-300 py-2 cursor-pointer"
       >
         Historia
       </a>
       <a 
-        href="#" 
-        (click)="scrollToSection('galeria', $event)"
-        class="font-sans text-xs font-semibold uppercase tracking-wider text-nord-cream/75 hover:text-nord-gold transition-colors duration-300 py-2 cursor-pointer"
-      >
-        Galería
-      </a>
-      <a 
-        href="#" 
+        href="#ubicacion" 
         (click)="scrollToSection('ubicacion', $event)"
         class="font-sans text-xs font-semibold uppercase tracking-wider text-nord-cream/75 hover:text-nord-gold transition-colors duration-300 py-2 cursor-pointer"
       >
@@ -66,16 +59,16 @@
     <div class="hidden md:block">
       <a 
         routerLink="/menu"
-        class="inline-flex items-center justify-center min-h-[40px] px-5 py-2 bg-nord-ember hover:bg-nord-ember/90 text-nord-cream font-sans font-semibold text-xs rounded-lg shadow-md hover:shadow-nord-ember/25 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 cursor-pointer"
+        class="inline-flex items-center justify-center min-h-[42px] px-6 py-2.5 bg-nord-fire hover:bg-nord-fire/90 text-nord-cream font-sans font-bold text-xs uppercase tracking-wider rounded-xl shadow-[0_0_20px_rgba(255,106,0,0.35)] border border-nord-gold/30 hover:shadow-[0_0_28px_rgba(255,106,0,0.6)] transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 cursor-pointer"
       >
-        🍽️ Ver Menú
+        🔥 Ordenar Ahora
       </a>
     </div>
 
     <!-- Mobile Menu Button (min 44x44px touch target) -->
     <button 
       (click)="toggleMobileMenu()"
-      class="md:hidden min-w-[44px] min-h-[44px] p-2.5 flex items-center justify-center rounded-xl bg-nord-charcoal/50 border border-nord-gold/15 text-nord-cream hover:text-nord-gold active:bg-nord-charcoal transition-colors cursor-pointer"
+      class="md:hidden min-w-[44px] min-h-[44px] p-2.5 flex items-center justify-center rounded-xl bg-nord-charcoal/80 border border-nord-gold/20 text-nord-cream hover:text-nord-gold active:bg-nord-charcoal transition-colors cursor-pointer"
       aria-label="Menú móvil"
     >
       @if (mobileMenuOpen()) {
@@ -92,57 +85,43 @@
 
   <!-- Mobile Dropdown Navigation Drawer -->
   @if (mobileMenuOpen()) {
-    <div class="md:hidden absolute top-full left-0 w-full bg-nord-dark/98 border-b border-nord-gold/15 backdrop-blur-2xl py-6 px-6 shadow-2xl transition-all duration-300 animate-fade-in max-h-[85vh] overflow-y-auto">
+    <div class="md:hidden absolute top-full left-0 w-full bg-nord-dark/98 border-b border-nord-border backdrop-blur-2xl py-6 px-6 shadow-2xl transition-all duration-300 animate-fade-in max-h-[85vh] overflow-y-auto">
       <div class="flex flex-col items-center gap-2 max-w-sm mx-auto">
         <a 
-          href="#" 
-          (click)="scrollToSection('experiencia', $event)"
-          class="w-full min-h-[48px] flex items-center justify-center font-sans text-sm font-semibold uppercase tracking-wider text-nord-cream/90 hover:text-nord-gold active:bg-nord-charcoal/50 rounded-xl transition-colors duration-200 cursor-pointer"
-        >
-          Experiencia
-        </a>
-        <a 
-          href="#" 
+          href="#destacados" 
           (click)="scrollToSection('destacados', $event)"
           class="w-full min-h-[48px] flex items-center justify-center font-sans text-sm font-semibold uppercase tracking-wider text-nord-cream/90 hover:text-nord-gold active:bg-nord-charcoal/50 rounded-xl transition-colors duration-200 cursor-pointer"
         >
-          Destacados
+          Favoritos
         </a>
         <a 
-          href="#" 
-          (click)="scrollToSection('porque', $event)"
+          routerLink="/menu"
+          (click)="mobileMenuOpen.set(false)"
           class="w-full min-h-[48px] flex items-center justify-center font-sans text-sm font-semibold uppercase tracking-wider text-nord-cream/90 hover:text-nord-gold active:bg-nord-charcoal/50 rounded-xl transition-colors duration-200 cursor-pointer"
         >
-          Por qué
+          Menú
         </a>
         <a 
-          href="#" 
+          href="#historia" 
           (click)="scrollToSection('historia', $event)"
           class="w-full min-h-[48px] flex items-center justify-center font-sans text-sm font-semibold uppercase tracking-wider text-nord-cream/90 hover:text-nord-gold active:bg-nord-charcoal/50 rounded-xl transition-colors duration-200 cursor-pointer"
         >
           Historia
         </a>
         <a 
-          href="#" 
-          (click)="scrollToSection('galeria', $event)"
-          class="w-full min-h-[48px] flex items-center justify-center font-sans text-sm font-semibold uppercase tracking-wider text-nord-cream/90 hover:text-nord-gold active:bg-nord-charcoal/50 rounded-xl transition-colors duration-200 cursor-pointer"
-        >
-          Galería
-        </a>
-        <a 
-          href="#" 
+          href="#ubicacion" 
           (click)="scrollToSection('ubicacion', $event)"
           class="w-full min-h-[48px] flex items-center justify-center font-sans text-sm font-semibold uppercase tracking-wider text-nord-cream/90 hover:text-nord-gold active:bg-nord-charcoal/50 rounded-xl transition-colors duration-200 cursor-pointer"
         >
           Ubicación
         </a>
-        <div class="w-full pt-3 mt-1 border-t border-nord-gold/10 flex justify-center">
+        <div class="w-full pt-4 mt-2 border-t border-nord-border flex justify-center">
           <a 
             routerLink="/menu"
             (click)="mobileMenuOpen.set(false)"
-            class="w-full min-h-[48px] flex items-center justify-center px-8 py-3.5 bg-nord-ember hover:bg-nord-ember/90 text-nord-cream font-sans font-bold text-sm rounded-xl shadow-lg hover:shadow-nord-ember/25 transition-all duration-300 cursor-pointer active:scale-95"
+            class="w-full min-h-[48px] flex items-center justify-center px-8 py-3.5 bg-nord-fire hover:bg-nord-fire/90 text-nord-cream font-sans font-bold text-sm uppercase tracking-wider rounded-xl shadow-[0_0_22px_rgba(255,106,0,0.45)] border border-nord-gold/30 transition-all duration-300 cursor-pointer active:scale-95"
           >
-            🍽️ Ver Menú Completo
+            🔥 Ordenar Ahora
           </a>
         </div>
       </div>
@@ -150,30 +129,19 @@
   }
 </header>
 
-<!-- Sections in Reordered Flow -->
+<!-- Sections in Reordered Flow (Desire & Conversion First) -->
 <app-hero-section></app-hero-section>
-<app-experience-section id="experiencia"></app-experience-section>
 <app-featured-section id="destacados"></app-featured-section>
-<app-why-us-section id="porque"></app-why-us-section>
+<app-menu-categories-section id="categorias"></app-menu-categories-section>
+<app-experience-section id="experiencia"></app-experience-section>
 <app-about-section id="historia"></app-about-section>
-<app-stats-section></app-stats-section>
 <app-gallery-section id="galeria" (selectImage)="openLightbox($event)"></app-gallery-section>
 <app-testimonials-section></app-testimonials-section>
-<app-values-section></app-values-section>
 <app-location-section id="ubicacion"></app-location-section>
 <app-cta-section></app-cta-section>
 
-<!-- Floating Mobile CTA (safe-area aware bottom-right on scroll) -->
-@if (showFloatingCta()) {
-  <div class="md:hidden fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom,0px))] right-4 z-40 transition-all duration-300 animate-bounce-down">
-    <a 
-      routerLink="/menu"
-      class="flex items-center justify-center gap-2 min-h-[48px] px-5 py-3 bg-nord-ember text-nord-cream font-sans font-bold text-sm rounded-full shadow-[0_4px_22px_rgba(217,119,6,0.45)] border border-nord-gold/30 cursor-pointer active:scale-95"
-    >
-      🍽️ Ver Menú
-    </a>
-  </div>
-}
+<!-- Mobile Bottom Bar (Sticky Conversion Bar for Smartphones) -->
+<app-mobile-actions></app-mobile-actions>
 
 <!-- Lightbox Modal Fullscreen -->
 @if (activeImageIndex() !== null) {
@@ -188,7 +156,7 @@
       </span>
       <button 
         (click)="closeLightbox()"
-        class="min-w-[44px] min-h-[44px] w-11 h-11 rounded-full bg-nord-charcoal border border-nord-gold/20 text-nord-cream hover:text-nord-gold active:scale-95 flex items-center justify-center font-bold text-lg cursor-pointer shrink-0"
+        class="min-w-[44px] min-h-[44px] w-11 h-11 rounded-full bg-nord-charcoal border border-nord-border text-nord-cream hover:text-nord-gold active:scale-95 flex items-center justify-center font-bold text-lg cursor-pointer shrink-0 focus:outline-none focus:ring-2 focus:ring-nord-gold"
         aria-label="Cerrar modal"
       >
         ✕
@@ -200,7 +168,7 @@
       <!-- Prev Button -->
       <button 
         (click)="prevImage($event)"
-        class="absolute left-2 sm:left-4 md:-left-14 min-w-[44px] min-h-[44px] w-11 h-11 md:w-12 md:h-12 rounded-full border border-nord-gold/20 bg-nord-charcoal/80 text-nord-gold hover:bg-nord-ember hover:text-nord-cream active:scale-95 flex items-center justify-center transition-all duration-300 cursor-pointer z-10 shadow-lg backdrop-blur-sm"
+        class="absolute left-2 sm:left-4 md:-left-14 min-w-[44px] min-h-[44px] w-11 h-11 md:w-12 md:h-12 rounded-full border border-nord-border bg-nord-charcoal/80 text-nord-gold hover:bg-nord-fire hover:text-nord-cream active:scale-95 flex items-center justify-center transition-all duration-300 cursor-pointer z-10 shadow-lg backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-nord-gold"
         aria-label="Imagen anterior"
       >
         ❮
@@ -210,13 +178,13 @@
       <img 
         [src]="images[activeImageIndex()!].url" 
         [alt]="images[activeImageIndex()!].title" 
-        class="max-w-[90vw] max-h-[72dvh] object-contain rounded-xl border border-nord-gold/10 shadow-2xl animate-scale-up"
+        class="max-w-[90vw] max-h-[72dvh] object-contain rounded-xl border border-nord-border shadow-2xl animate-scale-up"
       />
 
       <!-- Next Button -->
       <button 
         (click)="nextImage($event)"
-        class="absolute right-2 sm:right-4 md:-right-14 min-w-[44px] min-h-[44px] w-11 h-11 md:w-12 md:h-12 rounded-full border border-nord-gold/20 bg-nord-charcoal/80 text-nord-gold hover:bg-nord-ember hover:text-nord-cream active:scale-95 flex items-center justify-center transition-all duration-300 cursor-pointer z-10 shadow-lg backdrop-blur-sm"
+        class="absolute right-2 sm:right-4 md:-right-14 min-w-[44px] min-h-[44px] w-11 h-11 md:w-12 md:h-12 rounded-full border border-nord-border bg-nord-charcoal/80 text-nord-gold hover:bg-nord-fire hover:text-nord-cream active:scale-95 flex items-center justify-center transition-all duration-300 cursor-pointer z-10 shadow-lg backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-nord-gold"
         aria-label="Siguiente imagen"
       >
         ❯
@@ -231,23 +199,23 @@
 }
 
 <!-- Commercial Premium Footer -->
-<footer class="bg-nord-dark text-nord-cream/50 py-14 sm:py-16 border-t border-nord-gold/10">
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 sm:gap-12 mb-12">
+<footer class="bg-nord-dark text-nord-cream/50 py-8 sm:py-10 border-t border-nord-border">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-6 sm:mb-8">
     <!-- Brand column -->
     <div>
-      <div class="flex items-center gap-2.5 mb-5">
-        <img src="assets/logo/logo 2 nordicos.jpg" alt="Nórdicos Icon" class="h-9 w-auto object-contain rounded-xl border border-nord-gold/15" />
+      <div class="flex items-center gap-2.5 mb-3 sm:mb-4">
+        <img src="assets/logo/logo 2 nordicos.jpg" alt="Nórdicos Grill House" width="36" height="36" class="h-9 w-9 object-cover rounded-full border border-nord-border shadow-md" />
         <span class="font-serif text-sm font-bold text-nord-cream tracking-widest uppercase">Nórdicos</span>
       </div>
-      <p class="font-sans text-xs leading-relaxed text-nord-cream-muted mb-6">
+      <p class="font-sans text-xs leading-relaxed text-nord-cream-muted mb-4 sm:mb-5">
         Hamburguesas artesanales y cortes de autor asados a la leña. Tradición y fuego real en Oaxaca.
       </p>
       <div class="flex gap-4">
         <!-- Social links with min-h 44px touch targets -->
-        <a href="https://www.facebook.com/nordicosgrillhose" target="_blank" rel="noopener noreferrer" class="min-h-[44px] inline-flex items-center text-nord-cream/70 hover:text-nord-gold transition-colors duration-300 text-xs gap-1.5 cursor-pointer">
+        <a href="https://www.facebook.com/nordicosgrillhose" target="_blank" rel="noopener noreferrer" class="min-h-[44px] inline-flex items-center text-nord-cream/70 hover:text-nord-gold transition-colors duration-300 text-xs gap-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-nord-gold/50 rounded-lg px-1">
           📘 Facebook
         </a>
-        <a href="https://www.instagram.com/nordicos.grillhouse" target="_blank" rel="noopener noreferrer" class="min-h-[44px] inline-flex items-center text-nord-cream/70 hover:text-nord-gold transition-colors duration-300 text-xs gap-1.5 cursor-pointer">
+        <a href="https://www.instagram.com/nordicos.grillhouse" target="_blank" rel="noopener noreferrer" class="min-h-[44px] inline-flex items-center text-nord-cream/70 hover:text-nord-gold transition-colors duration-300 text-xs gap-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-nord-gold/50 rounded-lg px-1">
           📸 Instagram
         </a>
       </div>
@@ -255,38 +223,38 @@
 
     <!-- Quick Links column -->
     <div>
-      <h4 class="font-serif text-sm font-bold text-nord-cream uppercase tracking-wider mb-5">Explorar</h4>
-      <ul class="space-y-2.5 text-xs font-sans">
+      <h4 class="font-serif text-sm font-bold text-nord-cream uppercase tracking-wider mb-3 sm:mb-4">Explorar</h4>
+      <ul class="space-y-1 text-xs font-sans">
         <li>
-          <a href="#" (click)="scrollToSection('experiencia', $event)" class="min-h-[36px] inline-flex items-center hover:text-nord-gold transition-colors duration-300 cursor-pointer">Experiencia</a>
+          <a href="#" (click)="scrollToSection('experiencia', $event)" class="min-h-[36px] sm:min-h-[40px] inline-flex items-center hover:text-nord-gold transition-colors duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-nord-gold/50 rounded-lg px-1">Experiencia</a>
         </li>
         <li>
-          <a href="#" (click)="scrollToSection('destacados', $event)" class="min-h-[36px] inline-flex items-center hover:text-nord-gold transition-colors duration-300 cursor-pointer">Destacados</a>
+          <a href="#" (click)="scrollToSection('destacados', $event)" class="min-h-[36px] sm:min-h-[40px] inline-flex items-center hover:text-nord-gold transition-colors duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-nord-gold/50 rounded-lg px-1">Destacados</a>
         </li>
         <li>
-          <a routerLink="/menu" class="min-h-[36px] inline-flex items-center hover:text-nord-gold transition-colors duration-300 cursor-pointer">Carta Completa</a>
+          <a routerLink="/menu" class="min-h-[36px] sm:min-h-[40px] inline-flex items-center hover:text-nord-gold transition-colors duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-nord-gold/50 rounded-lg px-1">Carta Completa</a>
         </li>
         <li>
-          <a routerLink="/auth/log-in" class="min-h-[36px] inline-flex items-center hover:text-nord-gold transition-colors duration-300 cursor-pointer">Acceso POS</a>
+          <a routerLink="/auth/log-in" class="min-h-[36px] sm:min-h-[40px] inline-flex items-center hover:text-nord-gold transition-colors duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-nord-gold/50 rounded-lg px-1">Acceso POS</a>
         </li>
       </ul>
     </div>
 
     <!-- Contact & Reserves column -->
     <div>
-      <h4 class="font-serif text-sm font-bold text-nord-cream uppercase tracking-wider mb-5">Reservar ahora</h4>
-      <ul class="space-y-3 text-xs font-sans">
+      <h4 class="font-serif text-sm font-bold text-nord-cream uppercase tracking-wider mb-3 sm:mb-4">Reservar ahora</h4>
+      <ul class="space-y-1.5 text-xs font-sans">
         <li>
-          <a href="tel:+529512224034" class="min-h-[36px] inline-flex items-center gap-2 hover:text-nord-gold transition-colors duration-300 cursor-pointer">
+          <a href="tel:+529512224034" class="min-h-[36px] sm:min-h-[40px] inline-flex items-center gap-2 hover:text-nord-gold transition-colors duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-nord-gold/50 rounded-lg px-1">
             <span>📞</span> <span>+52 1 951 222 4034</span>
           </a>
         </li>
         <li>
-          <a href="https://wa.me/5219512224034" target="_blank" rel="noopener noreferrer" class="min-h-[36px] inline-flex items-center gap-2 hover:text-nord-gold transition-colors duration-300 cursor-pointer">
+          <a href="https://wa.me/5219512224034" target="_blank" rel="noopener noreferrer" class="min-h-[36px] sm:min-h-[40px] inline-flex items-center gap-2 hover:text-nord-gold transition-colors duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-nord-gold/50 rounded-lg px-1">
             <span>💬</span> <span>Escribir por WhatsApp</span>
           </a>
         </li>
-        <li class="flex items-start gap-2 pt-1">
+        <li class="flex items-start gap-2 pt-1 text-nord-cream/70">
           <span class="mt-0.5">📍</span> <span class="leading-relaxed">C. Zaragoza 26, Barrio de la Soledad, San Pablo Huixtepec.</span>
         </li>
       </ul>
@@ -294,22 +262,22 @@
 
     <!-- Hours column -->
     <div>
-      <h4 class="font-serif text-sm font-bold text-nord-cream uppercase tracking-wider mb-5">Horarios de servicio</h4>
-      <ul class="space-y-3 text-xs font-sans">
+      <h4 class="font-serif text-sm font-bold text-nord-cream uppercase tracking-wider mb-3 sm:mb-4">Horarios de servicio</h4>
+      <ul class="space-y-2 text-xs font-sans">
         <li class="leading-relaxed">
           Jueves a Domingo: <br/>
           <span class="text-nord-cream font-semibold">7:00 PM - 10:00 PM</span>
         </li>
         <li class="leading-relaxed text-nord-cream/40">
           Lunes a Miércoles: <br/>
-          <span class="text-nord-ember font-medium">Cerrado</span> (Preparación)
+          <span class="text-nord-fire font-medium">Cerrado</span> (Preparación)
         </li>
       </ul>
     </div>
   </div>
 
   <!-- Bottom copyrights -->
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 border-t border-nord-gold/10 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-sans text-nord-cream/40 text-center sm:text-left">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 border-t border-nord-border pt-4 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs font-sans text-nord-cream/40 text-center sm:text-left">
     <div>
       &copy; 2026 Nórdicos Grill House. Todos los derechos reservados.
     </div>

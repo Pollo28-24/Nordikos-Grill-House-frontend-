@@ -13,7 +13,8 @@ import { ProductCard } from './components/product-card/product-card';
 import { ProductDetailModal } from './components/product-detail-modal/product-detail-modal';
 import { PublicCheckout } from './components/public-checkout/public-checkout';
 import { PublicOrdersModal } from './components/public-orders-modal/public-orders-modal';
-import { Product } from '@core/models/product.model';
+import { Product, CartCustomization } from '@core/models/product.model';
+import { ActivatedRoute } from '@angular/router';
 import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
 import { ClientOrdersService } from '@core/services/client-orders.service';
 
@@ -42,6 +43,7 @@ export class PublicMenu implements OnInit {
   public clientOrdersService = inject(ClientOrdersService);
   private meta = inject(Meta);
   private title = inject(Title);
+  private route = inject(ActivatedRoute);
 
   // Categories and Products from services
   categories = this.categoriesService.visibleCategories;
@@ -68,7 +70,7 @@ export class PublicMenu implements OnInit {
     const query = (this.searchQuery() || '').toLowerCase().trim();
 
     if (categoryId) {
-      items = items.filter(p => p.categoria_id === categoryId);
+      items = items.filter(p => p.categoria_id != null && String(p.categoria_id) === String(categoryId));
     }
 
     if (query) {
@@ -86,6 +88,13 @@ export class PublicMenu implements OnInit {
 
   ngOnInit() {
     this.setMetaTags();
+    
+    // Escuchamos reactivamente los queryParams para sincronizar la categoría seleccionada
+    this.route.queryParamMap.subscribe(params => {
+      const catParam = params.get('categoria');
+      this.selectedCategoryId.set(catParam ? String(catParam) : null);
+    });
+
     // Force a reload when visiting the public menu to ensure fresh data
     this.categoriesService.reload();
     this.productsService.reload();
@@ -98,14 +107,19 @@ export class PublicMenu implements OnInit {
       { name: 'description', content: 'Explora nuestro delicioso menú de Nórdicos Grill House. Hamburguesas, cortes y más con el sabor que te transporta al norte.' },
       { property: 'og:title', content: 'Nórdicos Grill House - Menú Digital' },
       { property: 'og:description', content: 'Sabor que te transporta al norte. Consulta nuestros platillos y precios en línea.' },
-      { property: 'og:image', content: 'https://nordikos-grill-house-frontend.vercel.app/assets/logo/header.webp' },
+      { property: 'og:image', content: 'https://nordikos-grill-house-frontend.vercel.app/assets/header/fondo.jpg' },
+      { property: 'og:image:secure_url', content: 'https://nordikos-grill-house-frontend.vercel.app/assets/header/fondo.jpg' },
+      { property: 'og:image:type', content: 'image/jpeg' },
+      { property: 'og:image:width', content: '1080' },
+      { property: 'og:image:height', content: '608' },
+      { name: 'twitter:image', content: 'https://nordikos-grill-house-frontend.vercel.app/assets/header/fondo.jpg' },
       { property: 'og:url', content: 'https://nordikos-grill-house-frontend.vercel.app/menu' },
       { name: 'twitter:card', content: 'summary_large_image' }
     ]);
   }
 
-  selectCategory(id: string | null) {
-    this.selectedCategoryId.set(id);
+  selectCategory(id: string | number | null) {
+    this.selectedCategoryId.set(id != null ? String(id) : null);
   }
 
   getProductQuantity(productId: string): number {
@@ -121,7 +135,7 @@ export class PublicMenu implements OnInit {
 
 
   getProductsByCategory(categoryId: string | number): Product[] {
-    return this.filteredProducts().filter(p => p.categoria_id === categoryId);
+    return this.filteredProducts().filter(p => p.categoria_id != null && String(p.categoria_id) === String(categoryId));
   }
 
   addFromCard(product: Product) {
@@ -129,29 +143,10 @@ export class PublicMenu implements OnInit {
     this.triggerCartAnimation(product.id);
   }
 
-  addFromModal(event: { product: Product, quantity: number, variants: Record<string, number>, note: string }) {
-    const { product, quantity, variants, note } = event;
-    let addedAny = false;
-
-    if (product.price_type === 'variants' || (product.variants && product.variants.length > 0)) {
-      product.variants?.forEach(v => {
-        const qty = variants[v.id] || 0;
-        for (let i = 0; i < qty; i++) {
-          this.cartService.addToCart(product, v, 1, note);
-          addedAny = true;
-        }
-      });
-    } else {
-      for (let i = 0; i < quantity; i++) {
-        this.cartService.addToCart(product, undefined, 1, note);
-        addedAny = true;
-      }
-    }
-
-    if (addedAny) {
-      this.triggerCartAnimation(product.id);
-      setTimeout(() => this.closeProductDetail(), 500);
-    }
+  addFromModal(customization: CartCustomization) {
+    this.cartService.addCustomizedProduct(customization);
+    this.triggerCartAnimation(String(customization.product.id));
+    setTimeout(() => this.closeProductDetail(), 500);
   }
 
   triggerCartAnimation(productId: string) {

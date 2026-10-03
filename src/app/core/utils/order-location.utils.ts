@@ -1,23 +1,30 @@
 import { OrderRequestLocation } from '@core/models/order.model';
 
-const META_LOCATION_REGEX = /\[meta:(\{.*?\})\]/;
+const META_JSON_REGEX = /\[meta:(\{.*?\})\]/;
 
 export interface ParsedOrderNote {
   cleanNote: string | null;
   location: OrderRequestLocation | null;
 }
 
+export interface ParsedOrderMetadata {
+  cleanNote: string | null;
+  location: OrderRequestLocation | null;
+  paymentMethod: string | null;
+}
+
 /**
- * Parses structured JSON metadata (like GPS coordinates) embedded in nota_general,
- * returning the clean human note and the extracted location object.
+ * Parses structured JSON metadata (location, payment method, etc.) embedded in nota_general,
+ * returning clean human note, extracted GPS location, and chosen payment method.
  */
-export function parseLocationMetadata(note: string | null | undefined): ParsedOrderNote {
+export function parseOrderMetadata(note: string | null | undefined): ParsedOrderMetadata {
   if (!note || typeof note !== 'string') {
-    return { cleanNote: null, location: null };
+    return { cleanNote: null, location: null, paymentMethod: null };
   }
 
-  const match = note.match(META_LOCATION_REGEX);
+  const match = note.match(META_JSON_REGEX);
   let location: OrderRequestLocation | null = null;
+  let paymentMethod: string | null = null;
 
   if (match && match[1]) {
     try {
@@ -29,13 +36,26 @@ export function parseLocationMetadata(note: string | null | undefined): ParsedOr
           accuracy: typeof parsed.location.accuracy === 'number' ? parsed.location.accuracy : undefined,
         };
       }
+      if (parsed?.payment_method && typeof parsed.payment_method === 'string') {
+        paymentMethod = parsed.payment_method;
+      }
     } catch {
       // Ignore JSON parse errors gracefully
     }
   }
 
-  const cleanNote = note.replace(META_LOCATION_REGEX, '').trim() || null;
-  return { cleanNote, location };
+  const cleanNote = note.replace(META_JSON_REGEX, '').trim() || null;
+  return { cleanNote, location, paymentMethod };
+}
+
+/**
+ * Parses structured JSON metadata (like GPS coordinates) embedded in nota_general,
+ * returning the clean human note and the extracted location object.
+ * Maintained for backward compatibility.
+ */
+export function parseLocationMetadata(note: string | null | undefined): ParsedOrderNote {
+  const meta = parseOrderMetadata(note);
+  return { cleanNote: meta.cleanNote, location: meta.location };
 }
 
 /**
@@ -66,11 +86,12 @@ export function getDeliveryWhatsAppShareUrl(options: {
   clientName?: string | null;
   phone?: string | null;
   address?: string | null;
+  references?: string | null;
   location?: OrderRequestLocation | null;
   note?: string | null;
   total?: number | null;
 }): string {
-  const { orderCode, clientName, phone, address, location, note, total } = options;
+  const { orderCode, clientName, phone, address, references, location, note, total } = options;
   const mapsUrl = getGoogleMapsUrl(location, address);
 
   const lines: string[] = [
@@ -88,6 +109,10 @@ export function getDeliveryWhatsAppShareUrl(options: {
 
   if (address?.trim()) {
     lines.push(`📍 *Dirección:* ${address.trim()}`);
+  }
+
+  if (references?.trim()) {
+    lines.push(`📝 *Referencias:* ${references.trim()}`);
   }
 
   if (mapsUrl) {

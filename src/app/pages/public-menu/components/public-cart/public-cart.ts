@@ -1,10 +1,11 @@
-import { Component, input, output, inject } from '@angular/core';
+import { Component, input, output, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { CartItem } from '@core/services/public-cart.service';
 import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
 import { ClientOrdersService } from '@core/services/client-orders.service';
+import { OverlayLockService } from '@core/services/overlay-lock.service';
 
 @Component({
   selector: 'app-public-cart',
@@ -18,8 +19,9 @@ import { ClientOrdersService } from '@core/services/client-orders.service';
     }
   `]
 })
-export class PublicCart {
+export class PublicCart implements OnInit, OnDestroy {
   readonly clientOrdersService = inject(ClientOrdersService);
+  private overlayLock = inject(OverlayLockService);
 
   items     = input<CartItem[]>([]);
   total     = input<number>(0);
@@ -31,4 +33,12 @@ export class PublicCart {
   checkout       = output<void>();
   notaChange     = output<{ id: string; nota: string }>();
   viewOrders     = output<void>();
+
+  ngOnInit(): void {
+    this.overlayLock.lock();
+  }
+
+  ngOnDestroy(): void {
+    this.overlayLock.unlock();
+  }
 }

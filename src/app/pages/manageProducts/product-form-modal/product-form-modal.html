@@ -216,13 +216,17 @@
           <button
             type="button"
             (click)="setPriceMode('simple')"
-            class="flex-1 sm:flex-initial h-10 px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center cursor-pointer"
+            class="flex-1 sm:flex-initial h-10 px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             [class.bg-[#FFB300]]="priceMode() === 'simple'"
             [class.text-[#121212]]="priceMode() === 'simple'"
             [class.shadow-md]="priceMode() === 'simple'"
             [class.text-zinc-400]="priceMode() !== 'simple'"
-            [class.hover:text-white]="priceMode() !== 'simple'">
-            Simple
+            [class.hover:text-white]="priceMode() !== 'simple'"
+            [class.opacity-60]="isEditMode() && priceMode() === 'variant' && !canConvertToSimple()">
+            @if (isEditMode() && priceMode() === 'variant' && !canConvertToSimple()) {
+              <lucide-icon name="lock" class="w-3.5 h-3.5"></lucide-icon>
+            }
+            <span>Simple</span>
           </button>
           <button
             type="button"
@@ -247,6 +251,14 @@
           </button>
         </div>
       </div>
+
+      <!-- BANNER DE ESQUEMA PROTEGIDO POR HISTORIAL -->
+      @if (isEditMode() && priceMode() === 'variant' && !canConvertToSimple()) {
+        <div class="flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300/90 text-xs font-medium animate-in fade-in duration-200">
+          <lucide-icon name="lock" class="w-4 h-4 shrink-0 text-[#FFB300]"></lucide-icon>
+          <span>🔒 No se puede cambiar porque existen variantes utilizadas en pedidos históricos.</span>
+        </div>
+      }
 
       <!-- MODO SIMPLE: GRILLA EQUILIBRADA (2 COLS DESKTOP / 1 COL MOBILE) -->
       @if (priceMode() === 'simple') {

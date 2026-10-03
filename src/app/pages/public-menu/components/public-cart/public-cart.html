@@ -1,8 +1,8 @@
-<div class="fixed inset-0 z-50 flex justify-end">
+<div class="fixed inset-0 z-50 flex justify-end overscroll-contain">
   
-  <!-- Backdrop con fade suave -->
+  <!-- Backdrop con fade suave y aislamiento táctil -->
   <div 
-    class="absolute inset-0 cart-backdrop transition-opacity duration-300"
+    class="absolute inset-0 cart-backdrop transition-opacity duration-300 touch-none"
     (click)="close.emit()"
   ></div>
 
@@ -116,13 +116,32 @@
                   </span>
                 }
 
+                <!-- Extras / Modificadores Seleccionados -->
+                @if (item.modificadores && item.modificadores.length > 0) {
+                  <div class="flex flex-wrap gap-1 mt-1 mb-1.5">
+                    @for (m of item.modificadores; track m.nombre_modificador) {
+                      <span class="inline-flex items-center text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/70 px-1.5 py-0.5 rounded-md">
+                        + {{ m.nombre_modificador }}@if (m.cantidad > 1) { x{{ m.cantidad }} }
+                        @if (m.precio_unitario && m.precio_unitario > 0) {
+                          <span class="ml-1 text-emerald-600 font-semibold">({{ (m.precio_unitario * m.cantidad) | currencyMxn }})</span>
+                        }
+                      </span>
+                    }
+                  </div>
+                }
+
                 <!-- Price -->
                 <div class="flex items-baseline gap-1.5 mt-0.5">
                   @if (item.descuento && item.descuento > 0 && item.precio_original) {
-                    <span class="text-xs font-black text-orange-600 tabular-nums">{{ item.precio | currencyMxn }}</span>
+                    <span class="text-xs font-black text-orange-600 tabular-nums">{{ item.precio_total_unitario | currencyMxn }}</span>
                     <del class="text-[10px] text-gray-400 font-medium tabular-nums">{{ item.precio_original | currencyMxn }}</del>
                   } @else {
-                    <span class="text-xs font-black text-gray-900 tabular-nums">{{ item.precio | currencyMxn }}</span>
+                    <span class="text-xs font-black text-gray-900 tabular-nums">{{ item.precio_total_unitario | currencyMxn }}</span>
+                  }
+                  @if (item.precio_modificadores && item.precio_modificadores > 0) {
+                    <span class="text-[10px] text-gray-500 font-medium">
+                      (Base: {{ item.precio_base | currencyMxn }})
+                    </span>
                   }
                 </div>
 

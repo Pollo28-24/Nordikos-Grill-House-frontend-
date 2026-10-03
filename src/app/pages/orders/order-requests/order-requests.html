@@ -177,12 +177,17 @@
                     </span>
                   }
                 </div>
-                @if (req.direccion_entrega || getRequestLocation(req)) {
+                @if (getCleanDeliveryAddress(req) || getRequestLocation(req)) {
                   <div class="border-t border-white/5 pt-2 mt-2 space-y-2">
                     <div class="flex items-start gap-2 text-[11px] text-zinc-300">
                       <lucide-icon name="map-pin" class="w-3.5 h-3.5 text-orange-500 shrink-0 mt-0.5"></lucide-icon>
                       <div class="flex-1 min-w-0">
-                        <span class="font-medium text-zinc-300 leading-snug">{{ req.direccion_entrega || 'Ubicación GPS registrada' }}</span>
+                        <span class="font-medium text-zinc-300 leading-snug">{{ getCleanDeliveryAddress(req) || 'Ubicación GPS registrada' }}</span>
+                        @if (getDeliveryReferences(req); as ref) {
+                          <span class="block text-[10px] text-amber-300 font-medium mt-1">
+                            <span class="font-bold text-amber-400/90">📝 Ref:</span> {{ ref }}
+                          </span>
+                        }
                         @if (getRequestLocation(req); as loc) {
                           <span class="block text-[10px] text-emerald-400 font-medium mt-0.5">
                             📍 GPS: {{ loc.latitude | number:'1.4-4' }}, {{ loc.longitude | number:'1.4-4' }}
@@ -230,8 +235,20 @@
                       <p class="font-bold text-zinc-200">
                         {{ item.cantidad }}x {{ item.nombre_producto }}
                       </p>
+                      @if (item.order_request_item_modificadores && item.order_request_item_modificadores.length > 0) {
+                        <div class="mt-1 flex flex-wrap gap-1">
+                          @for (m of item.order_request_item_modificadores; track m.id) {
+                            <span class="inline-flex items-center text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                              ✓ {{ m.nombre_modificador }}@if (m.cantidad > 1) { x{{ m.cantidad }} }
+                              @if (m.precio_unitario > 0) {
+                                <span class="ml-1 text-emerald-300 font-mono">({{ (m.precio_unitario * m.cantidad) | currencyMxn }})</span>
+                              }
+                            </span>
+                          }
+                        </div>
+                      }
                       @if (item.nota) {
-                        <p class="text-[10px] text-orange-400 font-medium italic">
+                        <p class="text-[10px] text-orange-400 font-medium italic mt-0.5">
                           Nota: "{{ item.nota }}"
                         </p>
                       }
@@ -262,6 +279,24 @@
 
             <!-- TOTAL AND ACTIONS -->
             <div class="border-t border-white/5 pt-4 mt-2">
+              <!-- MÉTODO DE PAGO DETECTADO -->
+              <div class="flex items-center justify-between mb-3 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/5">
+                <div class="flex items-center gap-1.5 text-zinc-400 text-xs">
+                  <lucide-icon name="credit-card" class="w-3.5 h-3.5 text-amber-500/80" />
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Pago:</span>
+                  <span class="text-xs font-bold text-zinc-200">{{ getPaymentMethodLabel(req) }}</span>
+                </div>
+                @if (req.estado === 'pending') {
+                  <button 
+                    (click)="openAcceptModalManually(req)" 
+                    class="text-[10px] text-amber-400 hover:text-amber-300 font-bold hover:underline transition cursor-pointer"
+                    title="Cambiar método de pago antes de aceptar"
+                  >
+                    Cambiar
+                  </button>
+                }
+              </div>
+
               <div class="flex items-center justify-between mb-4">
                 <span class="text-[11px] font-bold uppercase text-zinc-500">Monto Total</span>
                 <span class="text-lg font-extrabold text-[#FFB300]">

@@ -7,10 +7,9 @@ import { OrdersRequestsService, OrderRequest } from '@core/services/orders-reque
 import { ToastService } from '@core/services/toast.service';
 import { UserFeedbackService } from '@core/services/user-feedback.service';
 import { Navbar } from '@shared/components/navbar/navbar';
-import { SupabaseService } from '@shared/data-access/supabase.service';
 import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
-import { OrderRequestLocation } from '@core/models/order.model';
-import { parseLocationMetadata, getGoogleMapsUrl, getDeliveryWhatsAppShareUrl } from '@core/utils/order-location.utils';
+import { OrderRequestLocation, PaymentMethod } from '@core/models/order.model';
+import { parseLocationMetadata, parseOrderMetadata, getGoogleMapsUrl, getDeliveryWhatsAppShareUrl } from '@core/utils/order-location.utils';
 
 @Component({
   selector: 'app-order-requests-page',
@@ -22,14 +21,13 @@ export class OrderRequestsPage implements OnInit, OnDestroy {
   public requestsService = inject(OrdersRequestsService);
   private toastService = inject(ToastService);
   private feedback = inject(UserFeedbackService);
-  private supabase = inject(SupabaseService).client;
 
   // Local UI state
   activeTab = signal<'pending' | 'accepted' | 'rejected'>('pending');
   loadingCatalogs = signal(false);
 
   // Catalogs for accepting requests
-  paymentMethods = signal<any[]>([]);
+  paymentMethods = signal<PaymentMethod[]>([]);
 
   // Modals state
   isAcceptModalOpen = signal(false);
@@ -70,12 +68,8 @@ export class OrderRequestsPage implements OnInit, OnDestroy {
   async loadCatalogs() {
     try {
       this.loadingCatalogs.set(true);
-      const { data: pagos } = await this.supabase
-        .from('metodos_pago')
-        .select('id, nombre')
-        .order('id');
-
-      this.paymentMethods.set(pagos ?? []);
+      const pagos = await this.requestsService.getPaymentMethods();
+      this.paymentMethods.set(pagos);
 
       if (pagos && pagos.length > 0) {
         this.selectedPaymentMethodId.set(pagos[0].id);
@@ -95,10 +89,83 @@ export class OrderRequestsPage implements OnInit, OnDestroy {
     this.requestsService.loadRequests();
   }
 
-  // Acceptance modal trigger
-  triggerAccept(req: OrderRequest) {
+  // Helper to resolve payment method id from DB column or metadata
+  resolvePaymentMethodId(req: OrderRequest): number | null {
+    if (req.metodo_pago_id) {
+      return req.metodo_pago_id;
+    }
+
+    const meta = parseOrderMetadata(req.nota_general);
+    const code = (meta.paymentMethod || '').toLowerCase();
+    if (!code) return null;
+
+    const methods = this.paymentMethods();
+    if (!methods || methods.length === 0) return null;
+
+    if (code.includes('efectivo') || code === 'cash') {
+      const match = methods.find(m => m.nombre.toLowerCase().includes('efectivo'));
+      return match ? match.id : null;
+    }
+    if (code.includes('tarjeta') || code.includes('terminal') || code === 'card') {
+      const match = methods.find(m => m.nombre.toLowerCase().includes('tarjeta') || m.nombre.toLowerCase().includes('terminal'));
+      return match ? match.id : null;
+    }
+    if (code.includes('transferencia') || code.includes('spei') || code === 'transfer') {
+      const match = methods.find(m => m.nombre.toLowerCase().includes('transferencia') || m.nombre.toLowerCase().includes('spei'));
+      return match ? match.id : null;
+    }
+
+    return null;
+  }
+
+  getPaymentMethodLabel(req: OrderRequest): string {
+    if (req.metodos_pago?.nombre) {
+      return req.metodos_pago.nombre;
+    }
+    if (req.metodo_pago_id) {
+      const match = this.paymentMethods().find(m => m.id === req.metodo_pago_id);
+      if (match) return match.nombre;
+    }
+    const meta = parseOrderMetadata(req.nota_general);
+    if (meta.paymentMethod) {
+      const p = meta.paymentMethod.toLowerCase();
+      if (p.includes('efectivo') || p === 'cash') return 'Efectivo';
+      if (p.includes('tarjeta') || p.includes('terminal') || p === 'card') return 'Tarjeta';
+      if (p.includes('transferencia') || p.includes('spei') || p === 'transfer') return 'Transferencia';
+      return meta.paymentMethod;
+    }
+    return 'Por definir';
+  }
+
+  // Acceptance modal trigger (manual override)
+  openAcceptModalManually(req: OrderRequest) {
     this.selectedRequest.set(req);
+    const resolvedId = this.resolvePaymentMethodId(req);
+    if (resolvedId) {
+      this.selectedPaymentMethodId.set(resolvedId);
+    } else if (this.paymentMethods().length > 0) {
+      this.selectedPaymentMethodId.set(this.paymentMethods()[0].id);
+    }
     this.isAcceptModalOpen.set(true);
+  }
+
+  // 1-Click Acceptance or fallback to modal
+  async triggerAccept(req: OrderRequest) {
+    const payId = this.resolvePaymentMethodId(req);
+
+    if (payId) {
+      // 1-Click Acceptance: El cliente ya seleccionó método de pago válido
+      const res = await this.requestsService.acceptRequest(req.id, payId, null);
+      if (res.success) {
+        this.toastService.show(`Solicitud ${req.request_code} aceptada y convertida a Orden #${res.numero_orden}`, 'success');
+      } else {
+        this.toastService.show(res.error || 'Error al aceptar la solicitud', 'error');
+      }
+      return;
+    }
+
+    // Fallback: Si no tiene método de pago detectado (solicitud legacy), abrir modal
+    this.openAcceptModalManually(req);
   }
 
   closeAcceptModal() {
@@ -185,12 +252,42 @@ export class OrderRequestsPage implements OnInit, OnDestroy {
   }
 
   getRequestLocation(req: OrderRequest): OrderRequestLocation | null {
+    if (req.latitude !== null && req.latitude !== undefined && req.longitude !== null && req.longitude !== undefined) {
+      return {
+        latitude: Number(req.latitude),
+        longitude: Number(req.longitude),
+        accuracy: req.accuracy ? Number(req.accuracy) : undefined
+      };
+    }
     return parseLocationMetadata(req.nota_general).location;
+  }
+
+  getRawDeliveryAddress(req: OrderRequest): string | null {
+    return req.direccion_entrega || req.clientes?.direccion || null;
+  }
+
+  getCleanDeliveryAddress(req: OrderRequest): string | null {
+    const raw = this.getRawDeliveryAddress(req);
+    if (!raw) return null;
+    if (raw.includes('(Ref:')) {
+      return raw.replace(/\s*\(Ref:\s*[^)]+\)/i, '').trim();
+    }
+    return raw;
+  }
+
+  getDeliveryReferences(req: OrderRequest): string | null {
+    if (req.referencias?.trim()) return req.referencias.trim();
+    const raw = this.getRawDeliveryAddress(req);
+    if (raw && raw.includes('(Ref:')) {
+      const match = raw.match(/\(Ref:\s*([^)]+)\)/i);
+      return match ? match[1].trim() : null;
+    }
+    return null;
   }
 
   getMapsUrl(req: OrderRequest): string | null {
     const loc = this.getRequestLocation(req);
-    return getGoogleMapsUrl(loc, req.direccion_entrega);
+    return getGoogleMapsUrl(loc, this.getCleanDeliveryAddress(req));
   }
 
   getDeliveryWhatsAppUrl(req: OrderRequest): string {
@@ -200,7 +297,8 @@ export class OrderRequestsPage implements OnInit, OnDestroy {
       orderCode: req.request_code,
       clientName: req.clientes?.nombre,
       phone: req.clientes?.telefono,
-      address: req.direccion_entrega,
+      address: this.getCleanDeliveryAddress(req),
+      references: this.getDeliveryReferences(req),
       location: loc,
       note: cleanNote,
       total: req.total,

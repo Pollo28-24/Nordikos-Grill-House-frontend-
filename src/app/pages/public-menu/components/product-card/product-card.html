@@ -61,12 +61,12 @@
     <!-- ADD TO CART BUTTONS -->
     @if (product().disponible !== false) {
       <div class="mt-auto flex gap-2 pt-2">
-        @if (product().price_type === 'variants' || (product().variants && product().variants!.length > 0)) {
+        @if (hasCustomizations()) {
           <button 
             (click)="onViewDetails.emit(product()); $event.stopPropagation()"
             class="w-full py-2 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold rounded-xl transition active:scale-95 flex items-center justify-center gap-2"
           >
-            Ver opciones
+            Personalizar
             <lucide-icon name="chevron-right" class="h-3 w-3"></lucide-icon>
           </button>
         } @else {

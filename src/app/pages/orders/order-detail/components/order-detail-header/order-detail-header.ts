@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { CommonModule, NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
+import { OrderPolicy } from '@core/domain/order/order.policy';
 
 @Component({
   selector: 'app-order-detail-header',
@@ -73,46 +74,74 @@ import { LucideAngularModule } from 'lucide-angular';
         }
       </div>
       
-      <!-- Fila 2: Botones de Acción (POS Toolbar style - 44px touch targets) -->
+      <!-- Fila 2: Botones de Acción Ergonómicos y Menú de Opciones Secundarias -->
       @if (order()) {
-        <div class="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center gap-2.5 mt-1">
-          @if (order()?.estado_pedido !== 'cancelado') {
+        <div class="flex items-center justify-between flex-wrap gap-2.5 mt-1">
+          <!-- Botones Primarios de Comprobantes (POS Toolbar style - 44px touch targets) -->
+          <div class="grid grid-cols-3 sm:flex sm:flex-wrap sm:items-center gap-2 w-full sm:w-auto">
             <button 
-              (click)="cancelOrder.emit()"
-              class="h-11 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 active:bg-red-500/30 text-red-400 border border-red-500/20 transition duration-200 active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider w-full sm:w-auto cursor-pointer select-none"
-              title="Cancelar orden"
+              (click)="openTicket.emit('kitchen')"
+              class="h-11 px-3.5 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 active:bg-orange-500/30 text-orange-400 border border-orange-500/20 transition duration-200 active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer select-none"
+              title="Ticket Cocina"
             >
-              <lucide-icon name="ban" class="w-4 h-4 text-red-400" />
-              <span>Cancelar</span>
+              <lucide-icon name="chef-hat" class="w-4 h-4 text-orange-400" />
+              <span>Cocina</span>
             </button>
-          }
+            
+            <button 
+              (click)="openTicket.emit('account')"
+              class="h-11 px-3.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 active:bg-amber-500/30 text-[#FFB300] border border-amber-500/20 transition duration-200 active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer select-none"
+              title="Ticket Cuenta"
+            >
+              <lucide-icon name="printer" class="w-4 h-4 text-[#FFB300]" />
+              <span>Cuenta</span>
+            </button>
+            
+            <button 
+              (click)="shareTicketPDF.emit()"
+              class="h-11 px-3.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 active:bg-blue-500/30 text-blue-400 border border-blue-500/20 transition duration-200 active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer select-none"
+              title="Compartir comprobante PDF"
+            >
+              <lucide-icon name="file-text" class="w-4 h-4 text-blue-400" />
+              <span>PDF</span>
+            </button>
+          </div>
 
-          <button 
-            (click)="openTicket.emit('kitchen')"
-            class="h-11 px-4 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 active:bg-orange-500/30 text-orange-400 border border-orange-500/20 transition duration-200 active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider w-full sm:w-auto cursor-pointer select-none"
-            title="Ticket Cocina"
-          >
-            <lucide-icon name="chef-hat" class="w-4 h-4 text-orange-400" />
-            <span>Cocina</span>
-          </button>
-          
-          <button 
-            (click)="openTicket.emit('account')"
-            class="h-11 px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 active:bg-amber-500/30 text-[#FFB300] border border-amber-500/20 transition duration-200 active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider w-full sm:w-auto cursor-pointer select-none"
-            title="Ticket Cuenta"
-          >
-            <lucide-icon name="printer" class="w-4 h-4 text-[#FFB300]" />
-            <span>Cuenta</span>
-          </button>
-          
-          <button 
-            (click)="shareTicketPDF.emit()"
-            class="h-11 px-4 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 active:bg-blue-500/30 text-blue-400 border border-blue-500/20 transition duration-200 active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider w-full sm:w-auto cursor-pointer select-none"
-            title="Compartir comprobante PDF"
-          >
-            <lucide-icon name="file-text" class="w-4 h-4 text-blue-400" />
-            <span>PDF</span>
-          </button>
+          <!-- Menú Secundario de Opciones ⋮ (Protección contra clics accidentales de acciones destructivas) -->
+          <div class="relative ml-auto">
+            <button
+              (click)="toggleMenu()"
+              class="w-11 h-11 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
+              title="Más opciones de orden"
+            >
+              <lucide-icon name="more-vertical" class="w-5 h-5" />
+            </button>
+
+            <!-- Menú Desplegable -->
+            @if (showMenu()) {
+              <div 
+                class="absolute right-0 top-12 z-50 w-52 rounded-2xl bg-[#1A1A1A] border border-white/10 shadow-2xl p-1.5 animate-in fade-in zoom-in-95 duration-150"
+              >
+                @if (canCancelOrder()) {
+                  <button
+                    (click)="triggerCancelOrder()"
+                    class="w-full h-10 px-3 rounded-xl hover:bg-red-500/10 active:bg-red-500/20 text-red-400 text-xs font-bold flex items-center gap-2.5 transition cursor-pointer select-none"
+                  >
+                    <lucide-icon name="ban" class="w-4 h-4 text-red-400" />
+                    <span>Cancelar Orden</span>
+                  </button>
+                }
+
+                <button
+                  (click)="showMenu.set(false); openTicket.emit('account')"
+                  class="w-full h-10 px-3 rounded-xl hover:bg-white/[0.05] active:bg-white/[0.08] text-zinc-300 text-xs font-bold flex items-center gap-2.5 transition cursor-pointer select-none"
+                >
+                  <lucide-icon name="printer" class="w-4 h-4 text-zinc-400" />
+                  <span>Reimprimir Comprobante</span>
+                </button>
+              </div>
+            }
+          </div>
         </div>
       }
     </div>
@@ -126,4 +155,21 @@ export class OrderDetailHeader {
   openTicket = output<'kitchen' | 'account'>();
   shareTicketPDF = output<void>();
   cancelOrder = output<void>();
+
+  showMenu = signal(false);
+
+  toggleMenu() {
+    this.showMenu.update((v) => !v);
+  }
+
+  triggerCancelOrder() {
+    this.showMenu.set(false);
+    this.cancelOrder.emit();
+  }
+
+  canCancelOrder(): boolean {
+    const o = this.order();
+    if (!o) return false;
+    return OrderPolicy.canCancelOrder(o);
+  }
 }

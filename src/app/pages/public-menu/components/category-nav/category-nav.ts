@@ -14,7 +14,12 @@ import { Category } from '@core/models/category.model';
 })
 export class CategoryNav {
   categories = input<Category[]>([]);
-  selectedCategoryId = input<string | null>(null);
+  selectedCategoryId = input<string | number | null>(null);
   
-  onSelect = output<string | null>();
+  onSelect = output<string | number | null>();
+
+  isSelected(catId: string | number): boolean {
+    const current = this.selectedCategoryId();
+    return current != null && String(current) === String(catId);
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, effect, input, output, OnInit, PLATFORM_ID } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, effect, input, output, OnInit, PLATFORM_ID, DestroyRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -10,6 +10,14 @@ import { CartItem } from '@core/services/public-cart.service';
 import { OrderRequestLocation, CheckoutDraft, ClientSubmittedOrder, CustomerProfile } from '@core/models/order.model';
 import { getGoogleMapsUrl } from '@core/utils/order-location.utils';
 import { ClientOrdersService } from '@core/services/client-orders.service';
+import { OverlayLockService } from '@core/services/overlay-lock.service';
+
+import { CheckoutHeaderComponent } from './components/checkout-header/checkout-header';
+import { CheckoutSummaryAccordionComponent } from './components/checkout-summary-accordion/checkout-summary-accordion';
+import { CheckoutServiceStepComponent } from './components/checkout-service-step/checkout-service-step';
+import { CheckoutDataStepComponent } from './components/checkout-data-step/checkout-data-step';
+import { CheckoutPaymentStepComponent } from './components/checkout-payment-step/checkout-payment-step';
+import { CheckoutSuccessStepComponent } from './components/checkout-success-step/checkout-success-step';
 
 export type CheckoutStep = 'service' | 'data' | 'payment' | 'success';
 export type ServiceCode = 'mesa' | 'llevar' | 'delivery';
@@ -17,7 +25,18 @@ export type ServiceCode = 'mesa' | 'llevar' | 'delivery';
 @Component({
   selector: 'app-public-checkout',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, CurrencyMxnPipe],
+  imports: [
+    CommonModule, 
+    ReactiveFormsModule, 
+    LucideAngularModule, 
+    CurrencyMxnPipe,
+    CheckoutHeaderComponent,
+    CheckoutSummaryAccordionComponent,
+    CheckoutServiceStepComponent,
+    CheckoutDataStepComponent,
+    CheckoutPaymentStepComponent,
+    CheckoutSuccessStepComponent
+  ],
   templateUrl: './public-checkout.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -28,6 +47,9 @@ export class PublicCheckout implements OnInit {
   private toastService = inject(ToastService);
   private platformId = inject(PLATFORM_ID);
   readonly clientOrdersService = inject(ClientOrdersService);
+  private overlayLock = inject(OverlayLockService);
+  private destroyRef = inject(DestroyRef);
+  private isLockedBySelf = false;
 
   private readonly DRAFT_STORAGE_KEY = 'nordikos_checkout_draft';
 
@@ -98,6 +120,25 @@ export class PublicCheckout implements OnInit {
     effect(() => {
       if (this.isOpen() && this.step() === 'success') {
         this.resetCheckout();
+      }
+    });
+
+    // Control reactivo del bloqueo de scroll
+    effect(() => {
+      const open = this.isOpen();
+      if (open && !this.isLockedBySelf) {
+        this.overlayLock.lock();
+        this.isLockedBySelf = true;
+      } else if (!open && this.isLockedBySelf) {
+        this.overlayLock.unlock();
+        this.isLockedBySelf = false;
+      }
+    });
+
+    this.destroyRef.onDestroy(() => {
+      if (this.isLockedBySelf) {
+        this.overlayLock.unlock();
+        this.isLockedBySelf = false;
       }
     });
   }
@@ -364,6 +405,7 @@ export class PublicCheckout implements OnInit {
         direccion_entrega: code === 'delivery' ? val.direccion.trim() : null,
         referencias: code === 'delivery' ? val.referencias.trim() : null,
         nota_general: val.nota_general.trim() || null,
+        metodo_pago: val.metodo_pago || 'efectivo',
         location: code === 'delivery' ? this.capturedLocation() : null,
         items: this.items(),
       });
@@ -385,7 +427,8 @@ export class PublicCheckout implements OnInit {
             cantidad: i.cantidad,
             imagen_url: i.imagen_url,
             variante: i.variante,
-            nota: i.nota,
+            nota: i.nota ?? undefined,
+            modificadores: i.modificadores,
           })),
           total: this.total(),
           cliente: {
@@ -396,6 +439,7 @@ export class PublicCheckout implements OnInit {
             referencias: code === 'delivery' ? val.referencias.trim() : undefined,
             numero_mesa: code === 'mesa' ? val.numero_mesa.trim() : undefined,
           },
+          metodo_pago: val.metodo_pago || 'efectivo',
           nota_general: val.nota_general.trim() || null,
           location: code === 'delivery' ? this.capturedLocation() : null,
         };
@@ -416,6 +460,7 @@ export class PublicCheckout implements OnInit {
         this.currentSubmittedOrder.set(submittedOrder);
         this.clearDraft();
         this.orderSubmitted.emit({ request_code: res.request_code });
+        this.toastService.show(`¡Pedido #${res.request_code} enviado con éxito! Tu comanda ha sido recibida en cocina.`, 'success', 5000);
         this.step.set('success');
       } else {
         this.toastService.show(res.error || 'No se pudo enviar el pedido. Intenta nuevamente.', 'error');
@@ -471,6 +516,14 @@ export class PublicCheckout implements OnInit {
     this.close.emit();
   }
 
+  onHeaderBack() {
+    if (this.step() === 'payment') {
+      this.goToStep('data');
+    } else if (this.step() === 'data') {
+      this.goToStep('service');
+    }
+  }
+
   // Cierre y reanudación
   onClose() {
     if (this.step() === 'success') {
@@ -509,5 +562,12 @@ export class PublicCheckout implements OnInit {
 
   getMapsUrl(location?: OrderRequestLocation | null, address?: string | null): string | null {
     return getGoogleMapsUrl(location, address);
+  }
+
+  openGoogleMaps() {
+    const url = this.getMapsUrl(this.capturedLocation(), this.checkoutForm.get('direccion')?.value);
+    if (url && isPlatformBrowser(this.platformId)) {
+      window.open(url, '_blank');
+    }
   }
 }

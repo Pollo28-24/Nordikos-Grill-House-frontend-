@@ -1,105 +1,99 @@
-import { Component, input, output, signal, computed, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { LucideAngularModule } from 'lucide-angular';
-import { Product, ProductVariant } from '@core/models/product.model';
-import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
+import { Component, input, output, inject, OnInit, OnDestroy, effect, viewChild, HostListener, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Product, CartCustomization } from '@core/models/product.model';
+import { OverlayLockService } from '@core/services/overlay-lock.service';
+import { CustomizationStore } from './store/customization.store';
+import { ModalHeroHeaderComponent } from './components/modal-hero-header/modal-hero-header';
+import { SectionTabsNavComponent } from './components/section-tabs-nav/section-tabs-nav';
+import { SectionCarouselComponent } from './components/section-carousel/section-carousel';
+import { ModalFooterActionComponent } from './components/modal-footer-action/modal-footer-action';
 
 @Component({
   selector: 'app-product-detail-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, CurrencyMxnPipe],
+  imports: [
+    CommonModule,
+    ModalHeroHeaderComponent,
+    SectionTabsNavComponent,
+    SectionCarouselComponent,
+    ModalFooterActionComponent
+  ],
+  providers: [CustomizationStore],
   templateUrl: './product-detail-modal.html',
 })
-export class ProductDetailModal {
+export class ProductDetailModal implements OnInit, OnDestroy {
+  // Inputs y Outputs públicos preservados para retrocompatibilidad total
   product = input.required<Product>();
   isAdded = input<boolean>(false);
 
   onClose = output<void>();
-  onAddToCart = output<{ product: Product, quantity: number, variants: Record<string, number>, note: string }>();
+  onAddToCart = output<CartCustomization>();
 
-  selectedQuantity = signal<number>(1);
-  variantQuantities = signal<Record<string, number>>({});
-  productNote = signal<string>('');
+  // Store provisto a nivel de ElementInjector (se destruye con el modal)
+  readonly store = inject(CustomizationStore);
+  private overlayLock = inject(OverlayLockService);
+  private platformId = inject(PLATFORM_ID);
+  private hasPushedHistoryState = false;
 
-  readonly quickChips: string[] = [
-    'Sin cebolla',
-    'Sin tomate',
-    'Sin chile',
-    'Sin verdura',
-    'Sin pepinillos',
-    'Sin mayonesa',
-    'Sin mostaza',
-    'Sin catsup',
-    'Sin Aderezo',
-    'Sin ningún tipo de aderezo',
-    'Bien cocida la carne',
-    'Sin queso amarillo',
-    'Sin queso manchego',
-    'Sin queso quesillo'
-  ];
-
-  totalVariantsSelected = computed(() => {
-    return Object.values(this.variantQuantities()).reduce((acc, q) => acc + q, 0);
-  });
+  readonly carousel = viewChild(SectionCarouselComponent);
 
   constructor() {
+    // Sincronizar el producto entrante con el Store
     effect(() => {
       const p = this.product();
-      this.selectedQuantity.set(1);
-      this.productNote.set('');
-      
-      const initialQuantities: Record<string, number> = {};
-      if (p.variants?.length) {
-        p.variants.forEach(v => {
-          initialQuantities[v.id] = 0;
-        });
-        initialQuantities[p.variants[0].id] = 1;
-      }
-      this.variantQuantities.set(initialQuantities);
+      this.store.init(p);
     });
   }
 
-  addNoteChip(chip: string) {
-    const current = this.productNote().trim();
-    if (!current) {
-      this.productNote.set(chip);
-    } else if (!current.toLowerCase().includes(chip.toLowerCase())) {
-      this.productNote.set(`${current}, ${chip}`);
+  ngOnInit(): void {
+    // Bloquear el body de forma reentrante y segura ante SSR y Safari iOS
+    this.overlayLock.lock();
+
+    // Soporte para botón atrás de Android y gestos del navegador
+    if (isPlatformBrowser(this.platformId)) {
+      window.history.pushState({ modal: 'product-detail' }, '');
+      this.hasPushedHistoryState = true;
     }
   }
 
-  updateSelectedQuantity(amount: number) {
-    this.selectedQuantity.update(q => Math.max(1, q + amount));
-  }
-
-  updateVariantQuantity(variantId: string, amount: number) {
-    this.variantQuantities.update(qs => ({
-      ...qs,
-      [variantId]: Math.max(0, (qs[variantId] || 0) + amount)
-    }));
-  }
-
-  hasSelectedVariants(): boolean {
-    const quantities = this.variantQuantities();
-    return Object.values(quantities).some(q => q > 0);
-  }
-
-  getTotal(): number {
-    const p = this.product();
-    if (p.variants && p.variants.length > 0) {
-      const quantities = this.variantQuantities();
-      return p.variants?.reduce((acc, v) => acc + ((v.precio - (v.descuento || 0)) * (quantities[v.id] || 0)), 0) || 0;
+  @HostListener('window:popstate')
+  onPopState(): void {
+    if (this.hasPushedHistoryState) {
+      this.hasPushedHistoryState = false;
     }
-    return ((p.precio || 0) - (p.descuento || 0)) * this.selectedQuantity();
+    this.onClose.emit();
   }
 
-  handleAdd() {
-    this.onAddToCart.emit({
-      product: this.product(),
-      quantity: this.selectedQuantity(),
-      variants: this.variantQuantities(),
-      note: this.productNote()
-    });
+  requestClose(): void {
+    if (isPlatformBrowser(this.platformId) && this.hasPushedHistoryState) {
+      this.hasPushedHistoryState = false;
+      window.history.back();
+    } else {
+      this.onClose.emit();
+    }
+  }
+
+  ngOnDestroy(): void {
+    // Liberar el bloqueo del body
+    this.overlayLock.unlock();
+
+    // Limpiar estado de historial si el modal se destruyó externamente
+    if (isPlatformBrowser(this.platformId) && this.hasPushedHistoryState) {
+      this.hasPushedHistoryState = false;
+      window.history.back();
+    }
+  }
+
+  handleSectionSelect(index: number): void {
+    this.store.setActiveSectionIndex(index);
+    this.carousel()?.scrollToSection(index);
+  }
+
+  handleAdd(): void {
+    const customization = this.store.buildCartCustomization();
+    if (customization) {
+      // Emitir el Value Object inmutable hacia el carrito
+      this.onAddToCart.emit(customization as unknown as CartCustomization);
+    }
   }
 }

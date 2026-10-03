@@ -1,29 +1,30 @@
-<section class="relative py-20 sm:py-28 md:py-36 bg-nord-dark text-nord-cream text-center overflow-hidden border-t border-nord-gold/10">
+<section class="relative md:min-h-[calc(100dvh-var(--navbar-height))] flex flex-col justify-center py-12 md:py-20 bg-nord-dark text-nord-cream text-center overflow-hidden border-t border-nord-border">
   <!-- Background Image with parallax overlay -->
   <div 
     class="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-105"
     style="background-image: url('assets/header/fondo.jpg'); filter: brightness(0.18);"
+    aria-hidden="true"
   ></div>
 
   <!-- Ambient light -->
-  <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-72 sm:w-96 h-72 sm:h-96 bg-nord-ember/10 rounded-full filter blur-3xl pointer-events-none"></div>
+  <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-64 sm:w-80 h-64 sm:h-80 bg-nord-fire-soft rounded-full filter blur-3xl pointer-events-none" aria-hidden="true"></div>
 
-  <div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 flex flex-col items-center">
-    <span appRevealOnScroll class="reveal-init text-nord-gold uppercase tracking-widest text-[11px] sm:text-xs font-semibold mb-3 sm:mb-4 block">Te Esperamos</span>
+  <div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 flex flex-col items-center w-full">
+    <span appRevealOnScroll class="reveal-init text-nord-gold uppercase tracking-widest text-[10px] sm:text-[11px] font-semibold mb-1.5 sm:mb-2 block">Te Esperamos</span>
     
-    <h2 appRevealOnScroll [revealDelay]="100" class="reveal-init font-serif text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 max-w-3xl leading-tight">
+    <h2 appRevealOnScroll [revealDelay]="100" class="reveal-init font-serif text-xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 max-w-2xl leading-tight">
       ¿Listo para vivir la <br class="hidden sm:inline"/>
-      <span class="text-nord-ember text-glow-gold drop-shadow-[0_2px_10px_rgba(217,119,6,0.25)]">Experiencia Nórdicos?</span>
+      <span class="text-nord-fire text-glow-gold drop-shadow-[0_2px_10px_rgba(255,106,0,0.3)]">Experiencia Nórdicos?</span>
     </h2>
 
-    <p appRevealOnScroll [revealDelay]="200" class="reveal-init font-sans text-xs sm:text-sm md:text-base text-nord-cream-muted max-w-xl mx-auto mb-8 sm:mb-10 leading-relaxed">
-      No dejes que te lo cuenten. Ven a descubrir por qué encendemos las brasas con pasión cada semana.
+    <p appRevealOnScroll [revealDelay]="200" class="reveal-init font-sans text-xs sm:text-sm md:text-base text-nord-cream-muted max-w-xl mx-auto mb-5 sm:mb-6 leading-relaxed">
+      No dejes que te lo cuenten. Ven a descubrir por qué encendemos las brasas con pasión y leña de encino cada semana.
     </p>
 
     <div appRevealOnScroll [revealDelay]="300" class="reveal-init w-full sm:w-auto">
       <a 
         routerLink="/menu"
-        class="inline-flex items-center justify-center min-h-[48px] w-full sm:w-auto px-8 sm:px-10 py-3.5 sm:py-4.5 bg-nord-ember hover:bg-nord-ember/90 text-nord-cream font-sans text-sm sm:text-base font-bold rounded-xl shadow-xl hover:shadow-nord-ember/35 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 animate-glow-pulse cursor-pointer"
+        class="inline-flex items-center justify-center min-h-[44px] w-full sm:w-auto px-7 sm:px-9 py-3 sm:py-3.5 bg-nord-fire hover:bg-nord-fire/90 text-nord-cream font-sans text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl shadow-xl hover:shadow-nord-fire/35 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 animate-glow-pulse cursor-pointer focus:outline-none focus:ring-2 focus:ring-nord-gold/50"
       >
         🍽️ Explorar Menú Completo
       </a>

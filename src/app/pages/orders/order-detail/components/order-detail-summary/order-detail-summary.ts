@@ -1,8 +1,19 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { OrderRequestLocation } from '@core/models/order.model';
 import { parseLocationMetadata, getGoogleMapsUrl, getDeliveryWhatsAppShareUrl } from '@core/utils/order-location.utils';
+import { OrderPolicy } from '@core/domain/order/order.policy';
+import { ServiceTypeCode } from '@core/domain/order/order.types';
+import { validateServiceTypePrerequisites } from '@core/domain/order/order.state-machine';
+
+export interface ServiceTypeChangeEvent {
+  serviceTypeId: number;
+  serviceCode: ServiceTypeCode;
+  serviceName: string;
+  numeroMesa?: string | null;
+  direccionEntrega?: string | null;
+}
 
 @Component({
   selector: 'app-order-detail-summary',
@@ -40,62 +51,171 @@ import { parseLocationMetadata, getGoogleMapsUrl, getDeliveryWhatsAppShareUrl } 
 
         <!-- Detalles del Servicio en 2 Columnas / Métricas (7 columnas en md) -->
         <div class="md:col-span-7">
-          <h3 class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3">Detalles del Servicio</h3>
-          
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <!-- Métrica 1: Servicio -->
-            <div class="flex flex-col">
-              <span class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Servicio</span>
-              <span class="text-xs font-extrabold text-white truncate inline-flex items-center gap-1.5 flex-wrap">
-                <span class="px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/10 text-xs font-bold">
-                  {{ order()?.tipos_servicio?.nombre }}
-                </span>
-                @if (order()?.numero_mesa) {
-                  <span class="px-2 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-[#FFB300] text-xs font-bold">
-                    Mesa {{ order().numero_mesa }}
-                  </span>
-                }
-              </span>
-            </div>
-
-            <!-- Métrica 2: Pago -->
-            <div class="flex flex-col">
-              <span class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Pago</span>
-              <span class="text-xs font-extrabold text-white truncate inline-flex items-center">
-                <span class="px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/10 text-xs font-bold">
-                  {{ order()?.metodos_pago?.nombre }}
-                </span>
-              </span>
-            </div>
-
-            <!-- Métrica 3: Fecha -->
-            <div class="flex flex-col">
-              <span class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Fecha Creación</span>
-              <span class="text-xs sm:text-sm font-black text-zinc-200 leading-tight">
-                {{ order()?.fecha_creacion | date:'dd/MM/yy' }}
-                <span class="block text-[10px] sm:text-xs font-medium text-zinc-400 mt-0.5">{{ order()?.fecha_creacion | date:'hh:mm a' }}</span>
-              </span>
-            </div>
-
-            <!-- Métrica 4: Tiempo -->
-            <div class="flex flex-col">
-              <span class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">
-                {{ order()?.fecha_cierre ? 'Duración total' : 'Tiempo en curso' }}
-              </span>
-              <span class="text-xs sm:text-sm font-black tracking-tight inline-flex items-center" [class.text-[#FFB300]]="!order()?.fecha_cierre" [class.text-white]="order()?.fecha_cierre">
-                @if (!order()?.fecha_cierre) {
-                  <span class="inline-block w-2 h-2 rounded-full bg-[#FFB300] animate-pulse mr-1.5 shrink-0 shadow-[0_0_8px_rgba(255,179,0,0.5)]"></span>
-                }
-                {{ duration }}
-              </span>
-            </div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-widest">Detalles del Servicio</h3>
+            @if (canChangeService() && !isEditingService()) {
+              <button
+                (click)="startEditingService()"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition cursor-pointer select-none"
+                title="Cambiar tipo de servicio (Mesa / Llevar / Domicilio)"
+              >
+                <lucide-icon name="edit-3" class="w-3.5 h-3.5 text-[#FFB300]" />
+                <span>Cambiar</span>
+              </button>
+            }
           </div>
+          
+          <!-- Vista Normal de Métricas de Servicio -->
+          @if (!isEditingService()) {
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <!-- Métrica 1: Servicio -->
+              <div class="flex flex-col">
+                <span class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Servicio</span>
+                <span class="text-xs font-extrabold text-white truncate inline-flex items-center gap-1.5 flex-wrap">
+                  <span class="px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/10 text-xs font-bold">
+                    {{ order()?.tipos_servicio?.nombre || order()?.tipo_servicio_nombre || 'N/A' }}
+                  </span>
+                  @if (order()?.numero_mesa) {
+                    <span class="px-2 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-[#FFB300] text-xs font-bold">
+                      Mesa {{ order().numero_mesa }}
+                    </span>
+                  }
+                </span>
+              </div>
+
+              <!-- Métrica 2: Pago -->
+              <div class="flex flex-col">
+                <span class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Pago</span>
+                <span class="text-xs font-extrabold text-white truncate inline-flex items-center">
+                  <span class="px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/10 text-xs font-bold">
+                    {{ order()?.metodos_pago?.nombre || order()?.metodo_pago_nombre || 'N/A' }}
+                  </span>
+                </span>
+              </div>
+
+              <!-- Métrica 3: Fecha -->
+              <div class="flex flex-col">
+                <span class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Fecha Creación</span>
+                <span class="text-xs sm:text-sm font-black text-zinc-200 leading-tight">
+                  {{ order()?.fecha_creacion | date:'dd/MM/yy' }}
+                  <span class="block text-[10px] sm:text-xs font-medium text-zinc-400 mt-0.5">{{ order()?.fecha_creacion | date:'hh:mm a' }}</span>
+                </span>
+              </div>
+
+              <!-- Métrica 4: Tiempo -->
+              <div class="flex flex-col">
+                <span class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">
+                  {{ order()?.fecha_cierre ? 'Duración total' : 'Tiempo en curso' }}
+                </span>
+                <span class="text-xs sm:text-sm font-black tracking-tight inline-flex items-center" [class.text-[#FFB300]]="!order()?.fecha_cierre" [class.text-white]="order()?.fecha_cierre">
+                  @if (!order()?.fecha_cierre) {
+                    <span class="inline-block w-2 h-2 rounded-full bg-[#FFB300] animate-pulse mr-1.5 shrink-0 shadow-[0_0_8px_rgba(255,179,0,0.5)]"></span>
+                  }
+                  {{ duration }}
+                </span>
+              </div>
+            </div>
+          } @else {
+            <!-- Selector Interactivo de Cambio de Servicio -->
+            <div class="p-3.5 rounded-xl bg-white/[0.02] border border-amber-500/20 space-y-3 animate-in fade-in duration-200">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase text-amber-400 tracking-wider">Seleccionar Nuevo Servicio:</span>
+                <button (click)="isEditingService.set(false)" class="text-zinc-400 hover:text-white text-xs font-bold cursor-pointer">
+                  Cancelar
+                </button>
+              </div>
+
+              <!-- Chips de selección rápida -->
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  (click)="selectedServiceCode.set('comedor')"
+                  class="h-10 rounded-xl text-xs font-bold border transition duration-150 flex items-center justify-center gap-1.5 cursor-pointer"
+                  [ngClass]="{
+                    'bg-amber-500/20 border-amber-500/40 text-[#FFB300]': selectedServiceCode() === 'comedor',
+                    'bg-white/[0.04] border-white/10 text-zinc-300 hover:bg-white/[0.08]': selectedServiceCode() !== 'comedor'
+                  }"
+                >
+                  <lucide-icon name="utensils" class="w-3.5 h-3.5" />
+                  <span>Comedor</span>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="selectedServiceCode.set('llevar')"
+                  class="h-10 rounded-xl text-xs font-bold border transition duration-150 flex items-center justify-center gap-1.5 cursor-pointer"
+                  [ngClass]="{
+                    'bg-amber-500/20 border-amber-500/40 text-[#FFB300]': selectedServiceCode() === 'llevar',
+                    'bg-white/[0.04] border-white/10 text-zinc-300 hover:bg-white/[0.08]': selectedServiceCode() !== 'llevar'
+                  }"
+                >
+                  <lucide-icon name="shopping-bag" class="w-3.5 h-3.5" />
+                  <span>Para Llevar</span>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="selectedServiceCode.set('domicilio')"
+                  class="h-10 rounded-xl text-xs font-bold border transition duration-150 flex items-center justify-center gap-1.5 cursor-pointer"
+                  [ngClass]="{
+                    'bg-amber-500/20 border-amber-500/40 text-[#FFB300]': selectedServiceCode() === 'domicilio',
+                    'bg-white/[0.04] border-white/10 text-zinc-300 hover:bg-white/[0.08]': selectedServiceCode() !== 'domicilio'
+                  }"
+                >
+                  <lucide-icon name="bike" class="w-3.5 h-3.5" />
+                  <span>Domicilio</span>
+                </button>
+              </div>
+
+              <!-- Inputs específicos según servicio -->
+              @if (selectedServiceCode() === 'comedor') {
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-zinc-400 font-bold shrink-0">Número de Mesa:</span>
+                  <input
+                    type="text"
+                    [value]="tableInput()"
+                    (input)="tableInput.set($any($event.target).value)"
+                    placeholder="Ej. 4, 12, Terraza..."
+                    class="h-9 px-3 rounded-lg bg-black/60 border border-white/15 text-white text-xs font-bold focus:border-[#FFB300] focus:outline-none w-full"
+                  />
+                </div>
+              }
+
+              @if (selectedServiceCode() === 'domicilio') {
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-zinc-400 font-bold shrink-0">Dirección:</span>
+                  <input
+                    type="text"
+                    [value]="addressInput()"
+                    (input)="addressInput.set($any($event.target).value)"
+                    placeholder="Calle, número, colonia..."
+                    class="h-9 px-3 rounded-lg bg-black/60 border border-white/15 text-white text-xs font-bold focus:border-[#FFB300] focus:outline-none w-full"
+                  />
+                </div>
+              }
+
+              @if (validationError()) {
+                <p class="text-xs text-red-400 font-medium">{{ validationError() }}</p>
+              }
+
+              <!-- Botón Confirmar Cambio -->
+              <div class="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  (click)="saveServiceTypeChange()"
+                  class="h-9 px-4 rounded-xl bg-[#FFB300] text-black font-extrabold text-xs uppercase tracking-wider hover:bg-[#FFB300]/90 active:scale-95 transition cursor-pointer select-none"
+                >
+                  Guardar Servicio
+                </button>
+              </div>
+            </div>
+          }
         </div>
 
       </div>
 
       <!-- Sección de Entrega a Domicilio y Geolocalización GPS -->
-      @if (deliveryAddress || location) {
+      @if (deliveryAddress || location || isDeliveryService) {
         <div class="mt-5 pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 bg-white/[0.02] border border-white/5 p-4 rounded-xl">
           <div class="flex items-start gap-3">
             <div class="w-9 h-9 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0 mt-0.5">
@@ -103,7 +223,12 @@ import { parseLocationMetadata, getGoogleMapsUrl, getDeliveryWhatsAppShareUrl } 
             </div>
             <div class="flex flex-col">
               <span class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider">Dirección de Entrega</span>
-              <span class="text-xs sm:text-sm font-bold text-zinc-100 mt-0.5">{{ deliveryAddress || 'Ubicación GPS registrada' }}</span>
+              <span class="text-xs sm:text-sm font-bold text-zinc-100 mt-0.5">{{ deliveryAddress || (location ? 'Ubicación GPS registrada' : 'Sin dirección registrada') }}</span>
+              @if (deliveryReferences) {
+                <span class="text-xs text-amber-300 font-medium mt-1 inline-flex items-center gap-1.5">
+                  <span class="font-bold text-amber-400/90">📝 Ref:</span> {{ deliveryReferences }}
+                </span>
+              }
               @if (location; as loc) {
                 <span class="text-xs text-emerald-400 font-mono mt-1">
                   📍 GPS: {{ loc.latitude | number:'1.4-4' }}, {{ loc.longitude | number:'1.4-4' }}
@@ -155,6 +280,66 @@ export class OrderDetailSummary {
   order = input.required<any>();
   currentTime = input.required<number>();
 
+  changeServiceType = output<ServiceTypeChangeEvent>();
+
+  isEditingService = signal(false);
+  selectedServiceCode = signal<ServiceTypeCode>('comedor');
+  tableInput = signal('');
+  addressInput = signal('');
+  validationError = signal<string | null>(null);
+
+  canChangeService(): boolean {
+    const o = this.order();
+    if (!o) return false;
+    return OrderPolicy.canChangeServiceType(o);
+  }
+
+  startEditingService() {
+    const o = this.order();
+    const rawCode = (o?.tipos_servicio?.nombre || o?.tipo_servicio_codigo || '').toLowerCase();
+    let currentCode: ServiceTypeCode = 'comedor';
+    if (rawCode.includes('llevar') || rawCode.includes('take')) currentCode = 'llevar';
+    else if (rawCode.includes('domicilio') || rawCode.includes('delivery')) currentCode = 'domicilio';
+
+    this.selectedServiceCode.set(currentCode);
+    this.tableInput.set(o?.numero_mesa || '');
+    this.addressInput.set(this.deliveryAddress || '');
+    this.validationError.set(null);
+    this.isEditingService.set(true);
+  }
+
+  saveServiceTypeChange() {
+    const targetCode = this.selectedServiceCode();
+    const mesa = targetCode === 'comedor' ? this.tableInput().trim() : null;
+    const direccion = targetCode === 'domicilio' ? this.addressInput().trim() : null;
+
+    const validation = validateServiceTypePrerequisites(targetCode, mesa, direccion);
+    if (!validation.valid) {
+      this.validationError.set(validation.error || 'Datos incompletos');
+      return;
+    }
+
+    let typeId = 1;
+    let name = 'Comedor';
+    if (targetCode === 'llevar') {
+      typeId = 2;
+      name = 'Para Llevar';
+    } else if (targetCode === 'domicilio') {
+      typeId = 3;
+      name = 'Domicilio';
+    }
+
+    this.changeServiceType.emit({
+      serviceTypeId: typeId,
+      serviceCode: targetCode,
+      serviceName: name,
+      numeroMesa: mesa,
+      direccionEntrega: direccion,
+    });
+
+    this.isEditingService.set(false);
+  }
+
   get duration(): string {
     const o = this.order();
     if (!o?.fecha_creacion) return '...';
@@ -185,12 +370,46 @@ export class OrderDetailSummary {
   }
 
   get location(): OrderRequestLocation | null {
+    const o = this.order();
+    if (o?.latitude !== null && o?.latitude !== undefined && o?.longitude !== null && o?.longitude !== undefined) {
+      return {
+        latitude: Number(o.latitude),
+        longitude: Number(o.longitude),
+        accuracy: o.accuracy ? Number(o.accuracy) : undefined
+      };
+    }
     return this.parsedNote.location;
   }
 
-  get deliveryAddress(): string | null {
+  get isDeliveryService(): boolean {
+    const o = this.order();
+    const rawCode = (o?.tipos_servicio?.nombre || o?.tipo_servicio_codigo || o?.tipo_servicio_nombre || '').toLowerCase();
+    return rawCode.includes('domicilio') || rawCode.includes('delivery');
+  }
+
+  get rawAddress(): string | null {
     const o = this.order();
     return o?.direccion_entrega || o?.clientes?.direccion || null;
+  }
+
+  get deliveryReferences(): string | null {
+    const o = this.order();
+    if (o?.referencias) return o.referencias;
+    const raw = this.rawAddress;
+    if (raw && raw.includes('(Ref:')) {
+      const match = raw.match(/\(Ref:\s*([^)]+)\)/i);
+      return match ? match[1].trim() : null;
+    }
+    return null;
+  }
+
+  get deliveryAddress(): string | null {
+    const raw = this.rawAddress;
+    if (!raw) return null;
+    if (raw.includes('(Ref:')) {
+      return raw.replace(/\s*\(Ref:\s*[^)]+\)/i, '').trim();
+    }
+    return raw;
   }
 
   get mapsUrl(): string | null {
@@ -204,10 +423,10 @@ export class OrderDetailSummary {
       clientName: o?.clientes?.nombre,
       phone: o?.clientes?.telefono,
       address: this.deliveryAddress,
+      references: this.deliveryReferences,
       location: this.location,
       note: this.cleanNote,
       total: o?.total,
     });
   }
 }
-

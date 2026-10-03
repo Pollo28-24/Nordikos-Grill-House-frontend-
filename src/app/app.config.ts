@@ -102,7 +102,12 @@ import {
   BookOpen,
   LayoutDashboard,
   Copy,
-  ArrowRight
+  ArrowRight,
+  CreditCard,
+  Truck,
+  ExternalLink,
+  Banknote,
+  Smartphone
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -212,7 +217,12 @@ providers: [
         BookOpen,
         LayoutDashboard,
         Copy,
-        ArrowRight
+        ArrowRight,
+        CreditCard,
+        Truck,
+        ExternalLink,
+        Banknote,
+        Smartphone,
       }),
     ),
   ],

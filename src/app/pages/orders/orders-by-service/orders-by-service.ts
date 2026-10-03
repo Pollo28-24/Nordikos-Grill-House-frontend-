@@ -42,7 +42,8 @@ interface ServiceType {
   standalone: true,
   imports: [LucideAngularModule, Navbar, TicketPrintComponent, OrderKpiBar, ServiceTabs, OrderFilterBar, OrderCard, OrderStatusFilter],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './orders-by-service.html'
+  templateUrl: './orders-by-service.html',
+  providers: [TickService]
 })
 export class OrdersByService implements OnInit, OnDestroy {
   private ordersService = inject(OrdersService);

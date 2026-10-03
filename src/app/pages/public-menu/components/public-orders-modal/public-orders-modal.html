@@ -113,6 +113,15 @@
                           <span class="text-orange-600 font-semibold">({{ item.variante.nombre }})</span>
                         }
                       </p>
+                      @if (item.modificadores && item.modificadores.length > 0) {
+                        <div class="flex flex-wrap gap-1 mt-0.5">
+                          @for (m of item.modificadores; track m.nombre_modificador) {
+                            <span class="text-[9px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/50 px-1 rounded">
+                              + {{ m.nombre_modificador }}@if (m.cantidad > 1) { x{{ m.cantidad }} }
+                            </span>
+                          }
+                        </div>
+                      }
                       @if (item.nota) {
                         <p class="text-[10px] text-amber-700 italic">
                           ↳ Nota: "{{ item.nota }}"

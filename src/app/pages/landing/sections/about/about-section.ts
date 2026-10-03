@@ -13,17 +13,4 @@ import { RevealOnScrollDirective } from '@shared/directives/reveal-on-scroll.dir
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AboutSection {
-  showMission = signal<boolean>(false);
-  showVision = signal<boolean>(false);
-
-  toggleMission() {
-    this.showMission.update(v => !v);
-    if (this.showMission()) this.showVision.set(false);
-  }
-
-  toggleVision() {
-    this.showVision.update(v => !v);
-    if (this.showVision()) this.showMission.set(false);
-  }
-}
+export class AboutSection {}

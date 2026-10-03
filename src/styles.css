@@ -42,49 +42,54 @@
   animation: bump 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Custom reveal animations */
-.reveal-init {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.reveal-init.revealed {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.reveal-left {
-  opacity: 0;
-  transform: translateX(-40px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.reveal-left.revealed {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.reveal-right {
-  opacity: 0;
-  transform: translateX(40px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.reveal-right.revealed {
-  opacity: 1;
-  transform: translateX(0);
-}
-
+/* Custom reveal animations — SSR safe & Progressive enhancement */
+.reveal-init,
+.reveal-left,
+.reveal-right,
 .reveal-scale {
-  opacity: 0;
-  transform: scale(0.95);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 1;
+  transform: none;
 }
 
-.reveal-scale.revealed {
-  opacity: 1;
-  transform: scale(1);
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-armed.reveal-init {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal-armed.reveal-left {
+    opacity: 0;
+    transform: translateX(-32px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal-armed.reveal-right {
+    opacity: 0;
+    transform: translateX(32px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal-armed.reveal-scale {
+    opacity: 0;
+    transform: scale(0.96);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal-armed.revealed {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+:root {
+  --navbar-height: 5rem;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --navbar-height: 4.75rem;
+  }
 }
 
 /* Custom fonts & colors for Tailwind v4 */
@@ -92,12 +97,38 @@
   --font-serif: "Playfair Display", serif;
   --font-sans: "Inter", sans-serif;
   
-  --color-nord-dark: #0B0B0B;
-  --color-nord-charcoal: #171717;
-  --color-nord-ember: #D97706;
-  --color-nord-gold: #FBBF24;
-  --color-nord-cream: #F8FAFC;
-  --color-nord-cream-muted: #CBD5E1;
+  /* Landing Design Tokens — Dark Fire Luxury */
+  --color-nord-dark: #050505;
+  --color-nord-charcoal: #111111;
+  --color-nord-card-hover: #1A1A1A;
+
+  /* Fire System */
+  --color-nord-fire: #FF6A00;
+  --color-nord-fire-soft: rgba(255, 106, 0, 0.35);
+
+  /* Overlay */
+  --color-nord-overlay: rgba(5, 5, 5, 0.72);
+
+  /* Luxury */
+  --color-nord-gold: #D4AF37;
+
+  /* Typography */
+  --color-nord-cream: #FFF4E6;
+  --color-nord-cream-muted: #D1C7BD;
+
+  /* Borders */
+  --color-nord-border: rgba(212, 175, 55, 0.12);
+
+  /* Legacy compatibility */
+  --color-nord-ember: #FF6A00;
+
+  /* App & POS Core Design Tokens (Single Source of Truth) */
+  --color-nord-surface: #121212;
+  --color-nord-card: #1E1E1E;
+  --color-nord-brand: #FFB300;
+  --color-nord-brand-hover: #FFC107;
+  --color-nord-text: #F5F5F5;
+  --color-nord-muted: #B0B0B0;
 }
 
 /* Micro-interactions & animations */
@@ -107,8 +138,8 @@
 }
 
 @keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 5px rgba(217, 119, 6, 0.2), 0 0 15px rgba(251, 191, 36, 0.1); }
-  50% { box-shadow: 0 0 20px rgba(217, 119, 6, 0.6), 0 0 35px rgba(251, 191, 36, 0.4); }
+  0%, 100% { box-shadow: 0 0 5px rgba(255, 106, 0, 0.25), 0 0 15px rgba(212, 175, 55, 0.15); }
+  50% { box-shadow: 0 0 22px rgba(255, 106, 0, 0.65), 0 0 38px rgba(212, 175, 55, 0.4); }
 }
 
 @keyframes bounceDown {

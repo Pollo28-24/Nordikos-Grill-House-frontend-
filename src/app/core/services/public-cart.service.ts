@@ -1,21 +1,18 @@
 import { Injectable, signal, computed, effect } from '@angular/core';
-import { Product, ProductVariant } from '../models/product.model';
+import { Product, ProductVariant, CartCustomization } from '../models/product.model';
+import { CartItem, normalizeCartItem, OrderCreateModifier } from '../models/order.model';
 
-export interface CartItem {
-  id: string; // generated unique id for the cart item
-  product_id: string;
-  nombre: string;
-  precio: number;
-  precio_original?: number;
-  descuento?: number;
-  cantidad: number;
-  imagen_url?: string;
-  variante?: {
-    id: string;
-    nombre: string;
-    precio: number;
-  };
-  nota?: string;
+export type { CartItem };
+
+function areModifiersEqual(a: OrderCreateModifier[], b: OrderCreateModifier[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort((x, y) => x.nombre_modificador.localeCompare(y.nombre_modificador));
+  const sortedB = [...b].sort((x, y) => x.nombre_modificador.localeCompare(y.nombre_modificador));
+  return sortedA.every((modA, i) => 
+    modA.nombre_modificador === sortedB[i].nombre_modificador && 
+    modA.cantidad === sortedB[i].cantidad && 
+    (modA.precio_unitario || 0) === (sortedB[i].precio_unitario || 0)
+  );
 }
 
 @Injectable({
@@ -35,16 +32,19 @@ export class PublicCartService {
   );
 
   readonly totalAmount = computed(() => 
-    this._items().reduce((acc, item) => acc + (item.precio * item.cantidad), 0)
+    this._items().reduce((acc, item) => acc + ((item.precio_total_unitario ?? item.precio_unitario ?? item.precio ?? 0) * item.cantidad), 0)
   );
 
   constructor() {
-    // Load from local storage if available
+    // Load from local storage if available with backward-compatible normalization
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(this.STORAGE_KEY);
       if (saved) {
         try {
-          this._items.set(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            this._items.set(parsed.map(i => normalizeCartItem(i)));
+          }
         } catch (e) {
           console.error('Error parsing cart from storage', e);
         }
@@ -57,14 +57,83 @@ export class PublicCartService {
     }
   }
 
-  addToCart(product: Product, variant?: ProductVariant, cantidad: number = 1, nota?: string) {
+  addCustomizedProduct(customization: CartCustomization) {
+    const { product, variant, quantity, modifiers, note } = customization;
+    const mods: OrderCreateModifier[] = (modifiers || []).map(m => ({
+      modificador_id: m.modifierId,
+      nombre_modificador: m.nombre,
+      cantidad: m.cantidad,
+      precio_unitario: m.precioUnitario
+    }));
+
+    const basePrice = variant 
+      ? (variant.precio - (variant.descuento || 0)) 
+      : ((product.precio || 0) - (product.descuento || 0));
+    
+    const modsPrice = mods.reduce((sum, m) => sum + (Number(m.precio_unitario || 0) * Number(m.cantidad || 1)), 0);
+    const unitPrice = basePrice + modsPrice;
+
     const items = [...this._items()];
     
-    // Check if item with same product and variant already exists
+    // Check if an identical item exists (same product, same variant, same note, same modifiers)
     const existingIndex = items.findIndex(i => 
-      i.product_id === product.id && 
-      (!variant || i.variante?.id === variant.id)
+      String(i.producto_id ?? i.product_id) === String(product.id) &&
+      (!variant || String(i.variante_id ?? i.variante?.id) === String(variant.id)) &&
+      (i.nota || null) === (note || null) &&
+      areModifiersEqual(i.modificadores || [], mods)
     );
+
+    if (existingIndex > -1) {
+      items[existingIndex] = {
+        ...items[existingIndex],
+        cantidad: items[existingIndex].cantidad + quantity
+      };
+    } else {
+      const newItem: CartItem = normalizeCartItem({
+        cart_item_id: crypto.randomUUID(),
+        producto_id: product.id,
+        nombre_producto: product.nombre,
+        precio_base: basePrice,
+        precio_modificadores: modsPrice,
+        precio_total_unitario: unitPrice,
+        precio_unitario: unitPrice,
+        precio: unitPrice,
+        precio_original: variant ? variant.precio : (product.precio || 0),
+        descuento: variant ? (variant.descuento || 0) : (product.descuento || 0),
+        cantidad: quantity,
+        imagen_url: product.imagen_url,
+        variante_id: variant?.id,
+        nombre_variante: variant?.nombre,
+        variante: variant ? {
+          id: String(variant.id),
+          nombre: variant.nombre,
+          precio: variant.precio
+        } : undefined,
+        nota: note || null,
+        modificadores: mods
+      });
+      items.push(newItem);
+    }
+
+    this._items.set(items);
+  }
+
+  addToCart(
+    product: Product,
+    variant?: ProductVariant,
+    cantidad: number = 1,
+    nota?: string,
+    modificadores: OrderCreateModifier[] = []
+  ) {
+    const items = [...this._items()];
+    const mods = modificadores || [];
+
+    // Check if item with same product, variant and modifiers already exists
+    const existingIndex = mods.length === 0 ? items.findIndex(i => 
+      String(i.producto_id ?? i.product_id) === String(product.id) && 
+      (!variant || String(i.variante_id ?? i.variante?.id) === String(variant.id)) &&
+      (!i.modificadores || i.modificadores.length === 0)
+    ) : -1;
 
     if (existingIndex > -1) {
       items[existingIndex] = {
@@ -73,22 +142,33 @@ export class PublicCartService {
         nota: nota || items[existingIndex].nota
       };
     } else {
-      const newItem: CartItem = {
-        id: crypto.randomUUID(),
-        product_id: product.id,
-        nombre: product.nombre,
+      const basePrice = variant ? (variant.precio - (variant.descuento || 0)) : ((product.precio || 0) - (product.descuento || 0));
+      const modsPrice = mods.reduce((sum, m) => sum + (Number(m.precio_unitario || 0) * Number(m.cantidad || 1)), 0);
+      const unitPrice = basePrice + modsPrice;
+
+      const newItem: CartItem = normalizeCartItem({
+        cart_item_id: crypto.randomUUID(),
+        producto_id: product.id,
+        nombre_producto: product.nombre,
+        precio_base: basePrice,
+        precio_modificadores: modsPrice,
+        precio_total_unitario: unitPrice,
+        precio_unitario: unitPrice,
+        precio: unitPrice,
         precio_original: variant ? variant.precio : (product.precio || 0),
         descuento: variant ? (variant.descuento || 0) : (product.descuento || 0),
-        precio: variant ? (variant.precio - (variant.descuento || 0)) : ((product.precio || 0) - (product.descuento || 0)),
         cantidad: cantidad,
         imagen_url: product.imagen_url,
+        variante_id: variant?.id,
+        nombre_variante: variant?.nombre,
         variante: variant ? {
-          id: variant.id,
+          id: String(variant.id),
           nombre: variant.nombre,
           precio: variant.precio
         } : undefined,
-        nota: nota
-      };
+        nota: nota || null,
+        modificadores: mods
+      });
       items.push(newItem);
     }
 
@@ -97,7 +177,7 @@ export class PublicCartService {
 
   updateNota(itemId: string, nota: string) {
     const items = [...this._items()];
-    const index = items.findIndex(i => i.id === itemId);
+    const index = items.findIndex(i => i.cart_item_id === itemId || i.id === itemId);
     
     if (index > -1) {
       items[index] = { ...items[index], nota: nota };
@@ -106,12 +186,12 @@ export class PublicCartService {
   }
 
   removeFromCart(itemId: string) {
-    this._items.set(this._items().filter(i => i.id !== itemId));
+    this._items.set(this._items().filter(i => i.cart_item_id !== itemId && i.id !== itemId));
   }
 
   updateQuantity(itemId: string, delta: number) {
     const items = [...this._items()];
-    const index = items.findIndex(i => i.id === itemId);
+    const index = items.findIndex(i => i.cart_item_id === itemId || i.id === itemId);
     
     if (index > -1) {
       const newQty = items[index].cantidad + delta;
@@ -134,11 +214,28 @@ export class PublicCartService {
     let message = `*Nuevo pedido - Nórdicos Grill House*\n\n`;
     
     this._items().forEach(item => {
-      const variantStr = item.variante ? ` (${item.variante.nombre})` : '';
-      message += `${item.cantidad}x ${item.nombre}${variantStr} - $${item.precio * item.cantidad}\n`;
+      const variantStr = item.nombre_variante ? ` (${item.nombre_variante})` : (item.variante ? ` (${item.variante.nombre})` : '');
+      const unit = item.precio_total_unitario ?? item.precio_unitario ?? item.precio ?? 0;
+      message += `*${item.cantidad}x ${item.nombre_producto}${variantStr}* - $${(unit * item.cantidad).toFixed(2)}\n`;
+      
+      if (item.modificadores && item.modificadores.length > 0) {
+        message += `  Extras:\n`;
+        item.modificadores.forEach(m => {
+          const qtyStr = m.cantidad > 1 ? ` x${m.cantidad}` : '';
+          const priceStr = (m.precio_unitario && m.precio_unitario > 0) 
+            ? ` (+$${(m.precio_unitario * m.cantidad).toFixed(2)})` 
+            : '';
+          message += `  • ${m.nombre_modificador}${qtyStr}${priceStr}\n`;
+        });
+      }
+
+      if (item.nota) {
+        message += `  Nota: "${item.nota}"\n`;
+      }
+      message += `\n`;
     });
 
-    message += `\n*Total: $${this.totalAmount()}*\n\n_Pedido generado desde el menú digital._`;
+    message += `*Total: $${this.totalAmount().toFixed(2)}*\n\n_Pedido generado desde el menú digital._`;
 
     const encodedMessage = encodeURIComponent(message);
     return `https://wa.me/${businessPhone}?text=${encodedMessage}`;

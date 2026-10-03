@@ -1,62 +1,77 @@
-<section id="ubicacion" class="py-16 sm:py-20 md:py-28 lg:py-32 bg-nord-dark text-nord-cream overflow-hidden border-t border-nord-gold/10">
-  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+<section id="ubicacion" class="scroll-mt-20 md:scroll-mt-24 md:min-h-[calc(100dvh-var(--navbar-height))] flex flex-col justify-center py-10 sm:py-12 md:py-16 bg-nord-dark text-nord-cream overflow-hidden border-t border-nord-border">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 w-full">
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 lg:gap-20 items-center">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-10 items-center">
       
       <!-- Left Column: Contact info & text -->
       <div 
         appRevealOnScroll 
         class="reveal-left flex flex-col justify-center"
       >
-        <span class="text-nord-gold uppercase tracking-widest text-[11px] sm:text-xs font-semibold mb-2 sm:mb-3 block">Ubicación y Horarios</span>
-        <h2 class="font-serif text-2xl sm:text-4xl md:text-5xl font-bold text-nord-cream mb-4 sm:mb-6">
+        <span class="text-nord-gold uppercase tracking-widest text-[10px] sm:text-[11px] font-semibold mb-1.5 block">Ubicación y Horarios</span>
+        <h2 class="font-serif text-xl sm:text-2xl md:text-3xl font-bold text-nord-cream mb-2 leading-tight">
           ¿Dónde se enciende <br class="hidden sm:inline"/>
-          <span class="text-nord-ember">el carbón?</span>
+          <span class="text-nord-fire">el carbón?</span>
         </h2>
         
-        <div class="h-0.5 w-14 sm:w-16 bg-nord-ember mb-8 sm:mb-10 rounded-full"></div>
+        <div class="h-0.5 w-12 bg-nord-fire mb-3 sm:mb-4 rounded-full"></div>
 
         <!-- Info Items -->
-        <div class="space-y-6 sm:space-y-8 mb-6 sm:mb-10">
+        <address class="space-y-2 sm:space-y-3 not-italic">
           <!-- Item 1: Address -->
-          <div class="flex items-start gap-3 sm:gap-4 group cursor-pointer p-2 -ml-2 rounded-xl hover:bg-nord-charcoal/40 active:bg-nord-charcoal/60 transition-colors" (click)="openGoogleMaps()">
-            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-nord-charcoal border border-nord-gold/15 flex items-center justify-center text-xl text-nord-ember group-hover:bg-nord-ember group-hover:text-nord-cream transition-all duration-300 shrink-0 shadow-md">
+          <div 
+            class="flex items-start gap-3 group cursor-pointer p-2 -ml-2 rounded-xl hover:bg-nord-charcoal/60 active:bg-nord-charcoal transition-all focus:outline-none focus:ring-2 focus:ring-nord-gold/50" 
+            role="button"
+            tabindex="0"
+            aria-label="Abrir ubicación de Nórdicos Grill House en Google Maps"
+            (click)="openGoogleMaps()"
+            (keydown.enter)="openGoogleMaps()"
+            (keydown.space)="openGoogleMaps(); $event.preventDefault()"
+          >
+            <div class="w-9 sm:w-10 h-9 sm:h-10 rounded-lg bg-nord-charcoal border border-nord-border flex items-center justify-center text-lg text-nord-fire group-hover:bg-nord-fire group-hover:text-nord-cream transition-all duration-300 shrink-0 shadow-md" aria-hidden="true">
               📍
             </div>
             <div>
-              <h4 class="font-serif text-base sm:text-lg font-bold text-nord-gold mb-1 group-hover:text-nord-ember transition-colors duration-300">Nuestra Dirección</h4>
-              <p class="font-sans text-xs sm:text-sm text-nord-cream-muted leading-relaxed mb-1">{{ address }}</p>
-              <span class="text-xs text-nord-ember font-semibold tracking-wider inline-flex items-center gap-1">VER EN GOOGLE MAPS →</span>
+              <h3 class="font-serif text-sm sm:text-base font-bold text-nord-gold mb-0.5 group-hover:text-nord-fire transition-colors duration-300">Nuestra Dirección</h3>
+              <p class="font-sans text-xs text-nord-cream-muted leading-relaxed mb-0.5">{{ address }}</p>
+              <span class="text-[11px] text-nord-fire font-semibold tracking-wider inline-flex items-center gap-1 group-hover:underline">VER EN GOOGLE MAPS →</span>
             </div>
           </div>
 
           <!-- Item 2: Phone / WhatsApp -->
-          <div class="flex items-start gap-3 sm:gap-4 group cursor-pointer p-2 -ml-2 rounded-xl hover:bg-nord-charcoal/40 active:bg-nord-charcoal/60 transition-colors" (click)="openWhatsApp()">
-            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-nord-charcoal border border-nord-gold/15 flex items-center justify-center text-xl text-nord-ember group-hover:bg-nord-ember group-hover:text-nord-cream transition-all duration-300 shrink-0 shadow-md">
+          <div 
+            class="flex items-start gap-3 group cursor-pointer p-2 -ml-2 rounded-xl hover:bg-nord-charcoal/60 active:bg-nord-charcoal transition-all focus:outline-none focus:ring-2 focus:ring-nord-gold/50" 
+            role="button"
+            tabindex="0"
+            aria-label="Contactar por WhatsApp para reservaciones y pedidos"
+            (click)="openWhatsApp()"
+            (keydown.enter)="openWhatsApp()"
+            (keydown.space)="openWhatsApp(); $event.preventDefault()"
+          >
+            <div class="w-9 sm:w-10 h-9 sm:h-10 rounded-lg bg-nord-charcoal border border-nord-border flex items-center justify-center text-lg text-nord-fire group-hover:bg-nord-fire group-hover:text-nord-cream transition-all duration-300 shrink-0 shadow-md" aria-hidden="true">
               💬
             </div>
             <div>
-              <h4 class="font-serif text-base sm:text-lg font-bold text-nord-gold mb-1 group-hover:text-nord-ember transition-colors duration-300">WhatsApp & Pedidos</h4>
-              <p class="font-sans text-xs sm:text-sm text-nord-cream-muted leading-relaxed mb-1">{{ phone }}</p>
-              <span class="text-xs text-nord-gold font-semibold tracking-wider inline-flex items-center gap-1">ESCRIBIR POR WHATSAPP →</span>
+              <h3 class="font-serif text-sm sm:text-base font-bold text-nord-gold mb-0.5 group-hover:text-nord-fire transition-colors duration-300">WhatsApp & Pedidos</h3>
+              <p class="font-sans text-xs text-nord-cream-muted leading-relaxed mb-0.5">{{ phone }}</p>
+              <span class="text-[11px] text-nord-gold font-semibold tracking-wider inline-flex items-center gap-1 group-hover:underline">ESCRIBIR POR WHATSAPP →</span>
             </div>
           </div>
 
           <!-- Item 3: Hours -->
-          <div class="flex items-start gap-3 sm:gap-4 p-2 -ml-2">
-            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-nord-charcoal border border-nord-gold/15 flex items-center justify-center text-xl text-nord-ember shrink-0 shadow-md">
+          <div class="flex items-start gap-3 p-2 -ml-2">
+            <div class="w-9 sm:w-10 h-9 sm:h-10 rounded-lg bg-nord-charcoal border border-nord-border flex items-center justify-center text-lg text-nord-fire shrink-0 shadow-md" aria-hidden="true">
               🕒
             </div>
             <div>
-              <h4 class="font-serif text-base sm:text-lg font-bold text-nord-gold mb-1">Horario de Atención</h4>
-              <p class="font-sans text-xs sm:text-sm text-nord-cream-muted leading-relaxed">
+              <h3 class="font-serif text-sm sm:text-base font-bold text-nord-gold mb-0.5">Horario de Atención</h3>
+              <p class="font-sans text-xs text-nord-cream-muted leading-relaxed">
                 Jueves a Domingo: <span class="text-nord-cream font-semibold">7:00 PM - 10:00 PM</span><br/>
-                <span class="text-nord-ember font-medium">Lunes a Miércoles: Cerrado</span> (preparación y curado artesanal).<br/>
-                Te recomendamos llegar temprano para disfrutar de la experiencia al grill completa.
+                <span class="text-nord-fire font-medium">Lunes a Miércoles: Cerrado</span> (preparación y curado artesanal).
               </p>
             </div>
           </div>
-        </div>
+        </address>
       </div>
 
       <!-- Right Column: Visual Map Card with Pulse indicator -->
@@ -66,41 +81,48 @@
       >
         <div 
           (click)="openGoogleMaps()"
-          class="bg-nord-charcoal/80 p-6 sm:p-8 rounded-2xl relative overflow-hidden group cursor-pointer border border-nord-gold/10 hover:border-nord-gold/30 transition-all duration-300 hover:shadow-2xl shadow-xl flex flex-col items-center justify-center text-center h-[290px] sm:h-[360px] md:h-[440px]"
+          (keydown.enter)="openGoogleMaps()"
+          (keydown.space)="openGoogleMaps(); $event.preventDefault()"
+          role="region"
+          aria-label="Mapa interactivo de ubicación"
+          class="bg-nord-charcoal/90 p-5 sm:p-6 rounded-xl relative overflow-hidden group cursor-pointer border border-nord-border hover:border-nord-gold/40 transition-all duration-300 hover:shadow-2xl shadow-xl flex flex-col items-center justify-center text-center h-[260px] sm:h-[300px] md:h-[350px]"
         >
           <!-- Background stylized grill graphic/map pattern -->
           <div 
-            class="absolute inset-0 bg-cover bg-center opacity-15 filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-1000"
+            class="absolute inset-0 bg-cover bg-center opacity-20 filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-1000"
             style="background-image: url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=800');"
+            aria-hidden="true"
           ></div>
           
           <!-- Radial gradient for depth -->
-          <div class="absolute inset-0 bg-gradient-to-b from-transparent via-nord-dark/85 to-nord-dark z-0"></div>
+          <div class="absolute inset-0 bg-gradient-to-b from-transparent via-nord-dark/85 to-nord-dark z-0" aria-hidden="true"></div>
 
           <!-- Pulsing Locator -->
-          <div class="relative z-10 mb-4 sm:mb-6 flex flex-col items-center">
+          <div class="relative z-10 mb-3 sm:mb-4 flex flex-col items-center" aria-hidden="true">
             <!-- Ripple Ring 2 -->
-            <div class="absolute w-16 sm:w-20 h-16 sm:h-20 rounded-full bg-nord-ember/15 animate-ping duration-1000"></div>
+            <div class="absolute w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-nord-fire-soft animate-ping duration-1000"></div>
             <!-- Ripple Ring 1 -->
-            <div class="absolute w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-nord-gold/20 animate-ping"></div>
+            <div class="absolute w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-nord-gold/20 animate-ping"></div>
             <!-- Marker Core -->
-            <div class="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-nord-ember border-2 border-nord-cream flex items-center justify-center text-xl sm:text-2xl shadow-lg transform group-hover:scale-105 transition-transform duration-300">
+            <div class="w-9 sm:w-10 h-9 sm:h-10 rounded-full bg-nord-fire border-2 border-nord-cream flex items-center justify-center text-lg sm:text-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300">
               🔥
             </div>
           </div>
 
           <!-- Text -->
-          <div class="relative z-10 px-4 mb-6 sm:mb-8">
-            <h3 class="font-serif text-xl sm:text-2xl font-bold text-nord-cream mb-1.5 sm:mb-2">Nórdicos Grill House</h3>
-            <p class="font-sans text-xs sm:text-sm text-nord-cream-muted max-w-sm mx-auto leading-relaxed">
+          <div class="relative z-10 px-3 mb-4 sm:mb-5">
+            <h3 class="font-serif text-lg sm:text-xl font-bold text-nord-cream mb-1">Nórdicos Grill House</h3>
+            <p class="font-sans text-xs text-nord-cream-muted max-w-xs mx-auto leading-relaxed">
               Estamos ubicados en San Pablo Huixtepec, Oaxaca. Tocá para abrir indicaciones en Google Maps y llegar directo.
             </p>
           </div>
 
           <!-- Action Button -->
           <button 
+            type="button"
             (click)="$event.stopPropagation(); openGoogleMaps()"
-            class="relative z-10 min-h-[44px] px-7 py-3 bg-nord-gold text-nord-dark font-sans font-bold text-xs sm:text-sm rounded-xl hover:bg-nord-ember hover:text-nord-cream active:scale-95 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg"
+            aria-label="Abrir indicaciones en Google Maps"
+            class="relative z-10 min-h-[38px] px-6 py-2 bg-nord-gold text-nord-dark font-sans font-bold text-xs rounded-lg hover:bg-nord-fire hover:text-nord-cream active:scale-95 transition-all duration-300 flex items-center gap-1.5 cursor-pointer shadow-md focus:outline-none focus:ring-2 focus:ring-nord-cream"
           >
             🗺️ Cómo Llegar en Maps
           </button>

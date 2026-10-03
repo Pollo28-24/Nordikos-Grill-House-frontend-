@@ -1,7 +1,7 @@
-<div class="min-h-screen bg-[#121212] text-[#F5F5F5]">
+<div class="min-h-screen bg-nord-surface text-nord-text">
   <app-navbar />
 
-  <main class="max-w-7xl mx-auto px-4 py-6 space-y-8">
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-8 pb-[max(6rem,env(safe-area-inset-bottom))]">
     
     <!-- ============================= -->
     <!-- BUSCADOR DE PRODUCTOS -->
@@ -34,10 +34,10 @@
       <!-- Todas -->
       <button
         class="px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap shrink-0"
-        [class.bg-[#FFB300]]="selectedCategoryId() === null"
-        [class.text-[#121212]]="selectedCategoryId() === null"
-        [class.bg-[#1E1E1E]]="selectedCategoryId() !== null"
-        [class.text-[#F5F5F5]]="selectedCategoryId() !== null"
+        [class.bg-nord-brand]="selectedCategoryId() === null"
+        [class.text-nord-surface]="selectedCategoryId() === null"
+        [class.bg-nord-card]="selectedCategoryId() !== null"
+        [class.text-nord-text]="selectedCategoryId() !== null"
         (click)="showAllCategories()"
       >
         Todas las categorías
@@ -46,10 +46,10 @@
       @for (category of categories(); track category.id) {
         <button
           class="px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap shrink-0"
-          [class.bg-[#FFB300]]="selectedCategoryId() === category.id"
-          [class.text-[#121212]]="selectedCategoryId() === category.id"
-          [class.bg-[#1E1E1E]]="selectedCategoryId() !== category.id"
-          [class.text-[#F5F5F5]]="selectedCategoryId() !== category.id"
+          [class.bg-nord-brand]="selectedCategoryId() === category.id"
+          [class.text-nord-surface]="selectedCategoryId() === category.id"
+          [class.bg-nord-card]="selectedCategoryId() !== category.id"
+          [class.text-nord-text]="selectedCategoryId() !== category.id"
           (click)="filterProductsByCategory(category.id)"
         >
           {{ categoryNameOverrides()[category.id] || category.nombre }}
@@ -57,7 +57,7 @@
       }
 
       <!-- Fade scroll -->
-      <div class="pointer-events-none absolute right-0 top-0 h-full w-12 bg-linear-to-l from-[#121212]"></div>
+      <div class="pointer-events-none absolute right-0 top-0 h-full w-12 bg-linear-to-l from-nord-surface"></div>
     </section>
 
     <!-- ============================= -->

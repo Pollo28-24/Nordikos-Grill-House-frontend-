@@ -17,4 +17,11 @@ export class ProductCard {
 
   onAdd = output<Product>();
   onViewDetails = output<Product>();
+
+  hasCustomizations(): boolean {
+    const p = this.product();
+    const hasVariants = p.price_type === 'variants' || (p.variants && p.variants.length > 0);
+    const hasModifiers = Boolean(p.modifiers && p.modifiers.length > 0);
+    return Boolean(hasVariants || hasModifiers);
+  }
 }

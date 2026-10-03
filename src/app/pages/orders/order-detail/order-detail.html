@@ -1,9 +1,7 @@
-
-
-<div class="min-h-screen bg-[#121212] text-[#F5F5F5] pb-[max(6rem,env(safe-area-inset-bottom))] no-print overflow-x-hidden w-full">
+<div class="min-h-screen bg-[#121212] text-[#F5F5F5] pb-28 sm:pb-16 no-print overflow-x-hidden w-full">
   <div class="max-w-4xl mx-auto px-4 sm:px-6 py-6 w-full box-border">
     
-    <!-- Header -->
+    <!-- Header Ergonómico con Menú Secundario -->
     <app-order-detail-header 
       [order]="order()"
       [orderId]="orderId()"
@@ -16,26 +14,29 @@
     @if (loading()) {
       <div class="flex flex-col items-center justify-center py-20 gap-4">
         <lucide-icon name="loader-2" class="w-10 h-10 text-[#FFB300] animate-spin" />
-        <p class="text-zinc-400 font-medium text-sm">Cargando detalles...</p>
+        <p class="text-zinc-400 font-medium text-sm">Cargando comanda...</p>
       </div>
     } @else if (order()) {
       <div class="flex flex-col gap-5">
-        <!-- Info General -->
+        <!-- Resumen del Servicio con Selector Interactivo -->
         <app-order-detail-summary
           [order]="order()"
           [currentTime]="currentTime()"
+          (changeServiceType)="onChangeServiceType($event)"
         />
 
-        <!-- Items de la Orden -->
+        <!-- Líneas de la Orden con Stepper Ergonómico y Micro-badging SyncStatus -->
         <app-order-detail-items
           [order]="order()"
           [items]="items()"
+          [syncStatusMap]="syncStatusMap()"
           (addProducts)="addMoreProducts()"
           (incrementItem)="onIncrementItem($event)"
+          (decrementItem)="onDecrementItem($event)"
           (cancelItem)="onCancelItem($event)"
         />
 
-        <!-- Resumen de Totales -->
+        <!-- Resumen Financiero de Totales -->
         <app-order-detail-totals
           [order]="order()"
         />
@@ -44,6 +45,60 @@
 
   </div>
 </div>
+
+<!-- Barra de Acción Contextual Fija para Móviles / Tablets (POS Sticky Action Bar) -->
+@if (order() && order()?.estado_pedido !== 'cancelado') {
+  <div class="fixed bottom-0 left-0 right-0 z-40 bg-[#1A1A1A]/95 backdrop-blur-md border-t border-white/10 px-4 py-3 shadow-[0_-8px_25px_rgba(0,0,0,0.6)] animate-in slide-in-from-bottom-3 duration-300">
+    <div class="max-w-4xl mx-auto flex items-center justify-between gap-4">
+      
+      <!-- Total a Pagar Resumido -->
+      <div class="flex flex-col">
+        <span class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider">Total</span>
+        <span class="text-xl sm:text-2xl font-black text-[#FFB300] tabular-nums leading-tight">
+          \${{ order().total | number:'1.2-2' }}
+        </span>
+      </div>
+
+      <!-- Botón de Acción Primaria Contextual (según estado de la orden) -->
+      <div class="flex items-center gap-2">
+        @if (order().estado_pedido === 'pendiente') {
+          <button
+            (click)="confirmOrder()"
+            class="h-12 px-5 sm:px-6 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-black font-black text-xs sm:text-sm uppercase tracking-wider transition duration-150 active:scale-95 flex items-center gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer select-none"
+          >
+            <lucide-icon name="check-circle" class="w-5 h-5 text-black" />
+            <span>Confirmar Comanda</span>
+          </button>
+        } @else if (order().estado_pedido === 'confirmado' && order().estado_pago === 'pendiente') {
+          <button
+            (click)="registerPaymentPrompt()"
+            class="h-12 px-5 sm:px-6 rounded-xl bg-[#FFB300] hover:bg-[#FFB300]/90 active:bg-[#FFB300]/80 text-black font-black text-xs sm:text-sm uppercase tracking-wider transition duration-150 active:scale-95 flex items-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer select-none"
+          >
+            <lucide-icon name="credit-card" class="w-5 h-5 text-black" />
+            <span>Cobrar \${{ order().total | number:'1.2-2' }}</span>
+          </button>
+        } @else if (order().estado_pedido === 'confirmado' && order().estado_pago === 'pagado') {
+          <button
+            (click)="markAsDelivered()"
+            class="h-12 px-5 sm:px-6 rounded-xl bg-blue-500 hover:bg-blue-400 active:bg-blue-600 text-white font-black text-xs sm:text-sm uppercase tracking-wider transition duration-150 active:scale-95 flex items-center gap-2 shadow-lg shadow-blue-500/20 cursor-pointer select-none"
+          >
+            <lucide-icon name="truck" class="w-5 h-5 text-white" />
+            <span>Marcar Entregado</span>
+          </button>
+        } @else if (order().estado_pedido === 'entregado') {
+          <button
+            (click)="openTicket('account')"
+            class="h-12 px-5 sm:px-6 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] active:bg-white/[0.16] border border-white/15 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition duration-150 active:scale-95 flex items-center gap-2 cursor-pointer select-none"
+          >
+            <lucide-icon name="printer" class="w-5 h-5 text-[#FFB300]" />
+            <span>Imprimir Ticket</span>
+          </button>
+        }
+      </div>
+
+    </div>
+  </div>
+}
 
 <!-- Modal de Ticket (Overlay) -->
 @if (showTicket()) {

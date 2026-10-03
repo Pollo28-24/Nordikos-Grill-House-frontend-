@@ -45,6 +45,7 @@ export class ProductFormModal {
   expandedVariants = signal<Set<string>>(new Set());
 
   priceMode = signal<PriceMode>('simple');
+  canConvertToSimple = signal<boolean>(true);
   selectedFile = signal<File | null>(null);
   imagePreviewUrl = signal<string | null>(null);
   isSaving = signal(false);
@@ -127,8 +128,11 @@ export class ProductFormModal {
         }
         if (product.variants && product.variants.length > 0) {
           this.priceMode.set('variant');
+          const canConvert = await this.productsService.canConvertToSimple(product.id);
+          this.canConvertToSimple.set(canConvert);
         } else {
           this.priceMode.set('simple');
+          this.canConvertToSimple.set(true);
         }
       } else {
         this.feedback.showError('Producto no encontrado');
@@ -197,26 +201,80 @@ export class ProductFormModal {
   }
 
   setPriceMode(mode: PriceMode) {
-    if (mode === 'variant' && this.priceMode() === 'simple' && this.isEditMode()) {
-      this.feedback.confirmAndExecute({
-        title: 'Cambiar a variantes',
-        message: `El producto "${this.productForm.get('nombre')?.value}" tiene precio simple. ¿Estás seguro de que deseas agregarle variantes?`,
-        confirmText: 'Sí, cambiar',
-        action: () => {
-          this.priceMode.set('variant');
-          if (this.variants.length === 0) {
-            this.addVariant();
-          }
+    if (mode === 'variant' && this.priceMode() === 'simple') {
+      const applyChangeToVariant = () => {
+        this.priceMode.set('variant');
+        if (this.variants.length === 0) {
+          const simplePrice = Number(this.productForm.get('precio')?.value) || 0;
+          const simpleCosto = Number(this.productForm.get('costo')?.value) || 0;
+          const simpleDescuento = Number(this.productForm.get('descuento')?.value) || 0;
+          const simpleSku = this.productForm.get('sku')?.value || '';
+          const simpleEmbalaje = this.productForm.get('embalaje')?.value || '';
+          this.variants.push(
+            this.createVariantFormGroup({
+              nombre: 'Presentación estándar',
+              precio: simplePrice,
+              costo: simpleCosto,
+              descuento: simpleDescuento,
+              sku: simpleSku,
+              embalaje: simpleEmbalaje,
+              disponible: true,
+            })
+          );
         }
-      });
+      };
+
+      if (this.isEditMode()) {
+        this.feedback.confirmAndExecute({
+          title: 'Cambiar a variantes',
+          message: `El producto "${this.productForm.get('nombre')?.value}" tiene precio simple. ¿Deseas convertirlo a producto con variantes? Su precio actual se usará como base para la primera variante.`,
+          confirmText: 'Sí, cambiar',
+          action: applyChangeToVariant,
+        });
+        return;
+      }
+
+      applyChangeToVariant();
       return;
     }
 
-    this.priceMode.set(mode);
-    
-    if (mode === 'simple') {
-      this.variants.clear();
-      this.expandedVariants.set(new Set());
+    if (mode === 'simple' && this.priceMode() === 'variant') {
+      if (this.isEditMode() && !this.canConvertToSimple()) {
+        this.feedback.confirmAndExecute({
+          title: 'Esquema de precios protegido',
+          message: 'Este producto tiene variantes utilizadas en pedidos anteriores. Para conservar la integridad del historial de ventas, no puede convertirse en un producto de precio simple.',
+          confirmText: 'Entendido',
+          action: () => {},
+        });
+        return;
+      }
+
+      if (this.variants.length > 0) {
+        this.feedback.confirmAndExecute({
+          title: 'Cambiar a precio simple',
+          message: 'Este producto tiene variantes configuradas pero ninguna ha sido utilizada en pedidos. Al cambiar a precio simple, las variantes actuales se descartarán. ¿Deseas continuar?',
+          confirmText: 'Sí, cambiar a simple',
+          isDanger: true,
+          action: () => {
+            const firstVariant = this.variants.at(0)?.value;
+            if (firstVariant) {
+              this.productForm.patchValue({
+                precio: firstVariant.precio ?? 0,
+                costo: firstVariant.costo ?? 0,
+                descuento: firstVariant.descuento ?? 0,
+                sku: firstVariant.sku ?? '',
+                embalaje: firstVariant.embalaje ?? '',
+              });
+            }
+            this.variants.clear();
+            this.expandedVariants.set(new Set());
+            this.priceMode.set('simple');
+          },
+        });
+        return;
+      }
+
+      this.priceMode.set('simple');
     }
   }
 

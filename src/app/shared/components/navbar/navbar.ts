@@ -6,6 +6,7 @@ import { AuthService } from '@auth/data-access/auth.services';
 import { ToastService } from '@core/services/toast.service';
 import { OrdersRequestsService } from '@core/services/orders-requests.service';
 import { filter } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-navbar',
@@ -31,7 +32,10 @@ export class Navbar {
 
   constructor() {
     this.router.events
-      .pipe(filter((event) => event instanceof NavigationEnd))
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed()
+      )
       .subscribe(() => {
         this.menuOpen.set(false);
       });

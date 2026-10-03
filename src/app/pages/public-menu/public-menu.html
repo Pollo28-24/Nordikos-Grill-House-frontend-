@@ -164,9 +164,11 @@
   ></app-public-checkout>
 
   <!-- MODAL DE HISTORIAL DE PEDIDOS DEL CLIENTE -->
-  <app-public-orders-modal
-    [isOpen]="isOrdersModalOpen()"
-    (close)="closeOrdersModal()"
-  ></app-public-orders-modal>
+  @if (isOrdersModalOpen()) {
+    <app-public-orders-modal
+      [isOpen]="true"
+      (close)="closeOrdersModal()"
+    ></app-public-orders-modal>
+  }
 
 </div>

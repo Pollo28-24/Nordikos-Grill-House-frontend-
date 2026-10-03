@@ -1,0 +1,71 @@
+<section id="categorias" class="scroll-mt-20 md:scroll-mt-24 py-10 sm:py-14 md:py-16 bg-nord-dark text-nord-cream border-t border-nord-border relative overflow-hidden">
+  <!-- Subtle ambient glow -->
+  <div class="absolute bottom-0 left-1/4 w-96 h-96 bg-nord-fire-soft rounded-full filter blur-[140px] pointer-events-none"></div>
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+    
+    <!-- Section Header (Daily Promos & Specials) -->
+    <div appRevealOnScroll class="reveal-init text-center max-w-2xl mx-auto mb-6 sm:mb-8">
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-nord-charcoal border border-nord-gold/30 text-nord-gold text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] mb-2 sm:mb-3">
+        <span>🔥</span>
+        <span>SELECCIÓN & COMBOS DEL DÍA</span>
+      </div>
+      <h2 class="font-serif text-2xl sm:text-4xl md:text-5xl font-bold mb-3 text-nord-cream leading-tight">
+        Promociones del <span class="text-nord-fire text-glow-gold">Fuego</span>
+      </h2>
+      <div class="h-0.5 w-16 bg-nord-fire mx-auto mb-3 sm:mb-4 rounded-full shadow-[0_0_10px_rgba(255,106,0,0.5)]"></div>
+      <p class="font-sans text-xs sm:text-sm md:text-base text-nord-cream-muted leading-relaxed">
+        Paquetes, combos y cortes al carbón con rotación diaria. Seleccioná cualquier opción para verla y pedirla en el menú.
+      </p>
+    </div>
+
+    <!-- Daily Items Grid (2x2 on mobile, 4 columns on desktop, compact height) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-10">
+      @for (item of dailyPromos(); track item.id; let i = $index) {
+        <a 
+          routerLink="/menu"
+          [queryParams]="item.categoryId ? { categoria: item.categoryId } : null"
+          appRevealOnScroll
+          [revealDelay]="i * 80"
+          class="reveal-scale group relative h-[260px] sm:h-[290px] rounded-2xl overflow-hidden border border-nord-border bg-nord-charcoal hover:border-nord-gold/50 shadow-xl transition-all duration-500 flex flex-col justify-end p-4 sm:p-5 cursor-pointer"
+        >
+          <!-- Background Product Image with gentle zoom -->
+          <div 
+            class="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-110 filter brightness-[0.5] contrast-105"
+            [style.background-image]="'url(' + item.image + ')'"
+          ></div>
+
+          <!-- Multi-step dark gradient overlay for crystal-clear readability -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
+
+          <!-- Promo Badge top-left -->
+          <div class="absolute top-3 left-3 z-10 px-2.5 py-0.5 rounded-full bg-nord-dark/90 backdrop-blur-md border border-nord-gold/30 text-nord-gold text-[10px] font-bold uppercase tracking-wider shadow-sm">
+            {{ item.badge }}
+          </div>
+
+          <!-- Price Tag top-right -->
+          <div class="absolute top-3 right-3 z-10 px-2.5 py-0.5 rounded-lg bg-nord-dark/90 backdrop-blur-md border border-nord-gold/40 text-nord-gold font-sans font-extrabold text-xs sm:text-sm shadow-md">
+            {{ item.price }}
+          </div>
+
+          <!-- Card Content (Title + Subtitle + Action CTA) -->
+          <div class="relative z-10">
+            <h3 class="font-serif text-lg sm:text-xl font-bold text-nord-cream group-hover:text-nord-gold transition-colors duration-300 mb-1 leading-snug">
+              {{ item.name }}
+            </h3>
+
+            <p class="font-sans text-xs text-nord-cream-muted leading-relaxed mb-3 line-clamp-2">
+              {{ item.tagline }}
+            </p>
+
+            <div class="flex items-center gap-1.5 text-xs font-bold text-nord-fire tracking-wider uppercase group-hover:text-nord-cream transition-colors duration-300">
+              <span>Explorar en el Menú</span>
+              <span class="transform group-hover:translate-x-1.5 transition-transform duration-300">→</span>
+            </div>
+          </div>
+        </a>
+      }
+    </div>
+
+  </div>
+</section>

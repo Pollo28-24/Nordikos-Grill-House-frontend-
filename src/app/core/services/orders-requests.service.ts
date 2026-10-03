@@ -2,6 +2,7 @@ import { Injectable, inject, signal, computed, PLATFORM_ID, DestroyRef } from '@
 import { isPlatformBrowser } from '@angular/common';
 import { OrdersRequestsApi } from '../api/orders-requests.api';
 import { LoggerService } from './logger.service';
+import { PaymentMethod } from '../models/order.model';
 
 export interface OrderRequestItemModifier {
   id: number;
@@ -32,9 +33,18 @@ export interface OrderRequest {
   tipo_servicio_id: number | null;
   numero_mesa: string | null;
   direccion_entrega: string | null;
+  referencias?: string | null;
   motivo_rechazo: string | null;
   created_at: string;
   accepted_at: string | null;
+  metodo_pago_id?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  accuracy?: number | null;
+  metodos_pago?: {
+    id: number;
+    nombre: string;
+  } | null;
   clientes: {
     id: number;
     nombre: string;
@@ -101,15 +111,30 @@ export class OrdersRequestsService {
     }
   }
 
+  // Load payment methods catalog
+  async getPaymentMethods(): Promise<PaymentMethod[]> {
+    try {
+      const { data, error } = await this.api.getPaymentMethods();
+      if (error) throw error;
+      return (data as PaymentMethod[]) ?? [];
+    } catch (err: any) {
+      this.logger.error('Error loading payment methods', err, 'OrdersRequestsService');
+      throw err;
+    }
+  }
+
   // Load all requests (optionally filtered by state)
   async loadRequests(status?: string) {
     try {
       this.loading.set(true);
       this.error.set(null);
-      const { data, error } = await this.api.getRequestsQuery(status);
-      if (error) throw error;
+      let res = await this.api.getRequestsQuery(status, true);
+      if (res.error && res.error.message?.includes('referencias')) {
+        res = await this.api.getRequestsQuery(status, false);
+      }
+      if (res.error) throw res.error;
 
-      this.requests.set((data || []) as unknown as OrderRequest[]);
+      this.requests.set((res.data || []) as unknown as OrderRequest[]);
     } catch (err: any) {
       this.logger.error('Error loading order requests', err, 'OrdersRequestsService');
       this.error.set(err.message || 'Error al cargar las solicitudes');
@@ -121,11 +146,14 @@ export class OrdersRequestsService {
   // Load a single request detail and insert/update in state
   private async loadRequestAndAddToState(requestId: number, playSound: boolean) {
     try {
-      const { data, error } = await this.api.getRequestsQuery().eq('id', requestId).maybeSingle();
-      if (error) throw error;
-      if (!data) return;
+      let res = await this.api.getRequestsQuery(undefined, true).eq('id', requestId).maybeSingle();
+      if (res.error && res.error.message?.includes('referencias')) {
+        res = await this.api.getRequestsQuery(undefined, false).eq('id', requestId).maybeSingle();
+      }
+      if (res.error) throw res.error;
+      if (!res.data) return;
 
-      const typedReq = data as unknown as OrderRequest;
+      const typedReq = res.data as unknown as OrderRequest;
 
       this.requests.update(list => {
         const index = list.findIndex(r => r.id === requestId);
@@ -153,6 +181,7 @@ export class OrdersRequestsService {
     direccion_entrega?: string | null;
     referencias?: string | null;
     nota_general?: string | null;
+    metodo_pago?: string | null;
     location?: { latitude: number; longitude: number; accuracy?: number } | null;
     items: any[];
   }) {
@@ -198,20 +227,37 @@ export class OrdersRequestsService {
       // Calculate total amount from items
       const totalAmount = payload.items.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
 
-      // Prepare clean physical delivery address (with references, NO GPS strings)
-      let finalAddress = payload.direccion_entrega?.trim() || null;
-      if (finalAddress && payload.referencias?.trim()) {
-        finalAddress = `${finalAddress} (Ref: ${payload.referencias.trim()})`;
-      }
+      // Prepare clean physical delivery address and dedicated delivery references (NO string mixing, NO GPS strings)
+      const finalAddress = payload.direccion_entrega?.trim() || null;
+      const finalReferencias = payload.referencias?.trim() || null;
 
-      // Prepare note general with optional customer name (for anonymous table) and clean location metadata JSON
+      // Prepare 100% human-readable kitchen note (NO stringified metadata JSON)
       let finalNote = payload.nota_general?.trim() || '';
       if (payload.clientInfo?.nombre && !phone) {
         finalNote = `Cliente: ${payload.clientInfo.nombre}${finalNote ? ' | ' + finalNote : ''}`;
       }
-      if (payload.location) {
-        const metaJson = JSON.stringify({ location: payload.location });
-        finalNote = finalNote ? `${finalNote}\n[meta:${metaJson}]` : `[meta:${metaJson}]`;
+
+      // Resolve native metodo_pago_id directly from catalog
+      let resolvedPaymentMethodId: number | null = null;
+      if (payload.metodo_pago) {
+        try {
+          const methods = await this.getPaymentMethods();
+          if (methods && methods.length > 0) {
+            const p = payload.metodo_pago.toLowerCase();
+            if (p.includes('efectivo') || p === 'cash') {
+              const match = methods.find(m => m.nombre.toLowerCase().includes('efectivo'));
+              if (match) resolvedPaymentMethodId = match.id;
+            } else if (p.includes('tarjeta') || p.includes('terminal') || p === 'card') {
+              const match = methods.find(m => m.nombre.toLowerCase().includes('tarjeta') || m.nombre.toLowerCase().includes('terminal'));
+              if (match) resolvedPaymentMethodId = match.id;
+            } else if (p.includes('transferencia') || p.includes('spei') || p === 'transfer') {
+              const match = methods.find(m => m.nombre.toLowerCase().includes('transferencia') || m.nombre.toLowerCase().includes('spei'));
+              if (match) resolvedPaymentMethodId = match.id;
+            }
+          }
+        } catch {
+          this.logger.warn('Could not resolve payment method id from catalog', 'OrdersRequestsService');
+        }
       }
 
       // 2. Create order request
@@ -222,24 +268,56 @@ export class OrdersRequestsService {
         tipo_servicio_id: payload.tipo_servicio_id,
         numero_mesa: payload.numero_mesa || null,
         direccion_entrega: finalAddress,
+        referencias: finalReferencias,
+        metodo_pago_id: resolvedPaymentMethodId,
+        latitude: payload.location?.latitude ?? null,
+        longitude: payload.location?.longitude ?? null,
+        accuracy: payload.location?.accuracy ?? null,
         estado: 'pending'
       });
       if (requestCreateError) throw requestCreateError;
 
-      // 3. Insert items and modifiers
-      const itemsToInsert = payload.items.map(item => ({
-        request_id: request.id,
-        producto_id: item.product_id || null,
-        variante_id: item.variante?.id || null,
-        nombre_producto: item.nombre,
-        cantidad: item.cantidad,
-        precio_unitario: item.precio,
-        total: item.precio * item.cantidad,
-        nota: item.nota || null
-      }));
+      // 3. Insert items
+      const itemsToInsert = payload.items.map(item => {
+        const unitPrice = item.precio_unitario ?? item.precio ?? 0;
+        return {
+          request_id: request.id,
+          producto_id: item.producto_id ?? item.product_id ?? null,
+          variante_id: item.variante_id ?? item.variante?.id ?? null,
+          nombre_producto: item.nombre_producto ?? item.nombre,
+          cantidad: item.cantidad,
+          precio_unitario: unitPrice,
+          total: unitPrice * item.cantidad,
+          nota: item.nota || null
+        };
+      });
 
       const { data: insertedItems, error: itemsInsertError } = await this.api.insertRequestItems(itemsToInsert);
       if (itemsInsertError) throw itemsInsertError;
+
+      // 4. Relational insert for item modifiers into order_request_item_modificadores
+      if (insertedItems && insertedItems.length > 0) {
+        const modifiersToInsert: any[] = [];
+        insertedItems.forEach((dbItem: any, index: number) => {
+          const originalItem = payload.items[index];
+          if (originalItem?.modificadores && Array.isArray(originalItem.modificadores) && originalItem.modificadores.length > 0) {
+            originalItem.modificadores.forEach((m: any) => {
+              if (!m.nombre_modificador) return;
+              modifiersToInsert.push({
+                request_item_id: dbItem.id,
+                modificador_id: m.modificador_id ? Number(m.modificador_id) : null,
+                nombre_modificador: m.nombre_modificador,
+                cantidad: Number(m.cantidad || 1),
+                precio_unitario: Number(m.precio_unitario || 0)
+              });
+            });
+          }
+        });
+
+        if (modifiersToInsert.length > 0) {
+          await this.api.insertRequestItemModifiers(modifiersToInsert);
+        }
+      }
 
       return { success: true, request_code: request.request_code };
     } catch (err: any) {

@@ -18,11 +18,11 @@ export class RevealOnScrollDirective implements OnInit {
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) {
-      // For SSR, keep them visible or let the client reveal them.
-      // If we don't do anything, the client will see them hide first when JS bootstraps,
-      // which is perfect for animations.
       return;
     }
+
+    // Client-side only: prime element for reveal animation without hiding during SSR
+    this.renderer.addClass(this.el.nativeElement, 'reveal-armed');
 
     const observerOptions = {
       root: null,

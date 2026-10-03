@@ -65,7 +65,7 @@ export class SalesDashboard {
     }
     
     // Sort by date descending
-    return orders.sort((a, b) => new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime());
+    return [...orders].sort((a, b) => new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime());
   });
   
   // KPIs - Only based on valid (non-cancelled) orders
@@ -120,11 +120,12 @@ export class SalesDashboard {
   });
   
   constructor() {
-    effect(() => {
+    effect((onCleanup) => {
       // Read signal synchronously to track dependency
       const range = this.selectedDateRange();
       // Allow current execution context to complete before triggering reload
-      setTimeout(() => this.loadDataForRange(range));
+      const timer = setTimeout(() => this.loadDataForRange(range));
+      onCleanup(() => clearTimeout(timer));
     });
   }
   

@@ -60,22 +60,22 @@ export class GallerySection {
     },
     {
       url: 'assets/Galeria/imagen publicidad 8.jpg',
-      title: 'El Arte del Carbón',
+      title: 'Fuego y Pasión',
       category: 'Cocina'
     },
     {
       url: 'assets/Galeria/imagen publicidad 9.jpg',
-      title: 'El Arte del Carbón',
+      title: 'Parrillada al Punto',
       category: 'Cocina'
     },
     {
       url: 'assets/Galeria/imagen publicidad 10.jpg',
-      title: 'El Arte del Carbón',
+      title: 'Brasas de Encino',
       category: 'Cocina'
     },
     {
       url: 'assets/Galeria/bebida.jpg',
-      title: 'Bebidas de la Casa',
+      title: 'Mixología Nórdicos',
       category: 'Bebidas'
     },
     {

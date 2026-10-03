@@ -15,8 +15,8 @@ import { ProductsService } from '@core/services/products.service';
       box-sizing: border-box;
       border-radius: 12px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-      background: #1A1A1A;
-      border: 1px solid #FFB30040;
+      background: var(--color-nord-card-hover, #1A1A1A);
+      border: 1px solid color-mix(in srgb, var(--color-nord-brand, #FFB300) 25%, transparent);
     }
     .cdk-drag-placeholder {
       opacity: 0.1;

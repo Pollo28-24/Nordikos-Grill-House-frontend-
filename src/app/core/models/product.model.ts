@@ -1,8 +1,16 @@
+export type ModifierSelectionType = 'RADIO' | 'CHECKBOX' | 'STEPPER';
+
 export interface ModifierCategory {
   id: string | number;
   nombre: string;
   descripcion?: string;
   visible: boolean;
+  // Reglas estrictas garantizadas por el mapper (sin undefineds en el dominio)
+  tipo_seleccion: ModifierSelectionType;
+  min_selections: number;
+  max_selections: number;
+  obligatorio: boolean;
+  orden_visual: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -18,7 +26,31 @@ export interface Modifier {
   visible: boolean;
   cantidad_maxima: number;
   tipo?: 'plus' | 'minus';
-  modificador_categorias?: { nombre: string };
+  modificador_categorias?: ModifierCategory;
+}
+
+export interface SelectedModifierItem {
+  modifierId: string | number;
+  categoryId: string | number;
+  nombre: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
+  modifier: Modifier; // Referencia/snapshot completa
+}
+
+export interface CartCustomization {
+  product: Product;
+  variant?: ProductVariant | null;
+  quantity: number;
+  modifiers: SelectedModifierItem[];
+  note?: string;
+}
+
+export interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
 }
 
 export interface ProductVariant {

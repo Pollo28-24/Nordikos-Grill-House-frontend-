@@ -11,7 +11,7 @@ export class OrdersApi {
       .select(`
         id, numero_orden, nota_general, fecha_creacion, fecha_cierre, total, 
         estado_pedido, estado_pago, metodo_pago_id, tipo_servicio_id, turno_id,
-        clientes (nombre), tipos_servicio (nombre),
+        clientes (id, nombre, telefono, email, direccion), tipos_servicio (nombre),
         order_items (
           id, cantidad, precio_unitario, nombre_producto, nota, producto_id,
           order_item_modificadores (id, nombre_modificador, cantidad, precio_unitario)
@@ -25,6 +25,22 @@ export class OrdersApi {
       query = query.limit(100);
     }
     return query;
+  }
+
+  getOrderListItem(orderId: number) {
+    return this.supabase
+      .from('orders')
+      .select(`
+        id, numero_orden, nota_general, fecha_creacion, fecha_cierre, total, 
+        estado_pedido, estado_pago, metodo_pago_id, tipo_servicio_id, turno_id,
+        clientes (id, nombre, telefono, email, direccion), tipos_servicio (nombre),
+        order_items (
+          id, cantidad, precio_unitario, nombre_producto, nota, producto_id,
+          order_item_modificadores (id, nombre_modificador, cantidad, precio_unitario)
+        )
+      `)
+      .eq('id', orderId)
+      .maybeSingle();
   }
 
   insertOrderItem(item: any) { 
@@ -99,13 +115,21 @@ export class OrdersApi {
       .eq('id', orderId);
   }
 
+  getPaymentMethods() {
+    return this.supabase.from('metodos_pago').select('id,nombre,tipo').order('id');
+  }
+
   getServiceTypes() { 
     return this.supabase.from('tipos_servicio').select('id,nombre').order('id'); 
   }
 
+  getClients(limit: number = 100) {
+    return this.supabase.from('clientes').select('id,nombre,telefono').order('nombre').limit(limit);
+  }
+
   async getOrderById(id: string | number) {
     const { data: order, error: orderError } = await this.supabase.from('orders')
-      .select(`*, clientes (nombre, telefono), tipos_servicio (nombre), metodos_pago (nombre), turnos (nombre)`)
+      .select(`*, clientes (id, nombre, telefono, email, direccion), tipos_servicio (nombre), metodos_pago (nombre), turnos (nombre)`)
       .eq('id', id).maybeSingle();
 
     if (orderError || !order) return { order: null, orderError, items: null, itemsError: null };

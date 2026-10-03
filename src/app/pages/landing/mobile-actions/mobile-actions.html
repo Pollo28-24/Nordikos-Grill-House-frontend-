@@ -1,0 +1,26 @@
+<!-- Mobile Bottom Bar (Sticky Conversion Bar, Safe-Area Aware) -->
+<nav 
+  class="md:hidden fixed bottom-0 left-0 w-full z-40 bg-nord-dark/95 backdrop-blur-xl border-t border-nord-border px-4 pt-2.5 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-[0_-8px_30px_rgba(0,0,0,0.85)]"
+  aria-label="Acciones rápidas móviles"
+>
+  <div class="max-w-md mx-auto grid grid-cols-2 gap-3">
+    <!-- Primary Conversion Button -->
+    <a 
+      routerLink="/menu"
+      class="min-h-[48px] px-4 py-3 bg-nord-fire hover:bg-nord-fire/90 active:scale-95 text-nord-cream font-sans font-bold text-xs uppercase tracking-wider rounded-xl shadow-[0_0_20px_rgba(255,106,0,0.45)] border border-nord-gold/30 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+    >
+      <span>🔥</span>
+      <span>Ver Menú</span>
+    </a>
+
+    <!-- Location Quick Button -->
+    <a 
+      href="#ubicacion"
+      (click)="scrollToLocation($event)"
+      class="min-h-[48px] px-4 py-3 bg-nord-charcoal/90 hover:bg-nord-charcoal active:scale-95 text-nord-cream font-sans font-semibold text-xs uppercase tracking-wider rounded-xl border border-nord-border flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+    >
+      <span>📍</span>
+      <span>Ubicación</span>
+    </a>
+  </div>
+</nav>

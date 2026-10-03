@@ -1,251 +1,31 @@
-<div class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
-  <!-- Backdrop -->
-  <div (click)="onClose.emit()" class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
-  
-  <!-- Content Container (Bottom Sheet en Android/móvil, Modal centrado en Desktop) -->
-  <div class="relative w-full max-w-lg bg-[#F8F5EE] rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl animate-slide-up sm:animate-fade-in flex flex-col max-h-[92vh] sm:max-h-[88vh] z-10 border border-[#E2D7B7]/80">
+<div class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 overscroll-contain">
+  <!-- Backdrop con aislamiento total de scroll y touch-none -->
+  <div 
+    (click)="requestClose()" 
+    class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity touch-none select-none"
+  ></div>
+
+  <!-- Content Container (Bottom Sheet en móvil / Modal centrado en Desktop) -->
+  <div class="relative w-full max-w-lg bg-[#F8F5EE] rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl animate-slide-up sm:animate-fade-in flex flex-col h-[92vh] max-h-[94vh] sm:max-h-[88vh] z-10 border border-[#E2D7B7]/80 overscroll-contain">
     
     <!-- Drag handle pill indicator (Mobile only) -->
     <div class="sm:hidden absolute top-2.5 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-white/70 shadow-sm z-30 pointer-events-none"></div>
 
-    <!-- 1. Header Image con Botón de Cierre Ergonómico -->
-    <div class="relative h-48 sm:h-56 bg-zinc-900 shrink-0 overflow-hidden">
-      @if (product().imagen_url) {
-        <img [src]="product().imagen_url" [alt]="product().nombre" class="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-110">
-        <img [src]="product().imagen_url" [alt]="product().nombre" class="relative w-full h-full object-contain p-2 drop-shadow-2xl">
-      } @else {
-        <div class="w-full h-full flex items-center justify-center text-gray-400">
-          <lucide-icon name="image" class="h-14 w-14"></lucide-icon>
-        </div>
-      }
+    <!-- 1. Cabecera Visual (Hero Image, Cierre, Título y Resumen Base) -->
+    <app-modal-hero-header class="block shrink-0" (onClose)="requestClose()"></app-modal-hero-header>
 
-      <!-- Close button (40x40px touch target) -->
-      <button 
-        (click)="onClose.emit()" 
-        class="absolute top-3.5 right-3.5 w-10 h-10 bg-black/40 hover:bg-black/60 active:scale-90 text-white rounded-full backdrop-blur-md transition flex items-center justify-center z-20 cursor-pointer touch-manipulation shadow-md"
-        title="Cerrar modal"
-        aria-label="Cerrar modal"
-      >
-        <lucide-icon name="x" class="h-5 w-5"></lucide-icon>
-      </button>
-    </div>
+    <!-- 2. Barra Superior de Pestañas de Secciones (Sticky Nav Pills) -->
+    <app-section-tabs-nav class="block shrink-0" (onSelectSection)="handleSectionSelect($event)"></app-section-tabs-nav>
 
-    <!-- 2. Scrollable Body: Contenido y opciones -->
-    <div class="grow overflow-y-auto p-4 sm:p-5 space-y-4 sm:space-y-5 custom-scrollbar">
-      
-      <!-- Title, Price & Description -->
-      <div class="space-y-1.5 pb-1">
-        <div class="flex items-start justify-between gap-3">
-          <h3 class="text-lg sm:text-xl font-black text-gray-900 leading-snug">
-            {{ product().nombre }}
-          </h3>
-          
-          <!-- Badge Personalizable si tiene variantes -->
-          @if (product().variants && product().variants!.length > 0) {
-            <span class="shrink-0 px-2.5 py-1 rounded-full bg-orange-100 text-orange-700 text-[10px] font-black uppercase tracking-wide">
-              Personalizable
-            </span>
-          }
-        </div>
+    <!-- 3. Carrusel Horizontal Paginado (Scroll-Snap X + IntersectionObserver) -->
+    <app-section-carousel class="flex-1 min-h-0 flex flex-col overflow-hidden"></app-section-carousel>
 
-        <!-- Precio para producto simple con desglose de descuento -->
-        @if (!(product().variants && product().variants!.length > 0)) {
-          <div class="flex items-baseline gap-2">
-            @if (product().descuento && product().descuento! > 0) {
-              <span class="text-lg sm:text-xl font-black text-orange-600 tabular-nums">
-                {{ (product().precio! - product().descuento!) | currencyMxn }}
-              </span>
-              <del class="text-xs text-gray-400 font-medium">
-                {{ product().precio! | currencyMxn }}
-              </del>
-              <span class="px-2 py-0.5 rounded-md bg-red-50 text-red-600 text-[10px] font-extrabold uppercase">
-                Ahorras {{ product().descuento! | currencyMxn }}
-              </span>
-            } @else {
-              <span class="text-lg sm:text-xl font-black text-orange-600 tabular-nums">
-                {{ product().precio! | currencyMxn }}
-              </span>
-            }
-          </div>
-        }
-
-        @if (product().descripcion) {
-          <p class="text-xs sm:text-sm text-gray-600 leading-relaxed pt-0.5">
-            {{ product().descripcion }}
-          </p>
-        }
-      </div>
-
-      <!-- Variants Selection (Si el producto cuenta con variantes) -->
-      @if (product().variants && product().variants!.length > 0) {
-        <div class="space-y-2.5 pt-1 border-t border-[#E2D7B7]/60">
-          <div class="flex items-center justify-between">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              Selecciona tus variantes
-            </p>
-            @if (totalVariantsSelected() > 0) {
-              <span class="text-[11px] font-bold text-orange-600">
-                {{ totalVariantsSelected() }} {{ totalVariantsSelected() === 1 ? 'seleccionada' : 'seleccionadas' }}
-              </span>
-            }
-          </div>
-
-          <div class="grid gap-2.5">
-            @for (variant of product().variants; track variant.id) {
-              <div 
-                class="w-full p-3.5 sm:p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 shadow-xs"
-                [class.border-orange-500]="variantQuantities()[variant.id] > 0"
-                [class.bg-orange-50/40]="variantQuantities()[variant.id] > 0"
-                [class.border-[#E2D7B7]]="variantQuantities()[variant.id] === 0"
-                [class.bg-white]="variantQuantities()[variant.id] === 0"
-              >
-                <!-- Nombre y Precio de la Variante -->
-                <div class="flex flex-col min-w-0 pr-1">
-                  <span class="font-bold text-sm text-gray-900 leading-snug truncate">
-                    {{ variant.nombre }}
-                  </span>
-                  <div class="flex items-center gap-1.5 mt-0.5">
-                    @if (variant.descuento && variant.descuento > 0) {
-                      <span class="font-black text-xs sm:text-sm text-orange-600 tabular-nums">
-                        {{ variant.precio - variant.descuento | currencyMxn }}
-                      </span>
-                      <del class="text-[10px] text-gray-400 font-medium">
-                        {{ variant.precio | currencyMxn }}
-                      </del>
-                    } @else {
-                      <span class="font-black text-xs sm:text-sm text-orange-600 tabular-nums">
-                        {{ variant.precio | currencyMxn }}
-                      </span>
-                    }
-                  </div>
-                </div>
-
-                <!-- Stepper de Cantidad de la Variante (touch target ergonómico) -->
-                <div class="flex items-center bg-[#F8F5EE] rounded-xl p-1 gap-1 border border-[#E2D7B7]/80 shadow-xs shrink-0">
-                  <button 
-                    (click)="updateVariantQuantity(variant.id, -1)"
-                    [disabled]="variantQuantities()[variant.id] <= 0"
-                    class="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-700 hover:bg-gray-100 active:scale-90 transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer touch-manipulation shadow-2xs"
-                    aria-label="Restar una unidad"
-                  >
-                    <lucide-icon name="minus" class="h-3.5 w-3.5"></lucide-icon>
-                  </button>
-                  
-                  <span class="w-7 text-center font-black text-gray-900 text-sm tabular-nums">
-                    {{ variantQuantities()[variant.id] || 0 }}
-                  </span>
-                  
-                  <button 
-                    (click)="updateVariantQuantity(variant.id, 1)"
-                    class="w-8 h-8 flex items-center justify-center rounded-lg bg-orange-500 text-white shadow-xs hover:bg-orange-600 active:scale-90 transition cursor-pointer touch-manipulation"
-                    aria-label="Añadir una unidad"
-                  >
-                    <lucide-icon name="plus" class="h-3.5 w-3.5"></lucide-icon>
-                  </button>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- Quantity Selector (Solo para productos simples) -->
-      @if (!(product().variants && product().variants!.length > 0)) {
-        <div class="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-white border border-[#E2D7B7] shadow-xs">
-          <div class="min-w-0">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Cantidad</p>
-            <p class="text-xs font-semibold text-gray-600 mt-0.5">¿Cuántos deseas ordenar?</p>
-          </div>
-          
-          <div class="flex items-center bg-[#F8F5EE] rounded-xl p-1 gap-1 border border-[#E2D7B7]/80 shrink-0">
-            <button 
-              (click)="updateSelectedQuantity(-1)"
-              [disabled]="selectedQuantity() <= 1"
-              class="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow-2xs text-gray-700 hover:bg-gray-100 active:scale-90 transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer touch-manipulation"
-              aria-label="Disminuir cantidad"
-            >
-              <lucide-icon name="minus" class="h-4 w-4"></lucide-icon>
-            </button>
-            
-            <span class="w-8 text-center font-black text-gray-900 text-base tabular-nums">
-              {{ selectedQuantity() }}
-            </span>
-            
-            <button 
-              (click)="updateSelectedQuantity(1)"
-              class="w-9 h-9 flex items-center justify-center rounded-lg bg-orange-500 text-white shadow-xs hover:bg-orange-600 active:scale-90 transition cursor-pointer touch-manipulation"
-              aria-label="Aumentar cantidad"
-            >
-              <lucide-icon name="plus" class="h-4 w-4"></lucide-icon>
-            </button>
-          </div>
-        </div>
-      }
-
-      <!-- Special Note Input with Quick Chips -->
-      <div class="space-y-2.5 pt-1 border-t border-[#E2D7B7]/60">
-        <div class="flex items-center justify-between">
-          <label for="modal-note-input" class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-            <lucide-icon name="message-square" class="w-3.5 h-3.5 text-orange-500"></lucide-icon>
-            <span>Instrucciones especiales</span>
-          </label>
-          <span class="text-[10px] text-gray-400 font-semibold">Opcional</span>
-        </div>
-
-        <!-- Quick Note Chips -->
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar -mx-1 px-1">
-          @for (chip of quickChips; track chip) {
-            <button 
-              type="button" 
-              (click)="addNoteChip(chip)"
-              class="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#F4EEDC] text-gray-700 border border-[#E2D7B7] hover:bg-orange-100 hover:text-orange-900 hover:border-orange-300 active:scale-95 transition cursor-pointer touch-manipulation"
-            >
-              + {{ chip }}
-            </button>
-          }
-        </div>
-
-        <textarea
-          id="modal-note-input"
-          [ngModel]="productNote()"
-          (ngModelChange)="productNote.set($event)"
-          placeholder="Ej: sin cebolla, salsa aparte, bien cocido..."
-          class="w-full text-xs sm:text-sm p-3 bg-white border border-[#E2D7B7] rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition resize-none placeholder-gray-400"
-          rows="2"
-        ></textarea>
-      </div>
-
-    </div>
-
-    <!-- 3. Sticky Footer Action (Siempre visible en pantalla con Safe Area Android) -->
-    <div class="p-4 sm:p-5 border-t border-[#E2D7B7]/60 bg-white/95 backdrop-blur-md shrink-0 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-      <button 
-        (click)="handleAdd()"
-        [disabled]="(product().variants && product().variants!.length > 0) && !hasSelectedVariants()"
-        class="w-full h-13 sm:h-14 text-white font-black text-sm sm:text-base rounded-2xl shadow-xl transition active:scale-98 flex items-center justify-between px-5 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none cursor-pointer touch-manipulation"
-        [class.bg-green-600]="isAdded()"
-        [class.hover:bg-green-700]="isAdded()"
-        [class.shadow-green-600/25]="isAdded()"
-        [class.bg-orange-500]="!isAdded()"
-        [class.hover:bg-orange-600]="!isAdded()"
-        [class.shadow-orange-500/25]="!isAdded()"
-      >
-        @if (isAdded()) {
-          <div class="flex items-center gap-2.5 mx-auto">
-            <lucide-icon name="check-circle" class="h-5 w-5"></lucide-icon>
-            <span>¡Agregado al pedido!</span>
-          </div>
-        } @else {
-          <div class="flex items-center gap-2">
-            <lucide-icon name="shopping-bag" class="h-5 w-5"></lucide-icon>
-            <span>Agregar al pedido</span>
-          </div>
-          <span class="font-black text-base sm:text-lg tabular-nums">
-            {{ getTotal() | currencyMxn }}
-          </span>
-        }
-      </button>
-    </div>
+    <!-- 4. Footer de Acción Fijo (Precio Desglosado y Botón de Confirmación) -->
+    <app-modal-footer-action 
+      class="block shrink-0"
+      [isAdded]="isAdded()" 
+      (onAddToCart)="handleAdd()"
+    ></app-modal-footer-action>
 
   </div>
 </div>

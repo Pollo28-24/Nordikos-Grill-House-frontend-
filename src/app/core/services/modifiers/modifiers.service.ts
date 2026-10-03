@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from '../../../shared/data-access/supabase.service';
 import { LoggerService } from '../logger.service';
 import { Modifier, ModifierCategory } from '../../models/product.model';
+import { mapModifierCategory } from '../products.service';
 
 @Injectable({
   providedIn: 'root'
@@ -27,7 +28,7 @@ export class ModifiersService {
         this.logger.error('Error loading modifier categories', error, 'ModifiersService');
         throw error;
       }
-      return data || [];
+      return (data || []).map((cat: any, idx: number) => mapModifierCategory(cat, idx));
     }
   });
 
@@ -39,7 +40,7 @@ export class ModifiersService {
         .from('modificadores')
         .select(`
           *,
-          modificador_categorias (nombre)
+          modificador_categorias (*)
         `)
         .order('nombre');
       
@@ -47,7 +48,10 @@ export class ModifiersService {
         this.logger.error('Error loading modifiers', error, 'ModifiersService');
         throw error;
       }
-      return data || [];
+      return (data || []).map((m: any, idx: number) => ({
+        ...m,
+        modificador_categorias: m.modificador_categorias ? mapModifierCategory(m.modificador_categorias, idx) : undefined
+      }));
     }
   });
 
@@ -111,7 +115,7 @@ export class ModifiersService {
       .insert(mod)
       .select(`
         *,
-        modificador_categorias (nombre)
+        modificador_categorias (*)
       `)
       .single();
     if (!error && data) {
@@ -130,7 +134,7 @@ export class ModifiersService {
       .eq('id', id)
       .select(`
         *,
-        modificador_categorias (nombre)
+        modificador_categorias (*)
       `)
       .single();
     if (!error && data) {

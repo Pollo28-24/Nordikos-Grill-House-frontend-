@@ -7,8 +7,94 @@ import { from, Observable } from 'rxjs';
 import { SupabaseService } from '@shared/data-access/supabase.service';
 import { SupabaseStorageService } from '@core/services/supabase-storage.service';
 import { AuthService } from '@auth/data-access/auth.services';
-import { Product, CreateProductDto, UpdateProductDto } from '@core/models/product.model';
+import { Product, CreateProductDto, UpdateProductDto, ModifierCategory, ModifierSelectionType } from '@core/models/product.model';
 import { ProductsApi } from '@core/api/products.api';
+import { LoggerService } from '@core/services/logger.service';
+
+export const CATEGORY_CANONICAL_RULES: Record<string, {
+  tipo_seleccion: ModifierSelectionType;
+  min_selections: number;
+  max_selections: number;
+  obligatorio: boolean;
+  orden_visual: number;
+}> = {
+  'termino': { tipo_seleccion: 'RADIO', min_selections: 1, max_selections: 1, obligatorio: true, orden_visual: 1 },
+  'coccion': { tipo_seleccion: 'RADIO', min_selections: 1, max_selections: 1, obligatorio: true, orden_visual: 1 },
+  'proteina': { tipo_seleccion: 'RADIO', min_selections: 1, max_selections: 1, obligatorio: true, orden_visual: 2 },
+  'quesos': { tipo_seleccion: 'CHECKBOX', min_selections: 0, max_selections: 5, obligatorio: false, orden_visual: 3 },
+  'salsas': { tipo_seleccion: 'CHECKBOX', min_selections: 0, max_selections: 4, obligatorio: false, orden_visual: 4 },
+  'aderezos': { tipo_seleccion: 'CHECKBOX', min_selections: 0, max_selections: 4, obligatorio: false, orden_visual: 4 },
+  'extras': { tipo_seleccion: 'STEPPER', min_selections: 0, max_selections: 99, obligatorio: false, orden_visual: 5 },
+  'agregados': { tipo_seleccion: 'STEPPER', min_selections: 0, max_selections: 99, obligatorio: false, orden_visual: 5 },
+  'sin_ingredientes': { tipo_seleccion: 'CHECKBOX', min_selections: 0, max_selections: 99, obligatorio: false, orden_visual: 6 },
+};
+
+export function mapModifierCategory(rawCat: any, fallbackIndex: number = 0): ModifierCategory {
+  if (!rawCat) {
+    return {
+      id: 0,
+      nombre: 'Extras',
+      visible: true,
+      tipo_seleccion: 'CHECKBOX',
+      min_selections: 0,
+      max_selections: 99,
+      obligatorio: false,
+      orden_visual: fallbackIndex + 1
+    };
+  }
+
+  // 1. Si la base de datos ya tiene columnas de reglas en el futuro, tienen prioridad absoluta
+  if (rawCat.tipo_seleccion) {
+    return {
+      id: rawCat.id,
+      nombre: rawCat.nombre,
+      descripcion: rawCat.descripcion,
+      visible: rawCat.visible !== false,
+      tipo_seleccion: rawCat.tipo_seleccion,
+      min_selections: Number(rawCat.min_selections ?? 0),
+      max_selections: Number(rawCat.max_selections ?? 99),
+      obligatorio: Boolean(rawCat.obligatorio),
+      orden_visual: Number(rawCat.orden_visual ?? (fallbackIndex + 1)),
+      created_at: rawCat.created_at,
+      updated_at: rawCat.updated_at
+    };
+  }
+
+  // 2. Normalización de clave canónica centralizada
+  const canonicalKey = String(rawCat.nombre || '').toLowerCase().trim().replace(/[\s_-]+/g, '_');
+  const matchedRule = Object.entries(CATEGORY_CANONICAL_RULES).find(([key]) => canonicalKey.includes(key))?.[1];
+
+  if (matchedRule) {
+    return {
+      id: rawCat.id,
+      nombre: rawCat.nombre,
+      descripcion: rawCat.descripcion,
+      visible: rawCat.visible !== false,
+      tipo_seleccion: matchedRule.tipo_seleccion,
+      min_selections: matchedRule.min_selections,
+      max_selections: matchedRule.max_selections,
+      obligatorio: matchedRule.obligatorio,
+      orden_visual: matchedRule.orden_visual,
+      created_at: rawCat.created_at,
+      updated_at: rawCat.updated_at
+    };
+  }
+
+  // 3. Fallback determinista seguro sin undefineds en el dominio
+  return {
+    id: rawCat.id,
+    nombre: rawCat.nombre,
+    descripcion: rawCat.descripcion,
+    visible: rawCat.visible !== false,
+    tipo_seleccion: 'CHECKBOX',
+    min_selections: 0,
+    max_selections: 99,
+    obligatorio: false,
+    orden_visual: fallbackIndex + 10,
+    created_at: rawCat.created_at,
+    updated_at: rawCat.updated_at
+  };
+}
 
 @Injectable({ providedIn: 'root' })
 export class ProductsService { // ACTÚA COMO STATE / FACADE
@@ -17,6 +103,7 @@ export class ProductsService { // ACTÚA COMO STATE / FACADE
   private readonly supabaseStorage = inject(SupabaseStorageService);
   private readonly supabase = inject(SupabaseService).client; // Temporalmente para subida de fotos raw
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly logger = inject(LoggerService);
 
   // -----------------------------
   // DATA RESOURCE (Angular 19/20+)
@@ -69,41 +156,88 @@ export class ProductsService { // ACTÚA COMO STATE / FACADE
       const user = await this.authService.getUser();
       if (!user.data.user) throw new Error('Usuario no autenticado.');
 
-      // 1. Upload images (CONCURRENTE)
-      const uploadedImageUrls = await this.uploadImages(dto.images);
+      const createdResources: {
+        productId: string | number | null;
+        imageUrls: string[];
+      } = {
+        productId: null,
+        imageUrls: []
+      };
 
-      // 2. Insert product
-      const productToInsert = { ...dto };
-      delete productToInsert.images;
-      delete productToInsert.variants;
+      try {
+        // 1. Upload images (CONCURRENTE)
+        const uploadedImageUrls = await this.uploadImages(dto.images);
+        createdResources.imageUrls = uploadedImageUrls;
 
-      const { data: newProduct, error: productError } = await this.api.insert(productToInsert);
-      if (productError) throw productError;
+        // 2. Insert product
+        const productToInsert = { ...dto };
+        delete productToInsert.images;
+        delete productToInsert.variants;
 
-      // 3. Sub-recursos (Imágenes y Variantes - CONCURRENTES)
-      const insertTasks: PromiseLike<any>[] = [];
+        const { data: newProduct, error: productError } = await this.api.insert(productToInsert);
+        if (productError) throw productError;
+        createdResources.productId = newProduct.id;
 
-      if (uploadedImageUrls.length > 0) {
-        const imagesToInsert = uploadedImageUrls.map((url) => ({ producto_id: newProduct.id, url }));
-        insertTasks.push(this.api.insertFotos(imagesToInsert));
+        // 3. Sub-recursos (Imágenes y Variantes - CONCURRENTES)
+        const insertTasks: PromiseLike<any>[] = [];
+
+        if (uploadedImageUrls.length > 0) {
+          const imagesToInsert = uploadedImageUrls.map((url) => ({ producto_id: newProduct.id, url }));
+          insertTasks.push(this.api.insertFotos(imagesToInsert));
+        }
+
+        if (dto.variants && dto.variants.length > 0) {
+          const variantsToInsert = dto.variants.map((v) => ({
+            producto_id: newProduct.id,
+            nombre: v.nombre,
+            precio: Number(v.precio) || 0,
+            costo: Number(v.costo) || 0,
+            descuento: Number(v.descuento) || 0,
+            sku: v.sku || '',
+            embalaje: v.embalaje || '',
+            disponible: v.disponible ?? true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }));
+          insertTasks.push(this.api.insertVariantes(variantsToInsert));
+        }
+
+        await Promise.all(insertTasks); // Ejecutar todo en paralelo
+        
+        this.reload();
+        return newProduct as Product;
+      } catch (err) {
+        this.logger.error('Error during product creation, initiating compensation rollback', err, 'ProductsService');
+        await this.rollbackCreateProduct(createdResources);
+        throw err;
       }
-
-      if (dto.variants && dto.variants.length > 0) {
-        const variantsToInsert = dto.variants.map((v) => ({
-          ...v,
-          producto_id: newProduct.id,
-          disponible: v.disponible ?? true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }));
-        insertTasks.push(this.api.insertVariantes(variantsToInsert));
-      }
-
-      await Promise.all(insertTasks); // Ejecutar todo en paralelo
-      
-      this.reload();
-      return newProduct as Product;
     }, null);
+  }
+
+  private async rollbackCreateProduct(created: {
+    productId: string | number | null;
+    imageUrls: string[];
+  }) {
+    if (created.productId) {
+      try {
+        await this.api.delete(created.productId);
+      } catch (dbErr) {
+        this.logger.error('Rollback failed to delete created product from DB', dbErr, 'ProductsService');
+      }
+    }
+
+    if (created.imageUrls && created.imageUrls.length > 0) {
+      const deletePromises = created.imageUrls.map(url => {
+        const path = this.supabaseStorage.extractImagePathFromUrl(url);
+        if (path) {
+          return this.supabaseStorage.deleteProductImage(path).catch(stErr => {
+            this.logger.warn('Rollback failed to delete image from storage', stErr, 'ProductsService');
+          });
+        }
+        return Promise.resolve();
+      });
+      await Promise.allSettled(deletePromises);
+    }
   }
 
   // -----------------------------
@@ -149,20 +283,53 @@ export class ProductsService { // ACTÚA COMO STATE / FACADE
       }
 
       // Lógica de Variantes...
-      if (dto.variants) {
+      if (dto.price_type === 'simple' && (existingProduct.producto_variantes?.length ?? 0) > 0) {
+        // Regla de Dominio: verificar si el producto tiene historial de ventas con variantes
+        const canConvert = await this.canConvertToSimple(existingProduct.id);
+        if (!canConvert) {
+          throw new Error(
+            'Este producto tiene variantes utilizadas en pedidos anteriores. Para conservar la integridad del historial de ventas, no puede convertirse en un producto de precio simple.'
+          );
+        }
+        // Si no tiene historial, eliminamos las variantes no utilizadas de la BD
+        const existingVariantIds = (existingProduct.producto_variantes || []).map((v: any) => String(v.id));
+        if (existingVariantIds.length > 0) {
+          deleteTasks.push(this.api.deleteVariantes(existingVariantIds));
+        }
+      } else if (dto.variants) {
         const existingVariantIds = (existingProduct.producto_variantes || []).map((v: any) => String(v.id));
         const variantsToInsert = dto.variants.filter(v => !('id' in v) || !existingVariantIds.includes(String((v as any).id)));
         const variantsToUpdate = dto.variants.filter(v => ('id' in v) && existingVariantIds.includes(String((v as any).id)));
         const variantIdsToDelete = existingVariantIds.filter((id: string) => !dto.variants!.some(v => String((v as any).id) === id));
 
         if (variantsToInsert.length > 0) {
-          insertTasks.push(this.api.insertVariantes(
-            variantsToInsert.map(v => ({ ...v, producto_id: existingProduct.id, updated_at: new Date().toISOString() }))
-          ));
+          const insertPayloads = variantsToInsert.map(v => ({
+            producto_id: existingProduct.id,
+            nombre: v.nombre,
+            precio: Number(v.precio) || 0,
+            costo: Number(v.costo) || 0,
+            descuento: Number(v.descuento) || 0,
+            sku: v.sku || '',
+            embalaje: v.embalaje || '',
+            disponible: v.disponible ?? true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }));
+          insertTasks.push(this.api.insertVariantes(insertPayloads));
         }
         
         variantsToUpdate.forEach(v => {
-          updateTasks.push(this.api.updateVariante((v as any).id, { ...v, updated_at: new Date().toISOString() }));
+          const updatePayload = {
+            nombre: v.nombre,
+            precio: Number(v.precio) || 0,
+            costo: Number(v.costo) || 0,
+            descuento: Number(v.descuento) || 0,
+            sku: v.sku || '',
+            embalaje: v.embalaje || '',
+            disponible: v.disponible ?? true,
+            updated_at: new Date().toISOString(),
+          };
+          updateTasks.push(this.api.updateVariante((v as any).id, updatePayload));
         });
 
         if (variantIdsToDelete.length > 0) {
@@ -263,6 +430,14 @@ export class ProductsService { // ACTÚA COMO STATE / FACADE
   productById = (id: string | number) => computed(() => this.products().find(p => String(p.id) === String(id)));
 
   // ===============================
+  // DOMAIN RULES
+  // ===============================
+  async canConvertToSimple(productId: string | number): Promise<boolean> {
+    const hasUsage = await this.api.hasHistoricalVariantUsage(productId);
+    return !hasUsage;
+  }
+
+  // ===============================
   // COMPATIBILITY LAYER & HELPERS
   // ===============================
 
@@ -353,8 +528,22 @@ export class ProductsService { // ACTÚA COMO STATE / FACADE
     
     if (row.producto_modificadores?.length) {
       product.modifiers = row.producto_modificadores
-        .filter((pm: any) => pm.modificadores)
-        .map((pm: any) => ({ ...pm.modificadores, id: pm.modificadores.id }));
+        .filter((pm: any) => {
+          const mod = pm.modificadores;
+          if (!mod || mod.visible === false) return false;
+          const cat = mod.modificador_categorias;
+          if (cat && cat.visible === false) return false;
+          return true;
+        })
+        .map((pm: any, idx: number) => {
+          const mod = pm.modificadores;
+          const mappedCat = mod.modificador_categorias ? mapModifierCategory(mod.modificador_categorias, idx) : undefined;
+          return {
+            ...mod,
+            id: mod.id,
+            modificador_categorias: mappedCat
+          };
+        });
     }
     
     return product;
