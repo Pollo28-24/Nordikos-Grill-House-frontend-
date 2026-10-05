@@ -2,7 +2,7 @@ import { Injectable, inject, computed, resource, PLATFORM_ID } from '@angular/co
 import { isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from '../../../shared/data-access/supabase.service';
 import { LoggerService } from '../logger.service';
-import { Modifier, ModifierCategory } from '../../models/product.model';
+import { Modifier, ModifierCategory, CreateModifierDto, UpdateModifierDto } from '../../models/product.model';
 import { mapModifierCategory } from '../products.service';
 
 @Injectable({
@@ -50,14 +50,20 @@ export class ModifiersService {
       }
       return (data || []).map((m: any, idx: number) => ({
         ...m,
+        disponible: m.disponible !== false,
+        visible: m.visible !== false,
         modificador_categorias: m.modificador_categorias ? mapModifierCategory(m.modificador_categorias, idx) : undefined
-      }));
+      })) as Modifier[];
     }
   });
 
   readonly categories = computed(() => this.categoriesResource.value() ?? []);
   readonly modifiers = computed(() => this.modifiersResource.value() ?? []);
   readonly loading = computed(() => this.categoriesResource.isLoading() || this.modifiersResource.isLoading());
+  readonly initialLoading = computed(() => 
+    (!this.categoriesResource.hasValue() && this.categoriesResource.isLoading()) ||
+    (!this.modifiersResource.hasValue() && this.modifiersResource.isLoading())
+  );
 
   reloadAll() {
     this.categoriesResource.reload();
@@ -109,7 +115,34 @@ export class ModifiersService {
     return { error };
   }
 
-  async createModifier(mod: Partial<Modifier>) {
+  /**
+   * Actualización optimista de flags (visible / disponible) con rollback automático en caso de error.
+   * Evita recargar toda la lista o parpadeos molestos de pantalla.
+   */
+  async toggleModifierStatus(id: string | number, field: 'visible' | 'disponible', value: boolean) {
+    const prev = this.modifiersResource.value() ?? [];
+
+    // Actualización inmediata en UI
+    this.modifiersResource.update(list =>
+      (list ?? []).map(m => m.id === id ? { ...m, [field]: value } : m)
+    );
+
+    const { error } = await this.supabase
+      .from('modificadores')
+      .update({ [field]: value })
+      .eq('id', id);
+
+    if (error) {
+      this.logger.error(`Error toggling modifier ${field}`, error, 'ModifiersService');
+      // Rollback al estado anterior si falló
+      this.modifiersResource.set(prev);
+      return { error };
+    }
+
+    return { error: null };
+  }
+
+  async createModifier(mod: CreateModifierDto) {
     const { data, error } = await this.supabase
       .from('modificadores')
       .insert(mod)
@@ -118,8 +151,19 @@ export class ModifiersService {
         modificador_categorias (*)
       `)
       .single();
+
     if (!error && data) {
-      this.modifiersResource.reload();
+      const createdItem: Modifier = {
+        ...data,
+        disponible: data.disponible !== false,
+        visible: data.visible !== false,
+        modificador_categorias: data.modificador_categorias ? mapModifierCategory(data.modificador_categorias) : undefined
+      };
+      // Actualizamos la señal localmente sin recargar toda la consulta
+      this.modifiersResource.update(list => {
+        const current = list ?? [];
+        return [...current, createdItem].sort((a, b) => a.nombre.localeCompare(b.nombre));
+      });
     }
     if (error) {
       this.logger.error('Error creating modifier', error, 'ModifiersService');
@@ -127,7 +171,7 @@ export class ModifiersService {
     return { data, error };
   }
 
-  async updateModifier(id: string | number, mod: Partial<Modifier>) {
+  async updateModifier(id: string | number, mod: UpdateModifierDto) {
     const { data, error } = await this.supabase
       .from('modificadores')
       .update(mod)
@@ -137,8 +181,18 @@ export class ModifiersService {
         modificador_categorias (*)
       `)
       .single();
+
     if (!error && data) {
-      this.modifiersResource.reload();
+      const updatedItem: Modifier = {
+        ...data,
+        disponible: data.disponible !== false,
+        visible: data.visible !== false,
+        modificador_categorias: data.modificador_categorias ? mapModifierCategory(data.modificador_categorias) : undefined
+      };
+      // Actualizamos la señal localmente sin destruir la vista ni los scrolls
+      this.modifiersResource.update(list =>
+        (list ?? []).map(m => m.id === id ? updatedItem : m).sort((a, b) => a.nombre.localeCompare(b.nombre))
+      );
     }
     if (error) {
       this.logger.error('Error updating modifier', error, 'ModifiersService');
@@ -147,15 +201,20 @@ export class ModifiersService {
   }
 
   async deleteModifier(id: string | number) {
+    const prev = this.modifiersResource.value() ?? [];
+
+    // Eliminación optimista
+    this.modifiersResource.update(list => (list ?? []).filter(m => m.id !== id));
+
     const { error } = await this.supabase
       .from('modificadores')
       .delete()
       .eq('id', id);
-    if (!error) {
-      this.modifiersResource.reload();
-    }
+
     if (error) {
       this.logger.error('Error deleting modifier', error, 'ModifiersService');
+      // Rollback
+      this.modifiersResource.set(prev);
     }
     return { error };
   }

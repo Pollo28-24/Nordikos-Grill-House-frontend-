@@ -530,7 +530,7 @@ export class ProductsService { // ACTÚA COMO STATE / FACADE
       product.modifiers = row.producto_modificadores
         .filter((pm: any) => {
           const mod = pm.modificadores;
-          if (!mod || mod.visible === false) return false;
+          if (!mod) return false;
           const cat = mod.modificador_categorias;
           if (cat && cat.visible === false) return false;
           return true;
@@ -541,6 +541,8 @@ export class ProductsService { // ACTÚA COMO STATE / FACADE
           return {
             ...mod,
             id: mod.id,
+            disponible: mod.disponible !== false,
+            visible: mod.visible !== false,
             modificador_categorias: mappedCat
           };
         });

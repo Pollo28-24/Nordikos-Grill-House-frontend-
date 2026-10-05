@@ -30,8 +30,8 @@ describe('ValidationEngine', () => {
         orden_visual: 1
       },
       items: [
-        { id: 's1', nombre: 'BBQ', precio: 0, visible: true, cantidad_maxima: 1 },
-        { id: 's2', nombre: 'Ranch', precio: 15, visible: true, cantidad_maxima: 1 }
+        { id: 's1', nombre: 'BBQ', precio: 0, visible: true, disponible: true, cantidad_maxima: 1 },
+        { id: 's2', nombre: 'Ranch', precio: 15, visible: true, disponible: true, cantidad_maxima: 1 }
       ]
     }
   ];
@@ -60,7 +60,7 @@ describe('ValidationEngine', () => {
       cantidad: 1,
       precioUnitario: 0,
       subtotal: 0,
-      modifier: { id: 's1', nombre: 'BBQ', precio: 0, visible: true, cantidad_maxima: 1 }
+      modifier: { id: 's1', nombre: 'BBQ', precio: 0, visible: true, disponible: true, cantidad_maxima: 1 }
     });
     selectedMods.set('cat-salsas', salsaMap);
 

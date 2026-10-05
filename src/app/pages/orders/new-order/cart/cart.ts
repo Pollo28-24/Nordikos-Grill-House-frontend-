@@ -15,6 +15,9 @@ import { LoggerService } from '../../../../core/services/logger.service';
   imports: [DecimalPipe, ReactiveFormsModule, LucideAngularModule],
   templateUrl: './cart.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    class: 'flex-1 flex flex-col h-full min-h-0 overflow-hidden'
+  }
 })
 export class NewOrderCart {
 

@@ -124,12 +124,15 @@ import { CustomizationStore } from '../../store/customization.store';
                   <!-- A. TIPO RADIO (Selección Exclusiva) -->
                   @if (sec.data.category.tipo_seleccion === 'RADIO') {
                     <div 
-                      (click)="store.selectRadioModifier(sec.data.category, mod)"
-                      class="w-full p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex items-center justify-between gap-2.5 shadow-xs cursor-pointer touch-manipulation select-none"
-                      [class.border-orange-500]="store.isModifierSelected(sec.data.category.id, mod.id)"
-                      [class.bg-orange-50/40]="store.isModifierSelected(sec.data.category.id, mod.id)"
-                      [class.border-[#E2D7B7]]="!store.isModifierSelected(sec.data.category.id, mod.id)"
-                      [class.bg-white]="!store.isModifierSelected(sec.data.category.id, mod.id)"
+                      (click)="mod.disponible !== false && store.selectRadioModifier(sec.data.category, mod)"
+                      class="w-full p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex items-center justify-between gap-2.5 shadow-xs touch-manipulation select-none"
+                      [class.cursor-pointer]="mod.disponible !== false"
+                      [class.cursor-not-allowed]="mod.disponible === false"
+                      [class.opacity-50]="mod.disponible === false"
+                      [class.border-orange-500]="mod.disponible !== false && store.isModifierSelected(sec.data.category.id, mod.id)"
+                      [class.bg-orange-50/40]="mod.disponible !== false && store.isModifierSelected(sec.data.category.id, mod.id)"
+                      [class.border-[#E2D7B7]]="mod.disponible === false || !store.isModifierSelected(sec.data.category.id, mod.id)"
+                      [class.bg-white]="mod.disponible !== false && !store.isModifierSelected(sec.data.category.id, mod.id)"
                     >
                       <div class="flex items-center gap-2.5 min-w-0">
                         <div 
@@ -147,8 +150,12 @@ import { CustomizationStore } from '../../store/customization.store';
                         </span>
                       </div>
 
-                      <div class="shrink-0 text-right">
-                        @if (mod.precio > 0) {
+                      <div class="shrink-0 text-right flex items-center gap-1.5">
+                        @if (mod.disponible === false) {
+                          <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                            Agotado
+                          </span>
+                        } @else if (mod.precio > 0) {
                           <span class="text-xs font-black text-orange-600 tabular-nums">
                             +{{ mod.precio | currencyMxn }}
                           </span>
@@ -164,12 +171,15 @@ import { CustomizationStore } from '../../store/customization.store';
                   <!-- B. TIPO CHECKBOX (Opciones Binarias) -->
                   @if (sec.data.category.tipo_seleccion === 'CHECKBOX') {
                     <div 
-                      (click)="store.toggleCheckboxModifier(sec.data.category, mod)"
-                      class="w-full p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex items-center justify-between gap-2.5 shadow-xs cursor-pointer touch-manipulation select-none"
-                      [class.border-orange-500]="store.isModifierSelected(sec.data.category.id, mod.id)"
-                      [class.bg-orange-50/40]="store.isModifierSelected(sec.data.category.id, mod.id)"
-                      [class.border-[#E2D7B7]]="!store.isModifierSelected(sec.data.category.id, mod.id)"
-                      [class.bg-white]="!store.isModifierSelected(sec.data.category.id, mod.id)"
+                      (click)="mod.disponible !== false && store.toggleCheckboxModifier(sec.data.category, mod)"
+                      class="w-full p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex items-center justify-between gap-2.5 shadow-xs touch-manipulation select-none"
+                      [class.cursor-pointer]="mod.disponible !== false"
+                      [class.cursor-not-allowed]="mod.disponible === false"
+                      [class.opacity-50]="mod.disponible === false"
+                      [class.border-orange-500]="mod.disponible !== false && store.isModifierSelected(sec.data.category.id, mod.id)"
+                      [class.bg-orange-50/40]="mod.disponible !== false && store.isModifierSelected(sec.data.category.id, mod.id)"
+                      [class.border-[#E2D7B7]]="mod.disponible === false || !store.isModifierSelected(sec.data.category.id, mod.id)"
+                      [class.bg-white]="mod.disponible !== false && !store.isModifierSelected(sec.data.category.id, mod.id)"
                     >
                       <div class="flex items-center gap-2.5 min-w-0">
                         <div 
@@ -187,8 +197,12 @@ import { CustomizationStore } from '../../store/customization.store';
                         </span>
                       </div>
 
-                      <div class="shrink-0 text-right">
-                        @if (mod.precio > 0) {
+                      <div class="shrink-0 text-right flex items-center gap-1.5">
+                        @if (mod.disponible === false) {
+                          <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                            Agotado
+                          </span>
+                        } @else if (mod.precio > 0) {
                           <span class="text-xs font-black text-orange-600 tabular-nums">
                             +{{ mod.precio | currencyMxn }}
                           </span>
@@ -205,44 +219,53 @@ import { CustomizationStore } from '../../store/customization.store';
                   @if (sec.data.category.tipo_seleccion === 'STEPPER') {
                     <div 
                       class="w-full p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex items-center justify-between gap-2.5 shadow-xs"
-                      [class.border-orange-500]="store.getModifierQuantity(sec.data.category.id, mod.id) > 0"
-                      [class.bg-orange-50/40]="store.getModifierQuantity(sec.data.category.id, mod.id) > 0"
-                      [class.border-[#E2D7B7]]="store.getModifierQuantity(sec.data.category.id, mod.id) === 0"
-                      [class.bg-white]="store.getModifierQuantity(sec.data.category.id, mod.id) === 0"
+                      [class.opacity-50]="mod.disponible === false"
+                      [class.border-orange-500]="mod.disponible !== false && store.getModifierQuantity(sec.data.category.id, mod.id) > 0"
+                      [class.bg-orange-50/40]="mod.disponible !== false && store.getModifierQuantity(sec.data.category.id, mod.id) > 0"
+                      [class.border-[#E2D7B7]]="mod.disponible === false || store.getModifierQuantity(sec.data.category.id, mod.id) === 0"
+                      [class.bg-white]="mod.disponible !== false && store.getModifierQuantity(sec.data.category.id, mod.id) === 0"
                     >
                       <div class="flex flex-col min-w-0 pr-1">
                         <span class="text-xs sm:text-sm font-bold text-gray-900 truncate">
                           {{ mod.nombre }}
                         </span>
-                        <span class="text-xs font-black text-orange-600 tabular-nums mt-0.5">
-                          +{{ mod.precio | currencyMxn }} c/u
-                        </span>
+                        @if (mod.disponible === false) {
+                          <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 mt-0.5">
+                            Agotado
+                          </span>
+                        } @else {
+                          <span class="text-xs font-black text-orange-600 tabular-nums mt-0.5">
+                            +{{ mod.precio | currencyMxn }} c/u
+                          </span>
+                        }
                       </div>
 
-                      <div class="flex items-center bg-[#F8F5EE] rounded-xl p-1 gap-1 border border-[#E2D7B7]/80 shadow-xs shrink-0">
-                        <button 
-                          type="button"
-                          (click)="store.updateStepperModifier(sec.data.category, mod, -1)"
-                          [disabled]="store.getModifierQuantity(sec.data.category.id, mod.id) <= 0"
-                          class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-white text-gray-700 hover:bg-gray-100 active:scale-90 transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer touch-manipulation shadow-2xs"
-                          aria-label="Restar extra"
-                        >
-                          <lucide-icon name="minus" class="h-3 w-3 sm:h-3.5 sm:w-3.5"></lucide-icon>
-                        </button>
-                        
-                        <span class="w-6 sm:w-7 text-center font-black text-gray-900 text-xs sm:text-sm tabular-nums">
-                          {{ store.getModifierQuantity(sec.data.category.id, mod.id) }}
-                        </span>
-                        
-                        <button 
-                          type="button"
-                          (click)="store.updateStepperModifier(sec.data.category, mod, 1)"
-                          class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-orange-500 text-white shadow-xs hover:bg-orange-600 active:scale-90 transition cursor-pointer touch-manipulation"
-                          aria-label="Añadir extra"
-                        >
-                          <lucide-icon name="plus" class="h-3 w-3 sm:h-3.5 sm:w-3.5"></lucide-icon>
-                        </button>
-                      </div>
+                      @if (mod.disponible !== false) {
+                        <div class="flex items-center bg-[#F8F5EE] rounded-xl p-1 gap-1 border border-[#E2D7B7]/80 shadow-xs shrink-0">
+                          <button 
+                            type="button"
+                            (click)="store.updateStepperModifier(sec.data.category, mod, -1)"
+                            [disabled]="store.getModifierQuantity(sec.data.category.id, mod.id) <= 0"
+                            class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-white text-gray-700 hover:bg-gray-100 active:scale-90 transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer touch-manipulation shadow-2xs"
+                            aria-label="Restar extra"
+                          >
+                            <lucide-icon name="minus" class="h-3 w-3 sm:h-3.5 sm:w-3.5"></lucide-icon>
+                          </button>
+                          
+                          <span class="w-6 sm:w-7 text-center font-black text-gray-900 text-xs sm:text-sm tabular-nums">
+                            {{ store.getModifierQuantity(sec.data.category.id, mod.id) }}
+                          </span>
+                          
+                          <button 
+                            type="button"
+                            (click)="store.updateStepperModifier(sec.data.category, mod, 1)"
+                            class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-orange-500 text-white shadow-xs hover:bg-orange-600 active:scale-90 transition cursor-pointer touch-manipulation"
+                            aria-label="Añadir extra"
+                          >
+                            <lucide-icon name="plus" class="h-3 w-3 sm:h-3.5 sm:w-3.5"></lucide-icon>
+                          </button>
+                        </div>
+                      }
                     </div>
                   }
 

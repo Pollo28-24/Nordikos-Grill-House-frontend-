@@ -1,36 +1,106 @@
-<div class="group relative rounded-2xl border border-white/5 bg-[#181818] p-5 hover:border-emerald-500/30 transition shadow-xl">
-  <div class="flex items-start justify-between mb-4">
-    <div class="p-3 rounded-xl transition-colors"
-      [class.bg-emerald-500\/10]="modifier().tipo !== 'minus'"
-      [class.text-emerald-500]="modifier().tipo !== 'minus'"
-      [class.bg-red-500\/10]="modifier().tipo === 'minus'"
-      [class.text-red-500]="modifier().tipo === 'minus'">
-      <lucide-icon [name]="modifier().tipo === 'minus' ? 'minus-circle' : 'plus-circle'" class="w-6 h-6" />
+<div class="group relative rounded-2xl border border-white/5 bg-[#181818] p-5 hover:border-emerald-500/30 transition shadow-xl flex flex-col justify-between h-full">
+  <!-- Top: Category, Name & Action buttons -->
+  <div>
+    <div class="flex items-start justify-between gap-3 mb-3">
+      <div class="min-w-0 flex-1">
+        <p class="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 truncate">
+          {{ modifier().modificador_categorias?.nombre || 'Sin Categoría' }}
+        </p>
+        <h3 class="text-base sm:text-lg font-bold text-white line-clamp-2 leading-snug">
+          {{ modifier().nombre }}
+        </h3>
+      </div>
+      
+      <!-- Actions: 44px+ accessible touch targets -->
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button 
+          type="button"
+          (click)="assign.emit()" 
+          class="w-9 h-9 sm:w-10 sm:h-10 min-w-[36px] min-h-[36px] rounded-xl bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 active:scale-95 transition flex items-center justify-center cursor-pointer" 
+          title="Asignar a Productos"
+          aria-label="Asignar a productos"
+        >
+          <lucide-icon name="link" class="w-4 h-4" />
+        </button>
+        <button 
+          type="button"
+          (click)="edit.emit()" 
+          class="w-9 h-9 sm:w-10 sm:h-10 min-w-[36px] min-h-[36px] rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white active:scale-95 transition flex items-center justify-center cursor-pointer" 
+          title="Editar"
+          aria-label="Editar modificador"
+        >
+          <lucide-icon name="edit-3" class="w-4 h-4" />
+        </button>
+        <button 
+          type="button"
+          (click)="delete.emit()" 
+          class="w-9 h-9 sm:w-10 sm:h-10 min-w-[36px] min-h-[36px] rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 active:scale-95 transition flex items-center justify-center cursor-pointer" 
+          title="Eliminar"
+          aria-label="Eliminar modificador"
+        >
+          <lucide-icon name="trash-2" class="w-4 h-4" />
+        </button>
+      </div>
     </div>
-    <div class="flex gap-2">
-      <button (click)="assign.emit()" class="p-2 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition" title="Asignar a Productos">
-        <lucide-icon name="link" class="w-4 h-4" />
-      </button>
-      <button (click)="edit.emit()" class="p-2 rounded-lg bg-zinc-800 text-white hover:bg-zinc-700 transition" title="Editar">
-        <lucide-icon name="edit-3" class="w-4 h-4" />
-      </button>
-      <button (click)="delete.emit()" class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition" title="Eliminar">
-        <lucide-icon name="trash-2" class="w-4 h-4" />
-      </button>
+
+    <!-- Price & Quantity Limit -->
+    <div class="flex items-baseline justify-between gap-2 mt-4 pb-4 border-b border-white/5">
+      <div>
+        @if (modifier().precio > 0) {
+          <span class="font-black text-lg text-emerald-400 tabular-nums">
+            {{ modifier().precio | currencyMxn }}
+          </span>
+        } @else {
+          <span class="text-xs font-bold text-zinc-400 bg-white/5 px-2.5 py-1 rounded-lg">
+            Sin costo extra
+          </span>
+        }
+      </div>
+
+      <span class="text-[11px] font-medium text-zinc-400 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+        Máx: {{ modifier().cantidad_maxima || 1 }}
+      </span>
     </div>
   </div>
-  
-  <h3 class="text-lg font-bold text-white mb-1">{{ modifier().nombre }}</h3>
-  <p class="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">
-    {{ modifier().modificador_categorias?.nombre || 'Sin Categoría' }}
-  </p>
-  
-  <div class="flex items-center justify-between">
-    <span class="font-black text-lg"
-      [class.text-emerald-500]="modifier().tipo !== 'minus'"
-      [class.text-red-500]="modifier().tipo === 'minus'">
-      {{ modifier().tipo === 'minus' ? '-' : '+' }}${{ modifier().precio }}
-    </span>
-    <span class="text-[10px] bg-white/5 px-2 py-1 rounded text-zinc-400">Max: {{ modifier().cantidad_maxima }}</span>
+
+  <!-- Bottom: Operational Quick Toggles (Inline 44px buttons) -->
+  <div class="grid grid-cols-2 gap-2 pt-4">
+    <!-- POS / Venta directa toggle -->
+    <button
+      type="button"
+      (click)="toggleStatus.emit({ field: 'disponible', value: !modifier().disponible })"
+      class="min-h-[44px] px-2.5 py-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 select-none"
+      [class.bg-[#FFB300]/10]="modifier().disponible"
+      [class.border-[#FFB300]/40]="modifier().disponible"
+      [class.text-[#FFB300]]="modifier().disponible"
+      [class.bg-zinc-900]="!modifier().disponible"
+      [class.border-white/10]="!modifier().disponible"
+      [class.text-zinc-500]="!modifier().disponible"
+      title="Alternar disponibilidad en el POS"
+    >
+      <span 
+        class="w-2 h-2 rounded-full shrink-0"
+        [class.bg-[#FFB300]]="modifier().disponible"
+        [class.bg-zinc-600]="!modifier().disponible"
+      ></span>
+      <span class="truncate">{{ modifier().disponible ? 'POS: Activo' : 'POS: Pausa' }}</span>
+    </button>
+
+    <!-- Menú Público digital toggle -->
+    <button
+      type="button"
+      (click)="toggleStatus.emit({ field: 'visible', value: !modifier().visible })"
+      class="min-h-[44px] px-2.5 py-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 select-none"
+      [class.bg-blue-500/10]="modifier().visible"
+      [class.border-blue-500/40]="modifier().visible"
+      [class.text-blue-400]="modifier().visible"
+      [class.bg-zinc-900]="!modifier().visible"
+      [class.border-white/10]="!modifier().visible"
+      [class.text-zinc-500]="!modifier().visible"
+      title="Alternar visibilidad en Menú Público"
+    >
+      <lucide-icon [name]="modifier().visible ? 'eye' : 'eye-off'" class="w-3.5 h-3.5 shrink-0" />
+      <span class="truncate">{{ modifier().visible ? 'Menú: Visible' : 'Menú: Oculto' }}</span>
+    </button>
   </div>
 </div>

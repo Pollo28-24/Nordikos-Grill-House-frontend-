@@ -44,6 +44,9 @@ export class CustomizationStore {
     const groupMap = new Map<string | number, GroupedCategory>();
 
     p.modifiers.forEach(m => {
+      // En el Menú Digital Público solo se muestran los modificadores visibles
+      if (m.visible === false) return;
+
       const cat = m.modificador_categorias || {
         id: 'extras',
         nombre: 'Extras y Opciones',

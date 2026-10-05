@@ -24,10 +24,25 @@ export interface Modifier {
   descuento?: number;
   sku?: string;
   visible: boolean;
+  disponible: boolean;
   cantidad_maxima: number;
-  tipo?: 'plus' | 'minus';
   modificador_categorias?: ModifierCategory;
 }
+
+export interface CreateModifierDto {
+  nombre: string;
+  categoria_id: string | number;
+  precio: number;
+  costo?: number;
+  descuento?: number;
+  cantidad_maxima: number;
+  visible: boolean;
+  disponible: boolean;
+  sku?: string;
+}
+
+export type UpdateModifierDto = Partial<CreateModifierDto>;
+
 
 export interface SelectedModifierItem {
   modifierId: string | number;

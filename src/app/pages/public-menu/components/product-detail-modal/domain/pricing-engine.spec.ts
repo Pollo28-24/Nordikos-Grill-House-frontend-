@@ -50,7 +50,7 @@ describe('PricingEngine', () => {
       cantidad: 2,
       precioUnitario: 20,
       subtotal: 40,
-      modifier: { id: 101, nombre: 'Queso Extra', precio: 20, visible: true, cantidad_maxima: 5 }
+      modifier: { id: 101, nombre: 'Queso Extra', precio: 20, visible: true, disponible: true, cantidad_maxima: 5 }
     });
     selectedMods.set(1, cat1);
 

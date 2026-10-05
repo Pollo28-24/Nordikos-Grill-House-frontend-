@@ -31,7 +31,10 @@ export interface ModalSection {
   standalone: true,
   imports: [CommonModule, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './products.html'
+  templateUrl: './products.html',
+  host: {
+    class: 'flex-1 flex flex-col h-full min-h-0 overflow-hidden'
+  }
 })
 export class NewOrderProducts {
 

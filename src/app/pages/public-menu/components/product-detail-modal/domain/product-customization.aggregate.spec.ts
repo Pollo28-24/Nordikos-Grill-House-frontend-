@@ -27,8 +27,8 @@ describe('ProductCustomization Aggregate Root', () => {
     orden_visual: 1
   };
 
-  const modTermino1: Modifier = { id: 't1', nombre: 'Medio', precio: 0, visible: true, cantidad_maxima: 1 };
-  const modTermino2: Modifier = { id: 't2', nombre: 'Bien Cocido', precio: 0, visible: true, cantidad_maxima: 1 };
+  const modTermino1: Modifier = { id: 't1', nombre: 'Medio', precio: 0, visible: true, disponible: true, cantidad_maxima: 1 };
+  const modTermino2: Modifier = { id: 't2', nombre: 'Bien Cocido', precio: 0, visible: true, disponible: true, cantidad_maxima: 1 };
 
   const checkCategory: ModifierCategory = {
     id: 'cat-extras',
@@ -41,9 +41,9 @@ describe('ProductCustomization Aggregate Root', () => {
     orden_visual: 2
   };
 
-  const modExtra1: Modifier = { id: 'e1', nombre: 'Tocino', precio: 25, visible: true, cantidad_maxima: 1 };
-  const modExtra2: Modifier = { id: 'e2', nombre: 'Queso', precio: 20, visible: true, cantidad_maxima: 1 };
-  const modExtra3: Modifier = { id: 'e3', nombre: 'Aguacate', precio: 20, visible: true, cantidad_maxima: 1 };
+  const modExtra1: Modifier = { id: 'e1', nombre: 'Tocino', precio: 25, visible: true, disponible: true, cantidad_maxima: 1 };
+  const modExtra2: Modifier = { id: 'e2', nombre: 'Queso', precio: 20, visible: true, disponible: true, cantidad_maxima: 1 };
+  const modExtra3: Modifier = { id: 'e3', nombre: 'Aguacate', precio: 20, visible: true, disponible: true, cantidad_maxima: 1 };
 
   it('debe inicializar la primera variante por defecto', () => {
     const aggregate = new ProductCustomization(dummyProduct);
