@@ -5,58 +5,86 @@ import { LucideAngularModule } from 'lucide-angular';
 export type OrderStatusFilterValue = 'all' | 'pendiente' | 'confirmado' | 'entregado' | 'cancelado';
 export type PaymentStatusFilterValue = 'all' | 'pendiente' | 'pagado';
 
+interface FilterChip<T> {
+  value: T;
+  label: string;
+  icon: string;
+  colorClass: string;
+}
+
 @Component({
   selector: 'app-order-status-filter',
   standalone: true,
   imports: [CommonModule, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="space-y-3.5 animate-in fade-in slide-in-from-top-1 duration-200">
-      <!-- Fila 1: Pedidos -->
-      <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-        <div class="flex items-center gap-1.5 shrink-0 text-zinc-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider sm:w-20">
-          <lucide-icon name="list-ordered" class="w-3.5 h-3.5 text-[#FFB300]"></lucide-icon>
-          <span>Pedido</span>
-        </div>
-        <div class="inline-flex p-1 gap-1 rounded-2xl bg-[#141414] border border-white/10 overflow-x-auto scrollbar-hide flex-nowrap max-w-full">
+    <div class="space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+      <!-- Sección 1: Estado del Pedido -->
+      <div class="space-y-2">
+        <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-zinc-400 block">
+          Estado del Pedido
+        </span>
+        <div class="flex flex-wrap gap-2" role="group" aria-label="Filtro de estado de pedido">
           @for (chip of orderChips; track chip.value) {
             <button 
+              type="button"
               (click)="toggleStatus(chip.value)"
-              [class]="getOrderChipClasses(chip.value)"
-              class="shrink-0 flex items-center gap-1.5 px-3.5 h-9 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 touch-manipulation whitespace-nowrap cursor-pointer"
-            >
-              <lucide-icon [name]="chip.icon" class="w-3.5 h-3.5"></lucide-icon>
+              [attr.aria-pressed]="isStatusActive(chip.value)"
+              [class.bg-zinc-100]="isStatusActive(chip.value)"
+              [class.text-zinc-950]="isStatusActive(chip.value)"
+              [class.font-bold]="isStatusActive(chip.value)"
+              [class.border-zinc-100]="isStatusActive(chip.value)"
+              [class.shadow-sm]="isStatusActive(chip.value)"
+              [class.bg-zinc-900/60]="!isStatusActive(chip.value)"
+              [class.text-zinc-300]="!isStatusActive(chip.value)"
+              [class.border-white/10]="!isStatusActive(chip.value)"
+              [class.hover:border-white/20]="!isStatusActive(chip.value)"
+              [class.hover:bg-white/5]="!isStatusActive(chip.value)"
+              class="h-11 min-h-[44px] px-3.5 sm:px-4 rounded-xl text-xs uppercase tracking-wider transition-all duration-200 active:scale-95 touch-manipulation cursor-pointer flex items-center gap-2 border">
+              @if (isStatusActive(chip.value) && chip.value !== 'all') {
+                <lucide-icon name="check" class="w-3.5 h-3.5 text-zinc-950 shrink-0"></lucide-icon>
+              } @else {
+                <lucide-icon [name]="chip.icon" class="w-3.5 h-3.5 shrink-0" [class]="isStatusActive(chip.value) ? 'text-zinc-950' : chip.colorClass"></lucide-icon>
+              }
               <span>{{ chip.label }}</span>
             </button>
           }
         </div>
       </div>
 
-      <!-- Fila 2: Pagos -->
-      <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-        <div class="flex items-center gap-1.5 shrink-0 text-zinc-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider sm:w-20">
-          <lucide-icon name="dollar-sign" class="w-3.5 h-3.5 text-[#FFB300]"></lucide-icon>
-          <span>Pago</span>
-        </div>
-        <div class="inline-flex p-1 gap-1 rounded-2xl bg-[#141414] border border-white/10 overflow-x-auto scrollbar-hide flex-nowrap max-w-full">
+      <!-- Sección 2: Estado del Pago -->
+      <div class="space-y-2">
+        <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-zinc-400 block">
+          Estado del Pago
+        </span>
+        <div class="flex flex-wrap gap-2" role="group" aria-label="Filtro de estado de pago">
           @for (chip of paymentChips; track chip.value) {
             <button 
+              type="button"
               (click)="togglePayment(chip.value)"
-              [class]="getPaymentChipClasses(chip.value)"
-              class="shrink-0 flex items-center gap-1.5 px-3.5 h-9 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 touch-manipulation whitespace-nowrap cursor-pointer"
-            >
-              <lucide-icon [name]="chip.icon" class="w-3.5 h-3.5"></lucide-icon>
+              [attr.aria-pressed]="isPaymentActive(chip.value)"
+              [class.bg-zinc-100]="isPaymentActive(chip.value)"
+              [class.text-zinc-950]="isPaymentActive(chip.value)"
+              [class.font-bold]="isPaymentActive(chip.value)"
+              [class.border-zinc-100]="isPaymentActive(chip.value)"
+              [class.shadow-sm]="isPaymentActive(chip.value)"
+              [class.bg-zinc-900/60]="!isPaymentActive(chip.value)"
+              [class.text-zinc-300]="!isPaymentActive(chip.value)"
+              [class.border-white/10]="!isPaymentActive(chip.value)"
+              [class.hover:border-white/20]="!isPaymentActive(chip.value)"
+              [class.hover:bg-white/5]="!isPaymentActive(chip.value)"
+              class="h-11 min-h-[44px] px-3.5 sm:px-4 rounded-xl text-xs uppercase tracking-wider transition-all duration-200 active:scale-95 touch-manipulation cursor-pointer flex items-center gap-2 border">
+              @if (isPaymentActive(chip.value) && chip.value !== 'all') {
+                <lucide-icon name="check" class="w-3.5 h-3.5 text-zinc-950 shrink-0"></lucide-icon>
+              } @else {
+                <lucide-icon [name]="chip.icon" class="w-3.5 h-3.5 shrink-0" [class]="isPaymentActive(chip.value) ? 'text-zinc-950' : chip.colorClass"></lucide-icon>
+              }
               <span>{{ chip.label }}</span>
             </button>
           }
         </div>
       </div>
     </div>
-  `,
-  styles: `
-    :host { display: block; }
-    .scrollbar-hide::-webkit-scrollbar { display: none; }
-    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   `
 })
 export class OrderStatusFilter {
@@ -66,19 +94,27 @@ export class OrderStatusFilter {
   statusFilter = output<OrderStatusFilterValue[]>();
   paymentFilter = output<PaymentStatusFilterValue[]>();
 
-  orderChips: { value: OrderStatusFilterValue; label: string; icon: string }[] = [
-    { value: 'all', label: 'Todas', icon: 'list-ordered' },
-    { value: 'pendiente', label: 'Pendientes', icon: 'chef-hat' },
-    { value: 'confirmado', label: 'Confirmadas', icon: 'check-circle' },
-    { value: 'entregado', label: 'Entregadas', icon: 'check-circle2' },
-    { value: 'cancelado', label: 'Canceladas', icon: 'ban' },
+  orderChips: FilterChip<OrderStatusFilterValue>[] = [
+    { value: 'all', label: 'Todas', icon: 'list-ordered', colorClass: 'text-zinc-400' },
+    { value: 'pendiente', label: 'Pendientes', icon: 'clock', colorClass: 'text-sky-400' },
+    { value: 'confirmado', label: 'Confirmadas', icon: 'check-circle', colorClass: 'text-violet-400' },
+    { value: 'entregado', label: 'Entregadas', icon: 'check-circle2', colorClass: 'text-emerald-400' },
+    { value: 'cancelado', label: 'Canceladas', icon: 'ban', colorClass: 'text-zinc-500' },
   ];
 
-  paymentChips: { value: PaymentStatusFilterValue; label: string; icon: string }[] = [
-    { value: 'all', label: 'Todo pago', icon: 'receipt' },
-    { value: 'pendiente', label: 'Sin pagar', icon: 'dollar-sign' },
-    { value: 'pagado', label: 'Pagadas', icon: 'check-circle2' },
+  paymentChips: FilterChip<PaymentStatusFilterValue>[] = [
+    { value: 'all', label: 'Todos', icon: 'receipt', colorClass: 'text-zinc-400' },
+    { value: 'pendiente', label: 'Sin pagar', icon: 'alert-circle', colorClass: 'text-rose-400' },
+    { value: 'pagado', label: 'Pagadas', icon: 'check-circle2', colorClass: 'text-teal-400' },
   ];
+
+  isStatusActive(val: OrderStatusFilterValue): boolean {
+    return this.currentStatus().includes(val);
+  }
+
+  isPaymentActive(val: PaymentStatusFilterValue): boolean {
+    return this.currentPayment().includes(val);
+  }
 
   toggleStatus(val: OrderStatusFilterValue) {
     if (val === 'all') {
@@ -124,32 +160,6 @@ export class OrderStatusFilter {
     } else {
       this.paymentFilter.emit(current);
     }
-  }
-
-  getOrderChipClasses(value: OrderStatusFilterValue) {
-    const isCurrent = this.currentStatus().includes(value);
-    if (!isCurrent) {
-      return 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.02] border border-transparent';
-    }
-    
-    if (value === 'all') return 'bg-white/10 text-white border border-white/10';
-    if (value === 'pendiente') return 'bg-white/10 text-[#FFB300] border border-[#FFB300]/20';
-    if (value === 'confirmado') return 'bg-white/10 text-blue-400 border border-blue-400/20';
-    if (value === 'entregado') return 'bg-white/10 text-emerald-400 border border-emerald-400/20';
-    if (value === 'cancelado') return 'bg-white/10 text-rose-500 border border-rose-500/20';
-    return '';
-  }
-
-  getPaymentChipClasses(value: PaymentStatusFilterValue) {
-    const isCurrent = this.currentPayment().includes(value);
-    if (!isCurrent) {
-      return 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.02] border border-transparent';
-    }
-    
-    if (value === 'all') return 'bg-white/10 text-white border border-white/10';
-    if (value === 'pendiente') return 'bg-white/10 text-rose-500 border border-rose-500/20';
-    if (value === 'pagado') return 'bg-white/10 text-emerald-400 border border-emerald-400/20';
-    return '';
   }
 }
 

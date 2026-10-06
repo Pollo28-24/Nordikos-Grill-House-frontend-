@@ -1,0 +1,74 @@
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+  @for (m of group().items; track m.id) {
+    <div 
+      class="flex items-center justify-between p-3 rounded-xl border transition-all select-none"
+      [class.cursor-pointer]="m.disponible !== false"
+      [class.cursor-not-allowed]="m.disponible === false"
+      [class.opacity-40]="m.disponible === false"
+      [class.border-emerald-500]="m.disponible !== false && isModifierSelected(m.id)"
+      [class.bg-emerald-500/10]="m.disponible !== false && isModifierSelected(m.id)"
+      [class.border-white/10]="m.disponible === false || !isModifierSelected(m.id)"
+      [class.bg-[#121212]]="m.disponible === false || !isModifierSelected(m.id)"
+      (click)="m.disponible !== false && toggleModifier.emit(m)"
+    >
+      <div class="flex items-center gap-3 min-w-0">
+        <!-- Indicador: Circular si es RADIO, Cuadrado si es CHECKBOX/STEPPER -->
+        <div 
+          class="w-5 h-5 border flex items-center justify-center transition-colors shrink-0"
+          [class.rounded-full]="group().category?.tipo_seleccion === 'RADIO'"
+          [class.rounded]="group().category?.tipo_seleccion !== 'RADIO'"
+          [class.bg-emerald-500]="m.disponible !== false && isModifierSelected(m.id)"
+          [class.border-emerald-500]="m.disponible !== false && isModifierSelected(m.id)"
+          [class.border-white/20]="m.disponible === false || !isModifierSelected(m.id)"
+        >
+          @if (m.disponible !== false && isModifierSelected(m.id)) {
+            @if (group().category?.tipo_seleccion === 'RADIO') {
+              <div class="w-2 h-2 rounded-full bg-black"></div>
+            } @else {
+              <lucide-icon name="check" class="w-3.5 h-3.5 text-black font-bold" />
+            }
+          }
+        </div>
+
+        <div class="flex flex-col text-left min-w-0">
+          <span class="font-bold text-xs sm:text-sm text-white truncate">{{ m.nombre }}</span>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-emerald-400 font-bold text-xs tabular-nums">+${{ m.precio }}</span>
+            @if (m.disponible === false) {
+              <span class="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">Agotado</span>
+            }
+            @if ((m.cantidad_maxima || 1) === 1 && group().category?.tipo_seleccion !== 'RADIO') {
+              <span class="text-[9px] font-semibold text-zinc-500 bg-white/[0.03] px-1.5 py-0.5 rounded border border-white/5">Máx. 1</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Stepper de Cantidad si cantidad_maxima > 1 -->
+      @if (m.disponible !== false && isModifierSelected(m.id) && (m.cantidad_maxima || 1) > 1) {
+        <div class="flex items-center gap-1.5 bg-[#1A1A1A] p-1 rounded-lg border border-white/10 shrink-0" (click)="$event.stopPropagation()">
+          <button 
+            type="button"
+            (click)="updateQty.emit({ modId: m.id, delta: -1 })" 
+            class="w-7 h-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-white bg-white/[0.04] transition cursor-pointer"
+            title="Disminuir porción"
+          >
+            <lucide-icon name="minus" class="w-3.5 h-3.5" />
+          </button>
+          <span class="text-white font-bold text-xs min-w-4 text-center tabular-nums select-none">{{ getModifierQty(m.id) }}</span>
+          <button 
+            type="button"
+            (click)="updateQty.emit({ modId: m.id, delta: 1 })" 
+            [disabled]="getModifierQty(m.id) >= (m.cantidad_maxima || 1)"
+            [class.opacity-40]="getModifierQty(m.id) >= (m.cantidad_maxima || 1)"
+            [class.cursor-not-allowed]="getModifierQty(m.id) >= (m.cantidad_maxima || 1)"
+            class="w-7 h-7 rounded-md flex items-center justify-center text-[#121212] bg-[#FFB300] hover:brightness-110 transition cursor-pointer font-black"
+            [title]="getModifierQty(m.id) >= (m.cantidad_maxima || 1) ? 'Límite alcanzado' : 'Añadir porción'"
+          >
+            <lucide-icon name="plus" class="w-3.5 h-3.5" />
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

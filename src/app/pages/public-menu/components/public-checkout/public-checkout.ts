@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, effect, input, output, OnInit, PLATFORM_ID, DestroyRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OrdersRequestsService } from '@core/services/orders-requests.service';
 import { OrdersRequestsApi } from '@core/api/orders-requests.api';
@@ -11,6 +11,15 @@ import { OrderRequestLocation, CheckoutDraft, ClientSubmittedOrder, CustomerProf
 import { getGoogleMapsUrl } from '@core/utils/order-location.utils';
 import { ClientOrdersService } from '@core/services/client-orders.service';
 import { OverlayLockService } from '@core/services/overlay-lock.service';
+
+export function mexicanPhoneValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  const digits = String(control.value).replace(/\D/g, '');
+  if (digits.length < 10 || digits.length > 15) {
+    return { invalidPhone: true };
+  }
+  return null;
+}
 
 import { CheckoutHeaderComponent } from './components/checkout-header/checkout-header';
 import { CheckoutSummaryAccordionComponent } from './components/checkout-summary-accordion/checkout-summary-accordion';
@@ -115,13 +124,6 @@ export class PublicCheckout implements OnInit {
         this.saveDraft();
       });
     }
-
-    // Si el modal se vuelve a abrir y había quedado en pantalla de éxito, reiniciar para un pedido nuevo
-    effect(() => {
-      if (this.isOpen() && this.step() === 'success') {
-        this.resetCheckout();
-      }
-    });
 
     // Control reactivo del bloqueo de scroll
     effect(() => {
@@ -285,10 +287,10 @@ export class PublicCheckout implements OnInit {
       // Nombre y notas son opcionales en mesa
     } else if (code === 'llevar') {
       f.nombre.setValidators([Validators.required]);
-      f.telefono.setValidators([Validators.required, Validators.pattern(/^[0-9+ ]{7,15}$/)]);
+      f.telefono.setValidators([Validators.required, mexicanPhoneValidator]);
     } else if (code === 'delivery') {
       f.nombre.setValidators([Validators.required]);
-      f.telefono.setValidators([Validators.required, Validators.pattern(/^[0-9+ ]{7,15}$/)]);
+      f.telefono.setValidators([Validators.required, mexicanPhoneValidator]);
       f.direccion.setValidators([Validators.required]);
     }
 
@@ -354,6 +356,55 @@ export class PublicCheckout implements OnInit {
     this.step.set(target);
   }
 
+  goToPaymentStep() {
+    const code = this.serviceCode();
+    this.applyValidators(code);
+
+    const f = this.checkoutForm.controls;
+
+    if (code === 'mesa') {
+      if (f.numero_mesa.invalid) {
+        f.numero_mesa.markAsTouched();
+        this.toastService.show('Por favor indica tu número de mesa.', 'error');
+        return;
+      }
+    }
+
+    if (code === 'llevar' || code === 'delivery') {
+      let hasError = false;
+      if (f.nombre.invalid) {
+        f.nombre.markAsTouched();
+        hasError = true;
+      }
+      if (f.telefono.invalid) {
+        f.telefono.markAsTouched();
+        hasError = true;
+      }
+
+      if (hasError) {
+        if (f.nombre.invalid) {
+          this.toastService.show('Por favor ingresa tu nombre completo.', 'error');
+        } else if (f.telefono.invalid) {
+          this.toastService.show('Por favor ingresa un teléfono válido de 10 dígitos.', 'error');
+        }
+        return;
+      }
+    }
+
+    if (code === 'delivery') {
+      const hasGps = this.geoStatus() === 'success' && !!this.capturedLocation();
+      const hasAddress = !!f.direccion.value?.trim();
+      if (!hasGps && !hasAddress) {
+        f.direccion.markAsTouched();
+        this.toastService.show('Para entrega a domicilio, ingresa tu dirección o usa tu GPS.', 'error');
+        return;
+      }
+    }
+
+    this.saveDraft();
+    this.step.set('payment');
+  }
+
   // --- Envío del Pedido ---
   async submitOrder() {
     const code = this.serviceCode();
@@ -367,11 +418,11 @@ export class PublicCheckout implements OnInit {
         return;
       }
       if ((code === 'llevar' || code === 'delivery') && this.checkoutForm.controls.nombre.invalid) {
-        this.toastService.show('Por favor ingresa tu nombre.', 'error');
+        this.toastService.show('Por favor ingresa tu nombre completo.', 'error');
         return;
       }
       if ((code === 'llevar' || code === 'delivery') && this.checkoutForm.controls.telefono.invalid) {
-        this.toastService.show('Por favor ingresa un número de teléfono válido (7 a 15 dígitos).', 'error');
+        this.toastService.show('Por favor ingresa un número de teléfono válido (10 dígitos).', 'error');
         return;
       }
       if (code === 'delivery' && this.checkoutForm.controls.direccion.invalid) {
@@ -459,9 +510,11 @@ export class PublicCheckout implements OnInit {
 
         this.currentSubmittedOrder.set(submittedOrder);
         this.clearDraft();
-        this.orderSubmitted.emit({ request_code: res.request_code });
         this.toastService.show(`¡Pedido #${res.request_code} enviado con éxito! Tu comanda ha sido recibida en cocina.`, 'success', 5000);
-        this.step.set('success');
+        this.orderSubmitted.emit({ request_code: res.request_code });
+        this.resetCheckout();
+        this.close.emit();
+        this.openOrdersHistory.emit();
       } else {
         this.toastService.show(res.error || 'No se pudo enviar el pedido. Intenta nuevamente.', 'error');
       }

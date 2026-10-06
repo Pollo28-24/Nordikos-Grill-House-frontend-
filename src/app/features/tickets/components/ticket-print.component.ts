@@ -1,5 +1,5 @@
-import { Component, inject, signal, input, effect, output, ViewEncapsulation } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { Component, inject, signal, input, effect, output, ViewEncapsulation, PLATFORM_ID } from '@angular/core';
+import { DatePipe, DecimalPipe, isPlatformBrowser } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { TicketService } from '../services/ticket.service';
 import { TicketData } from '../models/ticket.model';
@@ -17,6 +17,7 @@ import { Capacitor } from '@capacitor/core';
 export class TicketPrintComponent {
   private ticketService = inject(TicketService);
   private toastService = inject(ToastService);
+  private platformId = inject(PLATFORM_ID);
 
   orderId = input.required<string | number>();
   ticketType = input<'account' | 'kitchen'>('account');
@@ -27,7 +28,7 @@ export class TicketPrintComponent {
   close = output<void>();
 
   // Bluetooth signals expuestas
-  isNative = Capacitor.isNativePlatform();
+  isNative = isPlatformBrowser(this.platformId) && Capacitor.isNativePlatform();
   bluetoothDevices = this.ticketService.bluetoothDevices;
   isBluetoothConnected = this.ticketService.isBluetoothConnected;
   connectionState = this.ticketService.connectionState;

@@ -46,20 +46,39 @@
     <!-- Price & Quantity Limit -->
     <div class="flex items-baseline justify-between gap-2 mt-4 pb-4 border-b border-white/5">
       <div>
-        @if (modifier().precio > 0) {
-          <span class="font-black text-lg text-emerald-400 tabular-nums">
-            {{ modifier().precio | currencyMxn }}
-          </span>
-        } @else {
-          <span class="text-xs font-bold text-zinc-400 bg-white/5 px-2.5 py-1 rounded-lg">
-            Sin costo extra
-          </span>
+        <div class="flex items-center gap-2 flex-wrap">
+          @if (modifier().precio > 0) {
+            <span class="font-black text-lg text-emerald-400 tabular-nums">
+              {{ modifier().precio | currencyMxn }}
+            </span>
+            @if (modifier().descuento && modifier().descuento! > 0) {
+              <span class="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                -{{ modifier().descuento | currencyMxn }} desc.
+              </span>
+            }
+          } @else {
+            <span class="text-xs font-bold text-zinc-400 bg-white/5 px-2.5 py-1 rounded-lg">
+              Sin costo extra
+            </span>
+          }
+        </div>
+        @if (modifier().costo && modifier().costo! > 0) {
+          <p class="text-[10px] text-zinc-500 mt-0.5">
+            Costo: {{ modifier().costo | currencyMxn }}
+          </p>
         }
       </div>
 
-      <span class="text-[11px] font-medium text-zinc-400 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
-        Máx: {{ modifier().cantidad_maxima || 1 }}
-      </span>
+      <div class="flex items-center gap-1.5 shrink-0">
+        @if (modifier().sku) {
+          <span class="text-[10px] font-mono font-bold text-zinc-400 bg-white/5 px-2 py-0.5 rounded border border-white/5 uppercase" title="SKU">
+            {{ modifier().sku }}
+          </span>
+        }
+        <span class="text-[11px] font-medium text-zinc-400 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+          Máx: {{ modifier().cantidad_maxima || 1 }}
+        </span>
+      </div>
     </div>
   </div>
 

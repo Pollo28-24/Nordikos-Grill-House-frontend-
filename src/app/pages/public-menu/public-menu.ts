@@ -122,10 +122,14 @@ export class PublicMenu implements OnInit {
     this.selectedCategoryId.set(id != null ? String(id) : null);
   }
 
-  getProductQuantity(productId: string): number {
+  getProductQuantity(productId: string | number): number {
+    const targetId = String(productId);
     return this.cartService.items()
-      .filter(item => item.product_id === productId)
-      .reduce((acc, item) => acc + item.cantidad, 0);
+      .filter(item => {
+        const prodId = String(item.producto_id ?? item.product_id ?? (item as any).product?.id ?? '');
+        return prodId === targetId;
+      })
+      .reduce((acc, item) => acc + (Number(item.cantidad) || 0), 0);
   }
 
   onSearch(event: Event) {
@@ -139,26 +143,28 @@ export class PublicMenu implements OnInit {
   }
 
   addFromCard(product: Product) {
-    this.cartService.addToCart(product);
+    const defaultVariant = product.variants && product.variants.length > 0 ? product.variants[0] : undefined;
+    this.cartService.addToCart(product, defaultVariant);
     this.triggerCartAnimation(product.id);
   }
 
   addFromModal(customization: CartCustomization) {
     this.cartService.addCustomizedProduct(customization);
-    this.triggerCartAnimation(String(customization.product.id));
+    this.triggerCartAnimation(customization.product.id);
     setTimeout(() => this.closeProductDetail(), 500);
   }
 
-  triggerCartAnimation(productId: string) {
+  triggerCartAnimation(productId: string | number) {
+    const id = String(productId);
     // Animación del carrito
     this.cartBumping.set(false); // reset if clicked fast
     setTimeout(() => this.cartBumping.set(true), 10);
     setTimeout(() => this.cartBumping.set(false), 400);
 
     // Feedback en la tarjeta del producto
-    this.addedProducts.update(s => ({ ...s, [productId]: true }));
+    this.addedProducts.update(s => ({ ...s, [id]: true }));
     setTimeout(() => {
-      this.addedProducts.update(s => ({ ...s, [productId]: false }));
+      this.addedProducts.update(s => ({ ...s, [id]: false }));
     }, 1000);
   }
 
@@ -206,6 +212,8 @@ export class PublicMenu implements OnInit {
 
   onOrderSubmitted(_event: { request_code: string }) {
     this.cartService.clearCart();
+    this.isCheckoutOpen.set(false);
+    this.isOrdersModalOpen.set(true);
   }
 }
 

@@ -1,12 +1,15 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Product, ProductVariant, Modifier, ModifierCategory, SelectedModifierItem } from '@core/models/product.model';
 import { CustomizationSection, GroupedCategory, PriceBreakdown, ValidationResult, CartCustomization } from '../models/customization.model';
 import { ProductCustomization } from '../domain/product-customization.aggregate';
 import { PricingEngine } from '../domain/pricing-engine';
 import { ValidationEngine } from '../domain/validation-engine';
+import { ToastService } from '@core/services/toast.service';
 
 @Injectable()
 export class CustomizationStore {
+  private toastService = inject(ToastService);
+
   // Aggregate Root interno (el Store es su propietario durante el ciclo de vida del modal)
   private aggregate: ProductCustomization | null = null;
 
@@ -124,14 +127,15 @@ export class CustomizationStore {
       let count = 0;
       catMap?.forEach(item => count += item.cantidad);
 
-      const isComplete = !cat.obligatorio || count >= cat.min_selections;
-      const isRequired = cat.obligatorio;
+      const isRequired = Boolean(cat.obligatorio || cat.min_selections > 0);
+      const minRequired = cat.min_selections > 0 ? cat.min_selections : 1;
+      const isComplete = !isRequired || count >= minRequired;
 
       let badgeText: string | undefined = undefined;
       if (count > 0) {
         badgeText = `✓ (${count})`;
       } else if (isRequired) {
-        badgeText = '*';
+        badgeText = `Mín. ${minRequired} *`;
       }
 
       list.push({
@@ -191,12 +195,47 @@ export class CustomizationStore {
 
   toggleCheckboxModifier(cat: ModifierCategory, mod: Modifier): void {
     if (!this.aggregate) return;
+    const catMap = this.aggregate.selectedModifiers.get(cat.id);
+    const isAlreadySelected = Boolean(catMap?.has(mod.id));
+
+    if (!isAlreadySelected && catMap && catMap.size >= cat.max_selections) {
+      this.toastService.show(
+        `Máximo ${cat.max_selections} ${cat.max_selections === 1 ? 'opción permitida' : 'opciones permitidas'} en "${cat.nombre}"`,
+        'warning'
+      );
+      return;
+    }
+
     this.aggregate.toggleCheckboxModifier(cat, mod);
     this.selectedModifiers.set(new Map(this.aggregate.selectedModifiers));
   }
 
   updateStepperModifier(cat: ModifierCategory, mod: Modifier, delta: number): void {
     if (!this.aggregate) return;
+    const catMap = this.aggregate.selectedModifiers.get(cat.id);
+    const currentQty = catMap?.get(mod.id)?.cantidad || 0;
+    const itemMax = Number(mod.cantidad_maxima || 1);
+
+    if (delta > 0) {
+      if (currentQty >= itemMax) {
+        this.toastService.show(
+          `Máximo ${itemMax} ${itemMax === 1 ? 'porción' : 'porciones'} de "${mod.nombre}"`,
+          'warning'
+        );
+        return;
+      }
+
+      let catTotal = 0;
+      catMap?.forEach(item => { catTotal += item.cantidad; });
+      if (catTotal >= cat.max_selections) {
+        this.toastService.show(
+          `Límite máximo de "${cat.nombre}" alcanzado (${cat.max_selections})`,
+          'warning'
+        );
+        return;
+      }
+    }
+
     this.aggregate.updateStepperModifier(cat, mod, delta);
     this.selectedModifiers.set(new Map(this.aggregate.selectedModifiers));
   }

@@ -1,8 +1,10 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, OnDestroy, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, OnDestroy, effect, HostListener } from '@angular/core';
 import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { Router, RouterLink } from '@angular/router';
 import { OrdersService } from '@core/services/orders.service';
+import { OrdersRequestsService } from '@core/services/orders-requests.service';
+import { OverlayLockService } from '@core/services/overlay-lock.service';
 import { Navbar } from '@shared/components/navbar/navbar';
 
 const getSavedFilter = <T>(key: string, defaultValue: T): T => {
@@ -32,6 +34,13 @@ import { OrderFilterBar } from './components/order-filter-bar/order-filter-bar';
 import { OrderCard } from './components/order-card/order-card';
 import { OrderStatusFilter, OrderStatusFilterValue, PaymentStatusFilterValue } from './components/order-status-filter/order-status-filter';
 
+export interface ActiveFilterBadge {
+  id: string;
+  label: string;
+  type: 'date' | 'status' | 'payment';
+  value?: any;
+}
+
 interface ServiceType {
   id: number;
   nombre: string;
@@ -47,6 +56,8 @@ interface ServiceType {
 })
 export class OrdersByService implements OnInit, OnDestroy {
   private ordersService = inject(OrdersService);
+  private ordersRequestsService = inject(OrdersRequestsService);
+  private overlayLock = inject(OverlayLockService);
   private feedback = inject(UserFeedbackService);
   private router = inject(Router);
   private logger = inject(LoggerService);
@@ -74,6 +85,53 @@ export class OrdersByService implements OnInit, OnDestroy {
   statusFilter = signal<OrderStatusFilterValue[]>(getSavedFilter<OrderStatusFilterValue[]>('statusFilter', ['all']));
   paymentStatusFilter = signal<PaymentStatusFilterValue[]>(getSavedFilter<PaymentStatusFilterValue[]>('paymentStatusFilter', ['all']));
   showFilters = signal<boolean>(getSavedFilter<boolean>('showFilters', false));
+  showActionsMenu = signal(false);
+
+  pendingRequestsCount = computed(() => this.ordersRequestsService.pendingCount());
+
+  bulkDeliverableCount = computed(() =>
+    this.filtered().filter(o => o.estado_pedido !== 'entregado' && o.estado_pedido !== 'cancelado').length
+  );
+
+  bulkPayableCount = computed(() =>
+    this.filtered().filter(o => o.estado_pago === 'pendiente' && o.estado_pedido !== 'cancelado').length
+  );
+
+  isQuickPendingActive = computed(() => this.statusFilter().includes('pendiente'));
+  isQuickUnpaidActive = computed(() => this.paymentStatusFilter().includes('pendiente'));
+
+  activeFilterBadges = computed<ActiveFilterBadge[]>(() => {
+    const badges: ActiveFilterBadge[] = [];
+
+    const dateType = this.dateFilterType();
+    if (dateType === 'week') {
+      badges.push({ id: 'date-week', label: 'Semana', type: 'date' });
+    } else if (dateType === 'month') {
+      badges.push({ id: 'date-month', label: 'Mes', type: 'date' });
+    } else if (dateType === 'custom') {
+      badges.push({ id: 'date-custom', label: 'Personalizado', type: 'date' });
+    }
+
+    const sf = this.statusFilter();
+    if (!sf.includes('all')) {
+      sf.forEach(s => {
+        const label = s === 'pendiente' ? 'Pendientes' :
+                      s === 'confirmado' ? 'Confirmadas' :
+                      s === 'entregado' ? 'Entregadas' : 'Canceladas';
+        badges.push({ id: `status-${s}`, label, type: 'status', value: s });
+      });
+    }
+
+    const pf = this.paymentStatusFilter();
+    if (!pf.includes('all')) {
+      pf.forEach(p => {
+        const label = p === 'pendiente' ? 'Sin pagar' : 'Pagadas';
+        badges.push({ id: `payment-${p}`, label, type: 'payment', value: p });
+      });
+    }
+
+    return badges;
+  });
 
   constructor() {
     effect(() => {
@@ -117,8 +175,84 @@ export class OrdersByService implements OnInit, OnDestroy {
     return count;
   });
 
+  @HostListener('document:keydown.escape')
+  handleEscape() {
+    if (this.showFilters()) {
+      this.closeFilters();
+    }
+    if (this.showActionsMenu()) {
+      this.closeActionsMenu();
+    }
+  }
+
+  openFilters() {
+    this.showFilters.set(true);
+  }
+
+  closeFilters() {
+    this.showFilters.set(false);
+  }
+
   toggleFilters() {
-    this.showFilters.set(!this.showFilters());
+    this.showFilters.update(v => !v);
+  }
+
+  toggleActionsMenu() {
+    this.showActionsMenu.set(!this.showActionsMenu());
+  }
+
+  closeActionsMenu() {
+    this.showActionsMenu.set(false);
+  }
+
+  toggleQuickPending() {
+    const current = this.statusFilter();
+    if (current.includes('pendiente')) {
+      const next = current.filter(v => v !== 'pendiente');
+      this.statusFilter.set(next.length === 0 ? ['all'] : next);
+    } else {
+      const withoutAll = current.filter(v => v !== 'all');
+      this.statusFilter.set([...withoutAll, 'pendiente']);
+    }
+  }
+
+  toggleQuickUnpaid() {
+    const current = this.paymentStatusFilter();
+    if (current.includes('pendiente')) {
+      const next = current.filter(v => v !== 'pendiente');
+      this.paymentStatusFilter.set(next.length === 0 ? ['all'] : next);
+    } else {
+      const withoutAll = current.filter(v => v !== 'all');
+      this.paymentStatusFilter.set([...withoutAll, 'pendiente']);
+    }
+  }
+
+  removeBadge(badge: ActiveFilterBadge) {
+    if (badge.type === 'date') {
+      this.setDateFilter('today');
+    } else if (badge.type === 'status') {
+      const current = this.statusFilter().filter(v => v !== badge.value);
+      this.statusFilter.set(current.length === 0 ? ['all'] : current);
+    } else if (badge.type === 'payment') {
+      const current = this.paymentStatusFilter().filter(v => v !== badge.value);
+      this.paymentStatusFilter.set(current.length === 0 ? ['all'] : current);
+    }
+  }
+
+  clearAllFilters() {
+    this.setDateFilter('today');
+    this.statusFilter.set(['all']);
+    this.paymentStatusFilter.set(['all']);
+  }
+
+  executeBulkDeliver() {
+    this.closeActionsMenu();
+    this.bulkUpdateStatus('pedido', 'entregado');
+  }
+
+  executeBulkPay() {
+    this.closeActionsMenu();
+    this.bulkUpdateStatus('pago', 'pagado');
   }
 
   serviceTypeFilteredOrders = computed(() => {
@@ -193,10 +327,16 @@ export class OrdersByService implements OnInit, OnDestroy {
     this.loadTypes();
     this.applyDateFilter();
     this.ordersService.subscribeRealtime();
+    this.ordersRequestsService.loadRequests();
+    this.ordersRequestsService.subscribeRealtime();
   }
 
   ngOnDestroy(): void {
     this.ordersService.unsubscribeRealtime();
+    this.ordersRequestsService.unsubscribeRealtime();
+    if (this.overlayLock.isLocked()) {
+      this.overlayLock.unlock();
+    }
   }
 
   async loadTypes() {

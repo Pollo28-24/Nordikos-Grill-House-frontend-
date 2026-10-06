@@ -1,0 +1,59 @@
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+  @for (v of variants(); track v.id) {
+    <div 
+      class="flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer select-none"
+      [class.border-[#FFB300]]="isVariantSelected(v.id)"
+      [class.bg-[#FFB300]/10]="isVariantSelected(v.id)"
+      [class.border-white/10]="!isVariantSelected(v.id)"
+      [class.bg-[#121212]]="!isVariantSelected(v.id)"
+      [class.opacity-40]="v.disponible === false"
+      (click)="selectVariant.emit(v)"
+    >
+      <div class="flex items-center gap-3 min-w-0">
+        <div 
+          class="w-5 h-5 rounded-full border flex items-center justify-center transition-colors shrink-0"
+          [class.bg-[#FFB300]]="isVariantSelected(v.id)"
+          [class.border-[#FFB300]]="isVariantSelected(v.id)"
+          [class.border-white/20]="!isVariantSelected(v.id)"
+        >
+          @if (isVariantSelected(v.id)) {
+            <lucide-icon name="check" class="w-3 h-3 text-[#121212] font-black" />
+          }
+        </div>
+        <div class="flex flex-col min-w-0 text-left">
+          <span class="font-bold text-xs sm:text-sm text-white truncate">{{ v.nombre }}</span>
+          <div class="flex items-center gap-1.5">
+            @if (v.descuento && v.descuento > 0) {
+              <del class="text-[10px] text-zinc-500 font-medium">${{ v.precio }}</del>
+              <span class="text-emerald-400 font-bold text-xs tabular-nums">${{ v.precio - v.descuento }}</span>
+            } @else {
+              <span class="text-[#FFB300] font-bold text-xs tabular-nums">${{ v.precio }}</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      @if (isVariantSelected(v.id)) {
+        <div class="flex items-center gap-1.5 bg-[#1A1A1A] rounded-lg p-1 border border-white/10 shrink-0" (click)="$event.stopPropagation()">
+          <button 
+            type="button"
+            (click)="updateQty.emit({ variantId: v.id, delta: -1 })"
+            class="w-7 h-7 rounded-md flex items-center justify-center bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] text-white transition cursor-pointer"
+            title="Disminuir"
+          >
+            <lucide-icon name="minus" class="w-3.5 h-3.5" />
+          </button>
+          <span class="text-xs font-black text-[#FFB300] tabular-nums min-w-4 text-center select-none">{{ getVariantQty(v.id) }}</span>
+          <button 
+            type="button"
+            (click)="updateQty.emit({ variantId: v.id, delta: 1 })"
+            class="w-7 h-7 rounded-md flex items-center justify-center bg-[#FFB300] text-[#121212] hover:brightness-110 active:bg-amber-400 transition cursor-pointer font-black"
+            title="Aumentar"
+          >
+            <lucide-icon name="plus" class="w-3.5 h-3.5" />
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

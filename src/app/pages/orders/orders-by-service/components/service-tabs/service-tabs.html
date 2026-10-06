@@ -1,0 +1,41 @@
+<nav 
+  role="tablist" 
+  aria-label="Canal de servicio" 
+  class="w-full sm:w-auto flex items-center p-1 gap-1.5 rounded-2xl bg-[#18181A] border border-white/10 select-none overflow-x-auto scrollbar-hide shrink-0"
+>
+  <button 
+    role="tab"
+    type="button"
+    [attr.aria-selected]="selectedTypeId() === null"
+    class="shrink-0 whitespace-nowrap px-4 h-11 min-h-[44px] rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 cursor-pointer flex items-center justify-center gap-2" 
+    [class.bg-zinc-100]="selectedTypeId() === null" 
+    [class.text-zinc-950]="selectedTypeId() === null"
+    [class.font-black]="selectedTypeId() === null"
+    [class.shadow-sm]="selectedTypeId() === null"
+    [class.text-zinc-400]="selectedTypeId() !== null"
+    [class.hover:text-zinc-200]="selectedTypeId() !== null"
+    (click)="selectType.emit(null)"
+  >
+    <lucide-icon name="layers" class="w-4 h-4 shrink-0" />
+    <span>Todas</span>
+  </button>
+
+  @for (t of serviceTypes(); track t.id) {
+    <button 
+      role="tab"
+      type="button"
+      [attr.aria-selected]="selectedTypeId() === t.id"
+      class="shrink-0 whitespace-nowrap px-4 h-11 min-h-[44px] rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 cursor-pointer flex items-center justify-center gap-2" 
+      [class.bg-zinc-100]="selectedTypeId() === t.id" 
+      [class.text-zinc-950]="selectedTypeId() === t.id"
+      [class.font-black]="selectedTypeId() === t.id"
+      [class.shadow-sm]="selectedTypeId() === t.id"
+      [class.text-zinc-400]="selectedTypeId() !== t.id"
+      [class.hover:text-zinc-200]="selectedTypeId() !== t.id"
+      (click)="selectType.emit(t.id)"
+    >
+      <lucide-icon [name]="getServiceIcon(t.nombre)" class="w-4 h-4 shrink-0" />
+      <span>{{ t.nombre }}</span>
+    </button>
+  }
+</nav>

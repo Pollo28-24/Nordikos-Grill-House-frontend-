@@ -171,6 +171,7 @@ export class Products {
       title: 'Eliminar producto',
       message: `¿Eliminar "${product.nombre}"?`,
       confirmText: 'Sí, eliminar',
+      isDanger: true,
       action: () => this.productsService.delete(product.id),
       successMsg: 'Producto eliminado',
       errorMsg: 'Error al eliminar',

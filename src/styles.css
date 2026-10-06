@@ -1,6 +1,12 @@
 /* You can add global styles to this file, and also import other style files */
 @import "tailwindcss";
 
+html, body {
+  background-color: #121212;
+  color: #f5f5f5;
+  min-height: 100%;
+}
+
 /* Scrollbar personalizado para el tema oscuro */
 ::-webkit-scrollbar {
   width: 6px;
@@ -23,6 +29,15 @@
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #3f3f46;
+}
+
+/* Ocultar barra de scroll preservando el desplazamiento táctil */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 /* Modales personalizados */

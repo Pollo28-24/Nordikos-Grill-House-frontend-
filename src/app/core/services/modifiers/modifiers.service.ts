@@ -71,11 +71,28 @@ export class ModifiersService {
   }
 
   async createCategory(cat: Partial<ModifierCategory>) {
-    const { data, error } = await this.supabase
+    let { data, error } = await this.supabase
       .from('modificador_categorias')
       .insert(cat)
       .select()
       .single();
+
+    // Fallback defensivo si las columnas de reglas aún no existen en la BD de Supabase
+    if (error && (error.message?.includes('column') || error.message?.includes('schema cache') || error.code === 'PGRST204')) {
+      const basicCat = {
+        nombre: cat.nombre,
+        descripcion: cat.descripcion,
+        visible: cat.visible
+      };
+      const fallback = await this.supabase
+        .from('modificador_categorias')
+        .insert(basicCat)
+        .select()
+        .single();
+      data = fallback.data;
+      error = fallback.error;
+    }
+
     if (!error && data) {
       this.categoriesResource.reload();
     }
@@ -86,12 +103,30 @@ export class ModifiersService {
   }
 
   async updateCategory(id: string | number, cat: Partial<ModifierCategory>) {
-    const { data, error } = await this.supabase
+    let { data, error } = await this.supabase
       .from('modificador_categorias')
       .update(cat)
       .eq('id', id)
       .select()
       .single();
+
+    // Fallback defensivo si las columnas de reglas aún no existen en la BD de Supabase
+    if (error && (error.message?.includes('column') || error.message?.includes('schema cache') || error.code === 'PGRST204')) {
+      const basicCat = {
+        nombre: cat.nombre,
+        descripcion: cat.descripcion,
+        visible: cat.visible
+      };
+      const fallback = await this.supabase
+        .from('modificador_categorias')
+        .update(basicCat)
+        .eq('id', id)
+        .select()
+        .single();
+      data = fallback.data;
+      error = fallback.error;
+    }
+
     if (!error && data) {
       this.categoriesResource.reload();
     }

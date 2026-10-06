@@ -55,10 +55,11 @@ export class ManageModifiers implements OnInit {
   assignSelectedCategoryId = signal<string | number | null>(null);
 
   form = this.fb.group({
-    nombre: ['', [Validators.required]],
+    nombre: ['', [Validators.required, Validators.minLength(2)]],
     categoria_id: [null as string | number | null, [Validators.required]],
     precio: [0, [Validators.required, Validators.min(0)]],
     costo: [0, [Validators.min(0)]],
+    descuento: [0, [Validators.min(0)]],
     cantidad_maxima: [1, [Validators.required, Validators.min(1)]],
     visible: [true],
     disponible: [true],
@@ -99,13 +100,16 @@ export class ManageModifiers implements OnInit {
 
   openCreate() {
     this.editingId.set(null);
+    const defaultCatId = this.selectedCategoryId() ?? this.categories()[0]?.id ?? null;
     this.form.reset({ 
-      visible: true, 
-      disponible: true,
+      nombre: '',
+      categoria_id: defaultCatId,
       precio: 0, 
       costo: 0, 
+      descuento: 0,
       cantidad_maxima: 1,
-      categoria_id: this.categories()[0]?.id || null,
+      visible: true, 
+      disponible: true,
       sku: ''
     });
     this.showForm.set(true);
@@ -117,8 +121,9 @@ export class ManageModifiers implements OnInit {
       nombre: mod.nombre,
       categoria_id: mod.categoria_id,
       precio: mod.precio,
-      costo: mod.costo || 0,
-      cantidad_maxima: mod.cantidad_maxima,
+      costo: mod.costo ?? 0,
+      descuento: mod.descuento ?? 0,
+      cantidad_maxima: mod.cantidad_maxima ?? 1,
       visible: mod.visible !== false,
       disponible: mod.disponible !== false,
       sku: mod.sku || ''
@@ -127,7 +132,10 @@ export class ManageModifiers implements OnInit {
   }
 
   async save() {
-    if (this.form.invalid || this.isSaving()) return;
+    if (this.form.invalid || this.isSaving()) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
     this.isSaving.set(true);
     const val = this.form.getRawValue();
@@ -137,7 +145,8 @@ export class ManageModifiers implements OnInit {
       nombre: String(val.nombre || '').trim(),
       categoria_id: val.categoria_id!,
       precio: Number(val.precio || 0),
-      costo: Number(val.costo || 0),
+      costo: val.costo != null ? Number(val.costo) : 0,
+      descuento: val.descuento != null ? Number(val.descuento) : 0,
       cantidad_maxima: Number(val.cantidad_maxima || 1),
       visible: Boolean(val.visible),
       disponible: Boolean(val.disponible),
@@ -148,14 +157,22 @@ export class ManageModifiers implements OnInit {
       if (id) {
         const { error } = await this.modifiersService.updateModifier(id, payload);
         if (error) {
-          this.feedback.showError('Error al actualizar modificador');
+          if (error.code === '23505') {
+            this.feedback.showError('Ya existe un modificador con este nombre en esta categoría');
+          } else {
+            this.feedback.showError('Error al actualizar modificador');
+          }
           return;
         }
         this.feedback.showSuccess('Modificador actualizado');
       } else {
         const { error } = await this.modifiersService.createModifier(payload);
         if (error) {
-          this.feedback.showError('Error al crear modificador');
+          if (error.code === '23505') {
+            this.feedback.showError('Ya existe un modificador con este nombre en esta categoría');
+          } else {
+            this.feedback.showError('Error al crear modificador');
+          }
           return;
         }
         this.feedback.showSuccess('Modificador creado');

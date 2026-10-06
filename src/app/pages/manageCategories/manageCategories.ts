@@ -120,6 +120,7 @@ export class ManageCategories {
       title: 'Eliminar categoría',
       message: `¿Estás seguro de eliminar "${category.nombre}"? Se eliminarán todos los productos, variantes y fotos relacionados.`,
       confirmText: 'Eliminar todo',
+      isDanger: true,
       action: () => this.categoriesService.deleteCategory(category.id),
       successMsg: 'Categoría eliminada con éxito',
       errorMsg: 'Error al eliminar categoría'

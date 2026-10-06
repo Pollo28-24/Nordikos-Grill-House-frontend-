@@ -1,0 +1,40 @@
+<div class="space-y-3">
+  <div>
+    <label class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block mb-2">Instrucciones Rápidas (1 toque)</label>
+    <div class="flex flex-wrap gap-1.5">
+      @for (chip of quickNotes; track chip) {
+        <button
+          type="button"
+          (click)="toggleQuickNote.emit(chip)"
+          class="px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer select-none flex items-center gap-1"
+          [class.bg-[#FFB300]]="isQuickNoteSelected(chip)"
+          [class.text-[#121212]]="isQuickNoteSelected(chip)"
+          [class.font-black]="isQuickNoteSelected(chip)"
+          [class.border-[#FFB300]]="isQuickNoteSelected(chip)"
+          [class.shadow-sm]="isQuickNoteSelected(chip)"
+          [class.bg-white/[0.04]]="!isQuickNoteSelected(chip)"
+          [class.hover:bg-white/[0.08]]="!isQuickNoteSelected(chip)"
+          [class.text-zinc-300]="!isQuickNoteSelected(chip)"
+          [class.border-white/10]="!isQuickNoteSelected(chip)"
+        >
+          @if (isQuickNoteSelected(chip)) {
+            <span class="text-[10px] font-black">✓</span>
+          } @else {
+            <span class="text-zinc-500 font-normal">+</span>
+          }
+          <span>{{ chip }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <div>
+    <label class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5">Nota adicional para comanda</label>
+    <textarea 
+      [value]="note()"
+      (input)="noteChange.emit($any($event.target).value)"
+      placeholder="Ej: Salsa aparte, carne bien cocida, empaque especial..."
+      class="w-full h-24 p-3.5 rounded-xl border border-white/10 bg-[#121212] text-white text-xs outline-none focus:border-[#FFB300] focus:ring-1 focus:ring-[#FFB300]/20 transition resize-none placeholder-zinc-600"
+    ></textarea>
+  </div>
+</div>

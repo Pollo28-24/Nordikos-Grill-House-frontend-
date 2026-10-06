@@ -1,6 +1,6 @@
 <div 
-  (click)="onViewDetails.emit(product())"
-  class="group bg-[#F8F5EE] rounded-2xl border border-[#E2D7B7]/50 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden relative flex flex-col cursor-pointer h-full"
+  (click)="handleCardClick()"
+  class="group bg-[#F8F5EE] rounded-2xl border border-[#E2D7B7]/50 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden relative flex flex-col cursor-pointer h-full active:scale-[0.99] select-none"
 >
 
   <!-- DISPONIBILIDAD OVERLAY -->
@@ -33,7 +33,7 @@
 
     <!-- BADGE CANTIDAD -->
     @if (cartQuantity() > 0) {
-      <div class="absolute top-2 left-2 bg-orange-500 text-white text-[10px] font-black h-6 w-6 flex items-center justify-center rounded-full shadow-lg border-2 border-[#F8F5EE] animate-in zoom-in-50 duration-300 z-20">
+      <div class="absolute top-2 left-2 min-w-6.5 h-6.5 px-1.5 bg-orange-600 text-white text-xs font-black flex items-center justify-center rounded-full shadow-md border-2 border-[#F8F5EE] tabular-nums animate-in zoom-in-50 duration-300 z-20 select-none">
         {{ cartQuantity() }}
       </div>
     }
@@ -58,35 +58,29 @@
       {{ product().descripcion || 'Sin descripción' }}
     </p>
 
-    <!-- ADD TO CART BUTTONS -->
+    <!-- ADD TO CART / VIEW DETAILS BUTTONS -->
     @if (product().disponible !== false) {
       <div class="mt-auto flex gap-2 pt-2">
-        @if (hasCustomizations()) {
-          <button 
-            (click)="onViewDetails.emit(product()); $event.stopPropagation()"
-            class="w-full py-2 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold rounded-xl transition active:scale-95 flex items-center justify-center gap-2"
-          >
-            Personalizar
-            <lucide-icon name="chevron-right" class="h-3 w-3"></lucide-icon>
-          </button>
-        } @else {
-          <button 
-            (click)="onAdd.emit(product()); $event.stopPropagation()"
-            class="flex-1 py-2 text-white text-[11px] font-bold rounded-xl transition active:scale-95 flex items-center justify-center gap-2"
-            [class.bg-green-500]="isAdded()"
-            [class.hover:bg-green-600]="isAdded()"
-            [class.bg-orange-500]="!isAdded()"
-            [class.hover:bg-orange-600]="!isAdded()"
-          >
-            @if (isAdded()) {
-              <lucide-icon name="check" class="h-3 w-3"></lucide-icon>
-              Agregado
-            } @else {
-              <lucide-icon name="plus" class="h-3 w-3"></lucide-icon>
-              Agregar
-            }
-          </button>
-        }
+        <button 
+          type="button"
+          (click)="openDetails($event)"
+          class="w-full py-2 text-white text-[11px] font-bold rounded-xl transition active:scale-95 flex items-center justify-center gap-1.5 shadow-sm cursor-pointer select-none touch-manipulation"
+          [class.bg-green-600]="isAdded()"
+          [class.hover:bg-green-700]="isAdded()"
+          [class.bg-orange-500]="!isAdded()"
+          [class.hover:bg-orange-600]="!isAdded()"
+        >
+          @if (isAdded()) {
+            <lucide-icon name="check" class="h-3.5 w-3.5"></lucide-icon>
+            <span>¡Agregado!</span>
+          } @else if (hasCustomizations()) {
+            <span>Personalizar</span>
+            <lucide-icon name="chevron-right" class="h-3.5 w-3.5"></lucide-icon>
+          } @else {
+            <span>Ver Detalle</span>
+            <lucide-icon name="chevron-right" class="h-3.5 w-3.5"></lucide-icon>
+          }
+        </button>
       </div>
     }
   </div>

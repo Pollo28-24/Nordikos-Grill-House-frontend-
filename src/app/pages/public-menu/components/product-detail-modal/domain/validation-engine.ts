@@ -38,8 +38,9 @@ export class ValidationEngine {
       });
 
       // Regla de mínimo requerido
-      if (cat.obligatorio && totalSelectedInCat < cat.min_selections) {
-        const requiredCount = cat.min_selections;
+      const isRequired = Boolean(cat.obligatorio || cat.min_selections > 0);
+      const requiredCount = cat.min_selections > 0 ? cat.min_selections : 1;
+      if (isRequired && totalSelectedInCat < requiredCount) {
         const msg = requiredCount === 1 
           ? `Selecciona 1 opción en "${cat.nombre}"`
           : `Selecciona al menos ${requiredCount} opciones en "${cat.nombre}"`;

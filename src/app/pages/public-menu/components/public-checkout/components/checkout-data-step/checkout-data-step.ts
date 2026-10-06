@@ -19,16 +19,22 @@ import { OrderRequestLocation } from '@core/models/order.model';
             Número de Mesa <span class="text-orange-600">*</span>
           </label>
           <div class="relative">
-            <lucide-icon name="utensils" class="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"></lucide-icon>
+            <lucide-icon name="utensils" class="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"></lucide-icon>
             <input 
               type="text" 
               formControlName="numero_mesa" 
               placeholder="Ej: Mesa 4 o Barra 2" 
-              class="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl border text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition outline-none"
+              class="w-full pl-11 pr-4 py-2.5 bg-white rounded-xl border text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition outline-none"
               [class.border-red-400]="form().get('numero_mesa')?.invalid && form().get('numero_mesa')?.touched"
               [class.border-[#E2D7B7]]="!form().get('numero_mesa')?.invalid || !form().get('numero_mesa')?.touched"
             />
           </div>
+          @if (form().get('numero_mesa')?.invalid && form().get('numero_mesa')?.touched) {
+            <p class="text-[11px] text-red-600 font-medium flex items-center gap-1.5 animate-in fade-in">
+              <lucide-icon name="alert-circle" class="w-3.5 h-3.5 shrink-0"></lucide-icon>
+              <span>Por favor indica tu número de mesa.</span>
+            </p>
+          }
           <p class="text-[11px] text-gray-500">Indícanos en qué mesa estás sentado para llevártelo directamente.</p>
         </div>
       }
@@ -39,7 +45,7 @@ import { OrderRequestLocation } from '@core/models/order.model';
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
               <lucide-icon name="map-pin" class="w-4 h-4 text-orange-500"></lucide-icon>
-              <span>Ubicación de Entrega</span>
+              <span>Ubicación de Entrega <span class="text-orange-600">*</span></span>
             </span>
             @if (geoStatus() === 'success') {
               <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
@@ -108,21 +114,33 @@ import { OrderRequestLocation } from '@core/models/order.model';
               }
             </div>
 
-            <input 
-              type="text" 
-              formControlName="direccion" 
-              placeholder="Calle, número exterior/interior, colonia..." 
-              class="w-full px-3.5 py-2.5 bg-white rounded-xl border text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition outline-none"
-              [class.border-red-400]="form().get('direccion')?.invalid && form().get('direccion')?.touched"
-              [class.border-[#E2D7B7]]="!form().get('direccion')?.invalid || !form().get('direccion')?.touched"
-            />
+            <div class="relative">
+              <lucide-icon name="map-pin" class="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"></lucide-icon>
+              <input 
+                type="text" 
+                formControlName="direccion" 
+                placeholder="Calle, número exterior/interior, colonia..." 
+                class="w-full pl-11 pr-3.5 py-2.5 bg-white rounded-xl border text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition outline-none"
+                [class.border-red-400]="form().get('direccion')?.invalid && form().get('direccion')?.touched"
+                [class.border-[#E2D7B7]]="!form().get('direccion')?.invalid || !form().get('direccion')?.touched"
+              />
+            </div>
+            @if (form().get('direccion')?.invalid && form().get('direccion')?.touched) {
+              <p class="text-[11px] text-red-600 font-medium flex items-center gap-1.5 animate-in fade-in">
+                <lucide-icon name="alert-circle" class="w-3.5 h-3.5 shrink-0"></lucide-icon>
+                <span>Por favor ingresa tu dirección de entrega o usa tu GPS actual.</span>
+              </p>
+            }
 
-            <input 
-              type="text" 
-              formControlName="referencias" 
-              placeholder="Referencias (Ej: portón blanco, junto a la tienda...)" 
-              class="w-full px-3.5 py-2.5 bg-white rounded-xl border text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition outline-none border-[#E2D7B7]"
-            />
+            <div class="relative">
+              <lucide-icon name="info" class="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"></lucide-icon>
+              <input 
+                type="text" 
+                formControlName="referencias" 
+                placeholder="Referencias (Ej: portón blanco, junto a la tienda...)" 
+                class="w-full pl-11 pr-3.5 py-2.5 bg-white rounded-xl border text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition outline-none border-[#E2D7B7]"
+              />
+            </div>
           </div>
         </div>
       }
@@ -140,16 +158,22 @@ import { OrderRequestLocation } from '@core/models/order.model';
               Nombre Completo <span class="text-orange-600">*</span>
             </label>
             <div class="relative">
-              <lucide-icon name="user" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"></lucide-icon>
+              <lucide-icon name="user" class="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"></lucide-icon>
               <input 
                 type="text" 
                 formControlName="nombre" 
-                placeholder="Tu nombre" 
-                class="w-full pl-9 pr-3 py-2 bg-white rounded-xl border text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition outline-none"
+                placeholder="Tu nombre completo" 
+                class="w-full pl-11 pr-3.5 py-2.5 bg-white rounded-xl border text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition outline-none"
                 [class.border-red-400]="form().get('nombre')?.invalid && form().get('nombre')?.touched"
                 [class.border-[#E2D7B7]]="!form().get('nombre')?.invalid || !form().get('nombre')?.touched"
               />
             </div>
+            @if (form().get('nombre')?.invalid && form().get('nombre')?.touched) {
+              <p class="text-[11px] text-red-600 font-medium flex items-center gap-1.5 animate-in fade-in">
+                <lucide-icon name="alert-circle" class="w-3.5 h-3.5 shrink-0"></lucide-icon>
+                <span>Por favor ingresa tu nombre completo.</span>
+              </p>
+            }
           </div>
 
           <!-- Teléfono / WhatsApp -->
@@ -158,16 +182,22 @@ import { OrderRequestLocation } from '@core/models/order.model';
               Teléfono (WhatsApp) <span class="text-orange-600">*</span>
             </label>
             <div class="relative">
-              <lucide-icon name="phone" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"></lucide-icon>
+              <lucide-icon name="phone" class="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"></lucide-icon>
               <input 
                 type="tel" 
                 formControlName="telefono" 
-                placeholder="10 dígitos" 
-                class="w-full pl-9 pr-3 py-2 bg-white rounded-xl border text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition outline-none"
+                placeholder="10 dígitos (Ej: 951 123 4567)" 
+                class="w-full pl-11 pr-3.5 py-2.5 bg-white rounded-xl border text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition outline-none"
                 [class.border-red-400]="form().get('telefono')?.invalid && form().get('telefono')?.touched"
                 [class.border-[#E2D7B7]]="!form().get('telefono')?.invalid || !form().get('telefono')?.touched"
               />
             </div>
+            @if (form().get('telefono')?.invalid && form().get('telefono')?.touched) {
+              <p class="text-[11px] text-red-600 font-medium flex items-center gap-1.5 animate-in fade-in">
+                <lucide-icon name="alert-circle" class="w-3.5 h-3.5 shrink-0"></lucide-icon>
+                <span>Ingresa un número de WhatsApp válido (10 dígitos).</span>
+              </p>
+            }
           </div>
         </div>
 
@@ -178,12 +208,12 @@ import { OrderRequestLocation } from '@core/models/order.model';
             <span class="text-[10px] text-gray-400">Opcional</span>
           </label>
           <div class="relative">
-            <lucide-icon name="mail" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"></lucide-icon>
+            <lucide-icon name="mail" class="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"></lucide-icon>
             <input 
               type="email" 
               formControlName="email" 
               placeholder="Para enviarte copia del recibo" 
-              class="w-full pl-9 pr-3 py-2 bg-white rounded-xl border text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition outline-none border-[#E2D7B7]"
+              class="w-full pl-11 pr-3.5 py-2.5 bg-white rounded-xl border text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition outline-none border-[#E2D7B7]"
             />
           </div>
         </div>

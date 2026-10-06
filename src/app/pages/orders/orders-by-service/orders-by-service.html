@@ -2,7 +2,7 @@
 
 <div class="min-h-screen bg-[#121212] text-[#F5F5F5] no-print">
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-5 py-4 sm:py-6">
+  <div class="max-w-7xl mx-auto px-4 sm:px-5 py-4 sm:py-6 pb-28 sm:pb-8">
 
     <!-- HEADER -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 mb-5 sm:mb-6">
@@ -27,21 +27,75 @@
           <lucide-icon name="refresh-cw" class="w-4 h-4 sm:w-5 sm:h-5" [class.animate-spin]="loading()"></lucide-icon>
         </button>
 
-        <!-- Solicitudes -->
+        <!-- Solicitudes con Badge de conteo -->
         <button
           (click)="goToRequests()"
           type="button"
-          class="inline-flex items-center gap-2 px-3.5 sm:px-4 h-10 sm:h-11 rounded-xl bg-white/5 hover:bg-white/10 text-[#FFB300] border border-[#FFB300]/20 font-bold text-xs sm:text-sm active:scale-95 transition duration-200 cursor-pointer shrink-0"
+          class="relative inline-flex items-center gap-2 px-3.5 sm:px-4 h-10 sm:h-11 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-200 hover:text-white border border-white/10 font-bold text-xs sm:text-sm active:scale-95 transition duration-200 cursor-pointer shrink-0"
           title="Ver Solicitudes">
           <lucide-icon name="inbox" class="w-4 h-4 shrink-0" />
           <span>Solicitudes</span>
+          @if (pendingRequestsCount() > 0) {
+            <span class="inline-flex items-center justify-center px-1.5 py-0.5 min-w-[20px] h-5 rounded-full text-[10px] font-black bg-[#FFB300] text-zinc-950 shadow-sm animate-pulse">
+              {{ pendingRequestsCount() }}
+            </span>
+          }
         </button>
 
-        <!-- Nueva orden (Primary Action) -->
+        <!-- Menú de Acciones Masivas -->
+        <div class="relative">
+          <button
+            (click)="toggleActionsMenu()"
+            type="button"
+            class="inline-flex items-center gap-1.5 px-3.5 sm:px-4 h-10 sm:h-11 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/10 font-bold text-xs sm:text-sm active:scale-95 transition duration-200 cursor-pointer shrink-0"
+            [class.border-white/30]="showActionsMenu()">
+            <span>Acciones</span>
+            <lucide-icon [name]="showActionsMenu() ? 'chevron-up' : 'chevron-down'" class="w-3.5 h-3.5 text-zinc-400" />
+          </button>
+
+          @if (showActionsMenu()) {
+            <!-- Backdrop click-away for menu -->
+            <div class="fixed inset-0 z-40" (click)="closeActionsMenu()"></div>
+
+            <div class="absolute right-0 top-full mt-2 w-56 rounded-2xl bg-[#1E1E20] border border-white/15 shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+              <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                Acciones rápidas
+              </div>
+              <button 
+                (click)="executeBulkDeliver()" 
+                [disabled]="bulkDeliverableCount() === 0"
+                type="button"
+                class="w-full flex items-center justify-between px-3 h-10 rounded-xl text-xs font-semibold text-zinc-200 hover:bg-emerald-500/15 hover:text-emerald-300 disabled:opacity-40 disabled:pointer-events-none transition cursor-pointer">
+                <span class="flex items-center gap-2">
+                  <lucide-icon name="check-circle2" class="w-4 h-4 text-emerald-400" />
+                  <span>Entregar todo</span>
+                </span>
+                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400">
+                  {{ bulkDeliverableCount() }}
+                </span>
+              </button>
+              <button 
+                (click)="executeBulkPay()" 
+                [disabled]="bulkPayableCount() === 0"
+                type="button"
+                class="w-full flex items-center justify-between px-3 h-10 rounded-xl text-xs font-semibold text-zinc-200 hover:bg-[#FFB300]/15 hover:text-[#FFB300] disabled:opacity-40 disabled:pointer-events-none transition cursor-pointer">
+                <span class="flex items-center gap-2">
+                  <lucide-icon name="dollar-sign" class="w-4 h-4 text-[#FFB300]" />
+                  <span>Pagar todo</span>
+                </span>
+                <span class="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-[#FFB300]/20 text-[#FFB300]">
+                  {{ bulkPayableCount() }}
+                </span>
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- Nueva orden (Desktop Primary Action) -->
         <button
           (click)="createNewOrder()"
           type="button"
-          class="inline-flex items-center gap-2 px-4 sm:px-5 h-10 sm:h-11 rounded-xl bg-[#FFB300] text-[#121212] font-bold text-xs sm:text-sm hover:brightness-105 active:scale-95 transition duration-200 shadow-lg shadow-amber-500/15 cursor-pointer shrink-0">
+          class="hidden sm:inline-flex items-center gap-2 px-4 sm:px-5 h-10 sm:h-11 rounded-xl bg-[#FFB300] text-[#121212] font-bold text-xs sm:text-sm hover:brightness-105 active:scale-95 transition duration-200 shadow-lg shadow-amber-500/15 cursor-pointer shrink-0">
           <lucide-icon name="plus" class="w-4 h-4 shrink-0" />
           <span>Nueva orden</span>
         </button>
@@ -58,31 +112,72 @@
       />
     }
 
-    <!-- PESTAÑAS DE SERVICIO Y BOTÓN DE FILTROS -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-      <app-service-tabs 
-        [serviceTypes]="serviceTypes()" 
-        [selectedTypeId]="selectedTypeId()"
-        (selectType)="selectType($event)"
-      />
-      
-      <button 
-        (click)="toggleFilters()"
-        type="button"
-        class="shrink-0 flex items-center justify-center gap-2 px-3.5 sm:px-4 h-10 rounded-xl bg-[#18181A] border border-white/10 hover:bg-[#202022] active:scale-95 transition-all text-xs font-bold uppercase tracking-wider text-zinc-400 self-start sm:self-auto cursor-pointer"
-        [class.text-[#FFB300]]="hasActiveFilters()"
-        [class.border-[#FFB300]/30]="hasActiveFilters()"
-      >
-        <lucide-icon name="sliders-horizontal" class="w-3.5 h-3.5"></lucide-icon>
-        <span>{{ activeFiltersCount() > 0 ? 'Filtros activos (' + activeFiltersCount() + ')' : 'Filtros avanzados' }}</span>
-        <lucide-icon [name]="showFilters() ? 'chevron-up' : 'chevron-down'" class="w-3.5 h-3.5"></lucide-icon>
-      </button>
+    <!-- PESTAÑAS DE SERVICIO Y CONTROLES DE FILTRADO -->
+    <div class="flex flex-col gap-2.5 sm:gap-4 mb-4 sm:mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <!-- Segmented Control de Canal -->
+        <div class="w-full sm:w-auto min-w-0">
+          <app-service-tabs 
+            [serviceTypes]="serviceTypes()" 
+            [selectedTypeId]="selectedTypeId()"
+            (selectType)="selectType($event)"
+          />
+        </div>
+        
+        <!-- Botón Filtros (Desktop & Mobile trigger) -->
+        <button 
+          (click)="toggleFilters()"
+          type="button"
+          class="shrink-0 flex items-center justify-center gap-2 px-4 h-11 min-h-[44px] rounded-xl bg-[#18181A] border border-white/10 hover:bg-[#202022] active:scale-95 transition-all text-xs font-bold uppercase tracking-wider text-zinc-300 self-start sm:self-auto cursor-pointer"
+          [class.text-white]="hasActiveFilters()"
+          [class.border-white/30]="hasActiveFilters()"
+          [class.bg-zinc-800]="hasActiveFilters()">
+          <lucide-icon name="sliders-horizontal" class="w-4 h-4"></lucide-icon>
+          <span>{{ activeFiltersCount() > 0 ? 'Filtros (' + activeFiltersCount() + ')' : 'Filtros' }}</span>
+          <lucide-icon [name]="showFilters() ? 'chevron-up' : 'chevron-down'" class="w-3.5 h-3.5"></lucide-icon>
+        </button>
+      </div>
     </div>
 
-    <!-- ACORDEÓN DE FILTROS AVANZADOS -->
+    <!-- Active Badges row (chips con ✕ y botón limpiar) -->
+    @if (activeFilterBadges().length > 0) {
+      <div class="flex flex-wrap items-center gap-2 mb-4 animate-in fade-in duration-150">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-500 mr-0.5">Activos:</span>
+        @for (badge of activeFilterBadges(); track badge.id) {
+          <button 
+            type="button"
+            (click)="removeBadge(badge)"
+            class="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 text-xs font-semibold cursor-pointer active:scale-95 transition">
+            <span>{{ badge.label }}</span>
+            <lucide-icon name="x" class="w-3 h-3 text-zinc-400 hover:text-white" />
+          </button>
+        }
+        <button 
+          type="button"
+          (click)="clearAllFilters()"
+          class="text-xs text-zinc-400 hover:text-white underline cursor-pointer ml-1 py-1">
+          Limpiar todos
+        </button>
+      </div>
+    }
+
+    <!-- PANEL DE FILTROS AVANZADOS EN DESKTOP (sm y superior) -->
     @if (showFilters()) {
-      <div class="mb-5 sm:mb-6 p-4 sm:p-5 rounded-2xl bg-[#18181A] border border-white/10 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-        <!-- Filtro de Fechas y Acciones Rápidas -->
+      <div class="hidden sm:block mb-6 p-5 rounded-2xl bg-[#18181A] border border-white/10 space-y-5 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-400">
+            Filtros avanzados
+          </h3>
+          @if (hasActiveFilters()) {
+            <button 
+              type="button"
+              (click)="clearAllFilters()"
+              class="text-xs text-zinc-400 hover:text-white underline cursor-pointer">
+              Limpiar filtros
+            </button>
+          }
+        </div>
+
         <app-order-filter-bar 
           [dateFilterType]="dateFilterType()"
           [customStartDate]="customStartDate()"
@@ -92,18 +187,101 @@
           (customStartChange)="customStartDate.set($event)"
           (customEndChange)="customEndDate.set($event)"
           (applyFilter)="applyDateFilter()"
-          (bulkUpdate)="bulkUpdateStatus($event.type, $event.status)"
         />
 
         <div class="border-t border-white/10"></div>
 
-        <!-- Filtros Rápidos por Estado -->
         <app-order-status-filter 
           [currentStatus]="statusFilter()"
           [currentPayment]="paymentStatusFilter()"
           (statusFilter)="setStatusFilter($event)"
           (paymentFilter)="setPaymentFilter($event)"
         />
+      </div>
+    }
+
+    <!-- BOTTOM SHEET DE FILTROS EN MÓVIL (< sm) -->
+    @if (showFilters()) {
+      <div class="sm:hidden fixed inset-0 z-50">
+        <!-- Backdrop -->
+        <div 
+          class="fixed inset-0 bg-black/75 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+          (click)="closeFilters()">
+        </div>
+
+        <!-- Bottom Sheet Container -->
+        <div 
+          class="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] flex flex-col rounded-t-3xl bg-[#18181A] border-t border-white/10 shadow-2xl animate-in slide-in-from-bottom duration-250 pb-[max(1rem,env(safe-area-inset-bottom))]"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Filtros avanzados">
+          
+          <!-- Handle bar -->
+          <div class="w-12 h-1.5 rounded-full bg-zinc-700 mx-auto mt-3 mb-2 shrink-0"></div>
+
+          <!-- Sheet Header -->
+          <div class="flex items-center justify-between px-5 py-3 border-b border-white/10 shrink-0">
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider">Filtros</h3>
+              @if (activeFiltersCount() > 0) {
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-800 text-zinc-300 border border-white/10">
+                  {{ activeFiltersCount() }}
+                </span>
+              }
+            </div>
+
+            <div class="flex items-center gap-3">
+              @if (hasActiveFilters()) {
+                <button 
+                  type="button"
+                  (click)="clearAllFilters()"
+                  class="text-xs text-zinc-400 hover:text-white underline cursor-pointer">
+                  Limpiar
+                </button>
+              }
+              <button 
+                type="button"
+                (click)="closeFilters()"
+                class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer transition">
+                <lucide-icon name="x" class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Sheet Body (scrollable) -->
+          <div class="overflow-y-auto p-5 space-y-5 flex-1">
+            <app-order-filter-bar 
+              [dateFilterType]="dateFilterType()"
+              [customStartDate]="customStartDate()"
+              [customEndDate]="customEndDate()"
+              [filteredCount]="filtered().length"
+              (setDateFilter)="setDateFilter($event)"
+              (customStartChange)="customStartDate.set($event)"
+              (customEndChange)="customEndDate.set($event)"
+              (applyFilter)="applyDateFilter()"
+            />
+
+            <div class="border-t border-white/10"></div>
+
+            <app-order-status-filter 
+              [currentStatus]="statusFilter()"
+              [currentPayment]="paymentStatusFilter()"
+              (statusFilter)="setStatusFilter($event)"
+              (paymentFilter)="setPaymentFilter($event)"
+            />
+          </div>
+
+          <!-- Sheet Footer (CTA Button) -->
+          <div class="p-4 border-t border-white/10 shrink-0 bg-[#18181A]">
+            <button 
+              type="button"
+              (click)="closeFilters()"
+              class="w-full h-12 rounded-xl bg-[#FFB300] text-[#121212] font-black text-sm uppercase tracking-wider hover:brightness-105 active:scale-95 transition shadow-lg shadow-amber-500/15 cursor-pointer flex items-center justify-center">
+              Ver {{ filtered().length }} {{ filtered().length === 1 ? 'orden' : 'órdenes' }}
+            </button>
+          </div>
+
+        </div>
       </div>
     }
 
@@ -190,6 +368,17 @@
     }
 
   </div>
+
+  <!-- Botón Flotante para Móvil (FAB) -->
+  @if (!showFilters()) {
+    <button 
+      (click)="createNewOrder()" 
+      type="button" 
+      aria-label="Nueva orden" 
+      class="sm:hidden fixed right-5 bottom-6 z-40 w-14 h-14 rounded-full bg-[#FFB300] text-[#121212] shadow-2xl shadow-amber-500/35 flex items-center justify-center font-black active:scale-90 transition-transform duration-150 cursor-pointer">
+      <lucide-icon name="plus" class="w-7 h-7" />
+    </button>
+  }
 </div>
 
 <!-- Modal de Ticket Rápido (Overlay) -->

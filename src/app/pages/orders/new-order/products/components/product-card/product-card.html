@@ -1,0 +1,90 @@
+<!-- VISTA DESKTOP (CARDS) -->
+<div
+  class="hidden sm:flex group relative h-full flex-col bg-[#1A1A1A] rounded-2xl overflow-hidden border border-white/10 transition-all duration-200 hover:border-[#FFB300]/50 active:scale-[0.99] shadow-sm cursor-pointer select-none"
+  (click)="product().disponible !== false && select.emit($event)"
+>
+  <!-- Imagen -->
+  <div class="h-32 bg-zinc-900 overflow-hidden relative shrink-0">
+    @if (product().imagen_url) {
+      <img [src]="product().imagen_url" [alt]="product().nombre" loading="lazy" decoding="async" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" [class.grayscale]="product().disponible === false" />
+    } @else {
+      <div class="w-full h-full flex items-center justify-center"><lucide-icon name="utensils" class="w-6 h-6 text-zinc-600" /></div>
+    }
+    @if (product().disponible === false) {
+      <div class="absolute inset-0 bg-black/70 backdrop-blur-[2px] flex items-center justify-center">
+        <span class="bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">Agotado</span>
+      </div>
+    }
+  </div>
+
+  <div class="p-3.5 flex flex-col flex-1">
+    <div class="flex justify-between items-start gap-2">
+      <h3 class="text-xs sm:text-sm font-bold text-white leading-tight line-clamp-2">{{ product().nombre }}</h3>
+      <span class="text-xs sm:text-sm font-black text-[#FFB300] shrink-0 tabular-nums">{{ getProductPrice(product()) }}</span>
+    </div>
+    <div class="flex-1"></div>
+    <div class="mt-3">
+      <button 
+        (click)="product().disponible !== false && customize.emit($event)" 
+        [disabled]="product().disponible === false" 
+        class="w-full h-10 flex items-center justify-center gap-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white hover:border-[#FFB300]/30 transition-all cursor-pointer select-none text-xs font-bold uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
+        title="Personalizar modificadores / notas"
+      >
+        <lucide-icon name="sliders-horizontal" class="w-4 h-4 text-[#FFB300]"></lucide-icon>
+        <span>Personalizar</span>
+      </button>
+    </div>
+  </div>
+  @if (cartQuantity() > 0) {
+    <div class="absolute top-2 left-2 bg-[#FFB300] text-zinc-950 text-xs font-black w-6.5 h-6.5 flex items-center justify-center rounded-full shadow-lg border-2 border-[#1A1A1A] tabular-nums animate-in zoom-in select-none">
+      {{ cartQuantity() }}
+    </div>
+  }
+</div>
+
+<!-- VISTA MÓVIL (LISTA COMPACTA CON TOUCH TARGET 44px) -->
+<div 
+  (click)="product().disponible !== false && select.emit($event)"
+  class="flex sm:hidden items-center gap-3 p-3 bg-[#1A1A1A] border border-white/10 rounded-2xl active:bg-white/5 transition-colors relative cursor-pointer select-none"
+  [class.opacity-50]="product().disponible === false"
+>
+  <!-- Miniatura (56x56px) -->
+  <div class="w-14 h-14 rounded-xl bg-zinc-900 overflow-hidden shrink-0 border border-white/10">
+    @if (product().imagen_url) {
+      <img [src]="product().imagen_url" [alt]="product().nombre" loading="lazy" decoding="async" class="w-full h-full object-cover" />
+    } @else {
+      <div class="w-full h-full flex items-center justify-center"><lucide-icon name="utensils" class="w-5 h-5 text-zinc-600" /></div>
+    }
+  </div>
+
+  <!-- Info Central -->
+  <div class="flex-1 min-w-0 pr-1">
+    <div class="flex items-center gap-2 flex-wrap">
+      <h3 class="text-sm font-bold text-white truncate">{{ product().nombre }}</h3>
+      @if (cartQuantity() > 0) {
+        <span class="bg-[#FFB300] text-[#121212] text-[10px] font-black px-1.5 py-0.5 rounded-md tabular-nums shadow-sm animate-in zoom-in">
+          {{ cartQuantity() }}
+        </span>
+      }
+    </div>
+    <p class="text-xs sm:text-sm font-black text-[#FFB300] tabular-nums mt-0.5">{{ getProductPrice(product()) }}</p>
+  </div>
+
+  <!-- Botón de Modificadores en Móvil (Touch Target 44px) -->
+  <div class="flex items-center shrink-0" (click)="$event.stopPropagation()">
+    <button 
+      (click)="product().disponible !== false && customize.emit($event)"
+      [disabled]="product().disponible === false"
+      class="w-11 h-11 flex items-center justify-center rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-[#FFB300] active:scale-90 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+      title="Personalizar modificadores / notas"
+    >
+      <lucide-icon name="sliders-horizontal" class="w-4.5 h-4.5 text-[#FFB300]"></lucide-icon>
+    </button>
+  </div>
+
+  @if (product().disponible === false) {
+    <div class="absolute right-16 top-1/2 -translate-y-1/2">
+      <span class="text-[9px] font-bold text-red-400 uppercase tracking-wider bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded">Agotado</span>
+    </div>
+  }
+</div>

@@ -10,14 +10,15 @@ import { CustomizationStore } from '../../store/customization.store';
   imports: [CommonModule, LucideAngularModule, CurrencyMxnPipe],
   template: `
     @if (store.product(); as p) {
-      <!-- 1. Imagen de Cabecera con Botón de Cierre Ergonómico y Compacto -->
-      <div class="relative h-24 sm:h-32 bg-zinc-900 shrink-0 overflow-hidden">
+      <!-- 1. Imagen de Cabecera con Botón de Cierre Ergonómico y Espacio Generoso -->
+      <div class="relative h-44 sm:h-52 bg-zinc-950 shrink-0 overflow-hidden">
         @if (p.imagen_url) {
-          <img [src]="p.imagen_url" [alt]="p.nombre" class="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-110">
-          <img [src]="p.imagen_url" [alt]="p.nombre" class="relative w-full h-full object-contain p-1.5 drop-shadow-xl">
+          <img [src]="p.imagen_url" [alt]="p.nombre" class="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110">
+          <img [src]="p.imagen_url" [alt]="p.nombre" class="relative w-full h-full object-contain p-3 drop-shadow-2xl">
+          <div class="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
         } @else {
           <div class="w-full h-full flex items-center justify-center text-gray-400">
-            <lucide-icon name="image" class="h-8 w-8"></lucide-icon>
+            <lucide-icon name="image" class="h-10 w-10"></lucide-icon>
           </div>
         }
 
@@ -25,7 +26,7 @@ import { CustomizationStore } from '../../store/customization.store';
         <button 
           type="button"
           (click)="onClose.emit()" 
-          class="absolute top-2 right-2 w-9 h-9 sm:w-10 sm:h-10 bg-black/60 hover:bg-black/80 active:scale-90 text-white rounded-full backdrop-blur-md transition flex items-center justify-center z-20 cursor-pointer touch-manipulation shadow-md"
+          class="absolute top-2.5 right-2.5 w-9 h-9 sm:w-10 sm:h-10 bg-black/60 hover:bg-black/80 active:scale-90 text-white rounded-full backdrop-blur-md transition flex items-center justify-center z-20 cursor-pointer touch-manipulation shadow-md"
           title="Cerrar modal"
           aria-label="Cerrar modal"
         >

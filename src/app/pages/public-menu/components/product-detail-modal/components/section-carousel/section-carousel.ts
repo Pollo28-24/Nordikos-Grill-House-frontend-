@@ -21,13 +21,16 @@ import { CustomizationStore } from '../../store/customization.store';
   template: `
     <div 
       #pagesContainer
-      class="flex-1 min-h-0 w-full h-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scrollbar-none overscroll-contain"
-      style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none;"
+      (scroll)="onContainerScroll()"
+      (touchstart)="onTouchStart($event)"
+      (touchend)="onTouchEnd($event)"
+      class="flex-1 min-h-0 w-full h-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scrollbar-none overscroll-contain select-none"
+      style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; touch-action: pan-y pan-x;"
     >
       @for (sec of store.sections(); track sec.id; let idx = $index) {
         <div 
           class="section-panel w-full h-full shrink-0 snap-start overflow-y-auto p-3.5 sm:p-4 space-y-3 custom-scrollbar overscroll-contain flex flex-col"
-          style="scroll-snap-align: start; scroll-snap-stop: always; min-width: 100%; width: 100%;"
+          style="scroll-snap-align: start; scroll-snap-stop: always; min-width: 100%; width: 100%; touch-action: pan-y;"
           [attr.data-section-index]="idx"
         >
           <div class="space-y-3 pb-3 flex-1">
@@ -45,7 +48,13 @@ import { CustomizationStore } from '../../store/customization.store';
                   @if (sec.type === 'variants') {
                     Elige el tamaño o presentación deseada
                   } @else if (sec.type === 'modifier-category') {
-                    {{ sec.data?.category?.descripcion || (sec.isRequired ? 'Selección requerida' : 'Extras opcionales a tu gusto') }}
+                    @if (sec.data?.category?.tipo_seleccion === 'RADIO') {
+                      Selección única obligatoria (elige 1 opción)
+                    } @else if (sec.data?.category?.tipo_seleccion === 'STEPPER') {
+                      Elige porciones (máx. {{ sec.data?.category?.max_selections || 99 }} en total)
+                    } @else {
+                      Elige hasta {{ sec.data?.category?.max_selections || 99 }} opciones@if (sec.data?.category?.min_selections > 0) { (mín. {{ sec.data?.category?.min_selections }}) }
+                    }
                   } @else {
                     Personaliza tu pedido con instrucciones para cocina
                   }
@@ -226,9 +235,16 @@ import { CustomizationStore } from '../../store/customization.store';
                       [class.bg-white]="mod.disponible !== false && store.getModifierQuantity(sec.data.category.id, mod.id) === 0"
                     >
                       <div class="flex flex-col min-w-0 pr-1">
-                        <span class="text-xs sm:text-sm font-bold text-gray-900 truncate">
-                          {{ mod.nombre }}
-                        </span>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                          <span class="text-xs sm:text-sm font-bold text-gray-900 truncate">
+                            {{ mod.nombre }}
+                          </span>
+                          @if ((mod.cantidad_maxima || 1) === 1) {
+                            <span class="text-[9px] font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.2 rounded border border-gray-200">
+                              Máx. 1
+                            </span>
+                          }
+                        </div>
                         @if (mod.disponible === false) {
                           <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 mt-0.5">
                             Agotado
@@ -259,7 +275,11 @@ import { CustomizationStore } from '../../store/customization.store';
                           <button 
                             type="button"
                             (click)="store.updateStepperModifier(sec.data.category, mod, 1)"
+                            [disabled]="isStepperPlusDisabled(sec.data.category, mod)"
+                            [class.opacity-40]="isStepperPlusDisabled(sec.data.category, mod)"
+                            [class.cursor-not-allowed]="isStepperPlusDisabled(sec.data.category, mod)"
                             class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-orange-500 text-white shadow-xs hover:bg-orange-600 active:scale-90 transition cursor-pointer touch-manipulation"
+                            [title]="isStepperPlusDisabled(sec.data.category, mod) ? 'Límite alcanzado' : 'Añadir extra'"
                             aria-label="Añadir extra"
                           >
                             <lucide-icon name="plus" class="h-3 w-3 sm:h-3.5 sm:w-3.5"></lucide-icon>
@@ -385,21 +405,105 @@ export class SectionCarouselComponent implements AfterViewInit, OnDestroy {
     panels.forEach(panel => this.observer?.observe(panel));
   }
 
+  private touchStartX = 0;
+  private touchStartY = 0;
+  private isSwiping = false;
+  private isScrollingProgrammatically = false;
+  private scrollTimeout: any = null;
+
+  onTouchStart(e: TouchEvent): void {
+    if (e.touches.length === 1) {
+      this.touchStartX = e.touches[0].clientX;
+      this.touchStartY = e.touches[0].clientY;
+      this.isSwiping = true;
+    }
+  }
+
+  onTouchEnd(e: TouchEvent): void {
+    if (!this.isSwiping || e.changedTouches.length === 0) return;
+    this.isSwiping = false;
+
+    const deltaX = e.changedTouches[0].clientX - this.touchStartX;
+    const deltaY = e.changedTouches[0].clientY - this.touchStartY;
+
+    // Detectar si fue un deslizamiento horizontal (swipe) claro
+    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.1) {
+      const currentIdx = this.store.activeSectionIndex();
+      const maxIdx = this.store.sections().length - 1;
+
+      if (deltaX < 0 && currentIdx < maxIdx) {
+        // Deslizar hacia la izquierda -> avanzar a la siguiente sección
+        const nextIdx = currentIdx + 1;
+        this.store.setActiveSectionIndex(nextIdx);
+        this.scrollToSection(nextIdx);
+      } else if (deltaX > 0 && currentIdx > 0) {
+        // Deslizar hacia la derecha -> regresar a la sección anterior
+        const prevIdx = currentIdx - 1;
+        this.store.setActiveSectionIndex(prevIdx);
+        this.scrollToSection(prevIdx);
+      }
+    }
+  }
+
+  onContainerScroll(): void {
+    if (this.isScrollingProgrammatically) return;
+    const container = this.pagesContainer()?.nativeElement;
+    if (!container || !container.clientWidth) return;
+
+    const currentLeft = container.scrollLeft;
+    const width = container.clientWidth;
+    const newIndex = Math.round(currentLeft / width);
+    if (newIndex >= 0 && newIndex < this.store.sections().length && newIndex !== this.store.activeSectionIndex()) {
+      this.store.setActiveSectionIndex(newIndex);
+    }
+  }
+
   scrollToSection(index: number): void {
     const container = this.pagesContainer()?.nativeElement;
     if (!container) return;
 
     const targetLeft = index * container.clientWidth;
-    // Solo scrollear si la posición actual no coincide para evitar bucles
     if (Math.abs(container.scrollLeft - targetLeft) > 5) {
+      this.isScrollingProgrammatically = true;
+      if (this.scrollTimeout) clearTimeout(this.scrollTimeout);
+
       container.scrollTo({
         left: targetLeft,
         behavior: 'smooth'
       });
+
+      this.scrollTimeout = setTimeout(() => {
+        this.isScrollingProgrammatically = false;
+      }, 350);
     }
   }
 
+  isStepperPlusDisabled(cat: any, mod: any): boolean {
+    if (!cat || !mod) return false;
+    const currentQty = this.store.getModifierQuantity(cat.id, mod.id);
+    const itemMax = Number(mod.cantidad_maxima || 1);
+    if (currentQty >= itemMax) return true;
+    const catMap = this.store.selectedModifiers().get(cat.id);
+    let catTotal = 0;
+    catMap?.forEach(item => { catTotal += item.cantidad; });
+    const catMax = Number(cat.max_selections ?? 99);
+    return catTotal >= catMax;
+  }
+
+  isCheckboxLimitReached(cat: any, mod: any): boolean {
+    if (!cat || !mod) return false;
+    if (this.store.isModifierSelected(cat.id, mod.id)) return false;
+    const catMap = this.store.selectedModifiers().get(cat.id);
+    const count = catMap?.size ?? 0;
+    const catMax = Number(cat.max_selections ?? 99);
+    return count >= catMax;
+  }
+
   ngOnDestroy(): void {
+    if (this.scrollTimeout) {
+      clearTimeout(this.scrollTimeout);
+      this.scrollTimeout = null;
+    }
     if (this.observer) {
       this.observer.disconnect();
       this.observer = null;

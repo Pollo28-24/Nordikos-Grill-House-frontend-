@@ -14,7 +14,7 @@ export class OrderFilterBar {
   dateFilterType = input.required<'today' | 'week' | 'month' | 'custom'>();
   customStartDate = input.required<string>();
   customEndDate = input.required<string>();
-  filteredCount = input.required<number>();
+  filteredCount = input<number>(0);
 
   setDateFilter = output<'today' | 'week' | 'month' | 'custom'>();
   customStartChange = output<string>();

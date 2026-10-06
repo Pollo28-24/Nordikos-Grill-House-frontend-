@@ -13,6 +13,7 @@ export const privateGuard: CanActivateFn = () => {
   const platformId = inject(PLATFORM_ID);
 
   if (!isPlatformBrowser(platformId)) {
+    // In SSR, allow the shell to render so client-side hydration takes over and evaluates authentication
     return true;
   }
 

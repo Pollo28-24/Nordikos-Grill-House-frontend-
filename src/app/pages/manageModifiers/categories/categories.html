@@ -53,8 +53,8 @@
 <!-- Modal Form -->
 @if (showForm()) {
   <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-    <div class="bg-[#1A1A1A] w-full max-w-lg rounded-t-3xl sm:rounded-2xl border-t sm:border border-white/10 shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]">
-      <div class="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between">
+    <div class="bg-[#1A1A1A] w-full max-w-lg max-h-[90vh] sm:max-h-[85vh] rounded-t-3xl sm:rounded-2xl border-t sm:border border-white/10 shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 flex flex-col overflow-hidden pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div class="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between shrink-0">
         <h2 class="text-lg sm:text-xl font-black text-white flex items-center gap-2.5">
           <lucide-icon name="layers" class="w-5 h-5 text-[#FFB300]" />
           <span>{{ editingId() ? 'Editar Categoría' : 'Nueva Categoría' }}</span>
@@ -68,7 +68,7 @@
         </button>
       </div>
 
-      <form [formGroup]="form" (ngSubmit)="save()" class="p-5 sm:p-6 space-y-4 sm:space-y-5">
+      <form [formGroup]="form" (ngSubmit)="save()" class="p-5 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1 custom-scrollbar">
         <div class="space-y-1.5">
           <label class="block text-[10px] sm:text-xs font-bold uppercase tracking-widest text-zinc-400">
             Nombre de la Categoría
@@ -77,11 +77,21 @@
             type="text" 
             formControlName="nombre"
             placeholder="Ej: Extras, Salsas, Términos..."
-            class="w-full h-11 px-4 rounded-xl bg-[#121212] border border-white/10 text-white text-sm outline-none focus:border-[#FFB300] transition placeholder-zinc-600"
+            class="w-full h-11 px-4 rounded-xl bg-[#121212] border text-white text-sm outline-none transition placeholder-zinc-600"
+            [class.border-red-500]="form.get('nombre')?.invalid && (form.get('nombre')?.dirty || form.get('nombre')?.touched)"
+            [class.border-white/10]="!form.get('nombre')?.invalid || (!form.get('nombre')?.dirty && !form.get('nombre')?.touched)"
+            [class.focus:border-[#FFB300]]="!form.get('nombre')?.invalid || (!form.get('nombre')?.dirty && !form.get('nombre')?.touched)"
           >
-          <p class="text-[11px] text-zinc-500">
-            El nombre con el que agruparás los extras en el menú (Ej: "Salsas", "Términos").
-          </p>
+          @if (form.get('nombre')?.invalid && (form.get('nombre')?.dirty || form.get('nombre')?.touched)) {
+            <p class="text-xs text-red-400 mt-1 flex items-center gap-1 font-medium">
+              <lucide-icon name="alert-circle" class="w-3.5 h-3.5 shrink-0" />
+              El nombre es obligatorio y debe tener al menos 2 caracteres.
+            </p>
+          } @else {
+            <p class="text-[11px] text-zinc-500">
+              El nombre con el que agruparás los extras en el menú (Ej: "Salsas", "Términos").
+            </p>
+          }
         </div>
 
         <div class="space-y-1.5">
@@ -93,6 +103,86 @@
             placeholder="Describe qué tipo de modificadores contiene esta categoría..."
             class="w-full px-4 py-3 rounded-xl bg-[#121212] border border-white/10 text-white text-sm outline-none focus:border-[#FFB300] transition h-20 resize-none placeholder-zinc-600"
           ></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="block text-[10px] sm:text-xs font-bold uppercase tracking-widest text-zinc-400">
+              Tipo de Selección
+            </label>
+            <select 
+              formControlName="tipo_seleccion"
+              class="w-full h-11 px-4 rounded-xl bg-[#121212] border border-white/10 text-white text-sm outline-none focus:border-[#FFB300] transition cursor-pointer"
+            >
+              <option value="CHECKBOX">CHECKBOX (Múltiples opciones)</option>
+              <option value="RADIO">RADIO (Opción única exclusiva)</option>
+              <option value="STEPPER">STEPPER (Contador con cantidades)</option>
+            </select>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-zinc-400">
+              <span>Orden Visual</span>
+              <div class="relative group inline-flex items-center">
+                <lucide-icon name="help-circle" class="w-3.5 h-3.5 text-zinc-500 hover:text-[#FFB300] cursor-help transition-colors" />
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-2.5 bg-[#222224] text-[11px] text-zinc-200 rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-xl z-50 pointer-events-none border border-white/10 font-normal normal-case tracking-normal text-left">
+                  Define la prioridad de aparición de este grupo en el menú y en la comanda. Los números menores aparecen primero (Ej: 1 = Término de carne, 10 = Salsas, 20 = Extras).
+                </div>
+              </div>
+            </label>
+            <input 
+              type="number" 
+              formControlName="orden_visual"
+              min="1"
+              class="w-full h-11 px-4 rounded-xl bg-[#121212] border border-white/10 text-white text-sm outline-none focus:border-[#FFB300] transition"
+            >
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label class="block text-[10px] sm:text-xs font-bold uppercase tracking-widest text-zinc-400">
+                Mín. Selecciones
+              </label>
+              <input 
+                type="number" 
+                formControlName="min_selections"
+                min="0"
+                class="w-full h-11 px-4 rounded-xl bg-[#121212] border border-white/10 text-white text-sm outline-none focus:border-[#FFB300] transition"
+              >
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="block text-[10px] sm:text-xs font-bold uppercase tracking-widest text-zinc-400">
+                Máx. Selecciones
+              </label>
+              <input 
+                type="number" 
+                formControlName="max_selections"
+                min="1"
+                class="w-full h-11 px-4 rounded-xl bg-[#121212] border border-white/10 text-white text-sm outline-none focus:border-[#FFB300] transition"
+              >
+            </div>
+          </div>
+          @if (form.hasError('minGreaterThanMax')) {
+            <p class="text-xs text-red-400 mt-1 flex items-center gap-1 font-medium">
+              <lucide-icon name="alert-circle" class="w-3.5 h-3.5 shrink-0" />
+              La cantidad mínima no puede ser mayor que la cantidad máxima.
+            </p>
+          }
+        </div>
+
+        <div class="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/10">
+          <div>
+            <p class="text-sm font-bold text-white">¿Obligatorio al ordenar?</p>
+            <p class="text-xs text-zinc-400">Exige al cliente elegir opciones antes de agregar al carrito</p>
+          </div>
+          <input 
+            type="checkbox" 
+            formControlName="obligatorio"
+            class="w-6 h-6 rounded-lg bg-[#121212] border-white/20 text-[#FFB300] focus:ring-[#FFB300]/20 cursor-pointer"
+          >
         </div>
 
         <div class="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/10">
@@ -107,20 +197,26 @@
           >
         </div>
 
-        <div class="pt-2 flex items-center gap-2.5">
+        <div class="pt-3 border-t border-white/5 flex items-center gap-2.5 shrink-0">
           <button 
-            type="button"
-            (click)="showForm.set(false)"
-            class="flex-1 h-11 px-5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] text-zinc-300 hover:text-white border border-white/10 font-bold text-xs uppercase tracking-wider transition active:scale-95 cursor-pointer"
+            type="button" 
+            (click)="showForm.set(false)" 
+            [disabled]="isSaving()"
+            class="flex-1 h-11 px-5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] text-zinc-300 hover:text-white border border-white/10 font-bold text-xs uppercase tracking-wider transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             Cancelar
           </button>
           <button 
             type="submit"
-            [disabled]="form.invalid"
-            class="flex-1 h-11 px-6 rounded-xl bg-[#FFB300] hover:brightness-110 active:bg-amber-400 text-[#121212] font-bold text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition shadow-md shadow-[#FFB300]/10 active:scale-95 cursor-pointer"
+            [disabled]="form.invalid || isSaving()"
+            class="flex-1 h-11 px-6 rounded-xl bg-[#FFB300] hover:brightness-110 active:bg-amber-400 text-[#121212] font-bold text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition shadow-md shadow-[#FFB300]/10 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
           >
-            {{ editingId() ? 'Actualizar' : 'Crear' }}
+            @if (isSaving()) {
+              <lucide-icon name="loader-2" class="w-4 h-4 animate-spin" />
+              <span>Guardando...</span>
+            } @else {
+              <span>{{ editingId() ? 'Actualizar' : 'Crear' }}</span>
+            }
           </button>
         </div>
       </form>

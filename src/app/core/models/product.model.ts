@@ -3,7 +3,7 @@ export type ModifierSelectionType = 'RADIO' | 'CHECKBOX' | 'STEPPER';
 export interface ModifierCategory {
   id: string | number;
   nombre: string;
-  descripcion?: string;
+  descripcion?: string | null;
   visible: boolean;
   // Reglas estrictas garantizadas por el mapper (sin undefineds en el dominio)
   tipo_seleccion: ModifierSelectionType;

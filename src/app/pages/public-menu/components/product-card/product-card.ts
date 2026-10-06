@@ -24,4 +24,24 @@ export class ProductCard {
     const hasModifiers = Boolean(p.modifiers && p.modifiers.length > 0);
     return Boolean(hasVariants || hasModifiers);
   }
+
+  handleCardClick(): void {
+    if (this.product().disponible === false) {
+      return;
+    }
+    this.onAdd.emit(this.product());
+  }
+
+  openDetails(event: MouseEvent): void {
+    event.stopPropagation();
+    this.onViewDetails.emit(this.product());
+  }
+
+  quickAdd(event: MouseEvent): void {
+    event.stopPropagation();
+    if (this.product().disponible === false) {
+      return;
+    }
+    this.onAdd.emit(this.product());
+  }
 }

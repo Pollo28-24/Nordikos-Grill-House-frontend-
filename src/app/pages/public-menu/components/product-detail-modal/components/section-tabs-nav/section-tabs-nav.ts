@@ -1,5 +1,5 @@
-import { Component, inject, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, output, viewChild, ElementRef, effect, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { CustomizationStore } from '../../store/customization.store';
 
 @Component({
@@ -9,6 +9,7 @@ import { CustomizationStore } from '../../store/customization.store';
   template: `
     @if (store.sections().length > 1) {
       <nav 
+        #navContainer
         class="px-3 sm:px-4 py-2 bg-[#F1ECDF] border-b border-[#E2D7B7]/80 flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0"
         role="tablist"
         aria-label="Pestañas de personalización"
@@ -68,5 +69,20 @@ import { CustomizationStore } from '../../store/customization.store';
 })
 export class SectionTabsNavComponent {
   readonly store = inject(CustomizationStore);
+  private platformId = inject(PLATFORM_ID);
   readonly onSelectSection = output<number>();
+  readonly navContainer = viewChild<ElementRef<HTMLElement>>('navContainer');
+
+  constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      effect(() => {
+        const _idx = this.store.activeSectionIndex();
+        setTimeout(() => {
+          const container = this.navContainer()?.nativeElement;
+          const activeBtn = container?.querySelector('[aria-selected="true"]');
+          activeBtn?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }, 50);
+      });
+    }
+  }
 }

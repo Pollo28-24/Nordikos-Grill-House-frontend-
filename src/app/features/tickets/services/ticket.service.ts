@@ -3,10 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from '@shared/data-access/supabase.service';
 import { LoggerService } from '@core/services/logger.service';
 import { TicketData } from '../models/ticket.model';
-import { Share } from '@capacitor/share';
 import { Capacitor } from '@capacitor/core';
-import { jsPDF } from 'jspdf';
-import { Filesystem, Directory } from '@capacitor/filesystem';
 
 declare let bluetoothSerial: any;
 
@@ -556,12 +553,17 @@ export class TicketService {
   }
 
   async shareOrCopyTicket(data: TicketData): Promise<'shared' | 'copied' | 'failed'> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return 'failed';
+    }
+
     const isNative = Capacitor.isNativePlatform();
     const text = this.generateTicketText(data);
     const title = `Ticket Orden #${data.order.numero_orden || data.order.id}`;
 
     if (isNative) {
       try {
+        const { Share } = await import('@capacitor/share');
         await Share.share({
           title: title,
           text: text,
@@ -643,6 +645,7 @@ export class TicketService {
     estimate += 2 + 4.5 + 4.5 + (data.order.propina ? 4.5 : 0) + 4.5 + 4.5 + 4.5 + 4.5 + 12; // totals, footer, bottom margin
     
     // 2. Instanciar jsPDF con ancho 58mm y la altura estimada
+    const { jsPDF } = await import('jspdf');
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -788,6 +791,9 @@ export class TicketService {
       try {
         const pdfBase64 = doc.output('datauristring').split(',')[1];
         
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        const { Share } = await import('@capacitor/share');
+
         const writeResult = await Filesystem.writeFile({
           path: fileName,
           data: pdfBase64,

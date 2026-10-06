@@ -1,0 +1,150 @@
+<div 
+  class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+  (click)="close.emit()"
+>
+  <div 
+    class="bg-[#1A1A1A] w-full max-w-xl rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl border-t sm:border border-white/10 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 h-[85vh] sm:h-[75vh] max-h-[640px] flex flex-col"
+    (click)="$event.stopPropagation()"
+  >
+    
+    <!-- Header Modal Fijo -->
+    <div class="px-4 py-3.5 sm:px-5 sm:py-4 border-b border-white/10 bg-[#161618] flex items-center justify-between shrink-0">
+      <div class="flex flex-col min-w-0 pr-3">
+        <span class="text-[10px] font-black uppercase tracking-widest text-[#FFB300]">Personalizar Producto</span>
+        <h3 class="text-sm sm:text-base font-black text-white truncate">{{ product()?.nombre }}</h3>
+      </div>
+      <button 
+        (click)="close.emit()" 
+        class="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] text-zinc-400 hover:text-white flex items-center justify-center transition cursor-pointer shrink-0 select-none"
+        title="Cerrar modal"
+      >
+        <lucide-icon name="x" class="w-4.5 h-4.5"></lucide-icon>
+      </button>
+    </div>
+
+    <!-- Barra de Navegación de Secciones / Pestañas (Section Nav) -->
+    @if (sections().length > 1) {
+      <div class="px-3 sm:px-4 py-2 bg-[#141416] border-b border-white/10 flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0">
+        @for (sec of sections(); track sec.id; let idx = $index) {
+          <button
+            type="button"
+            (click)="scrollToSection(idx)"
+            class="h-8 sm:h-8.5 px-3 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer select-none"
+            [class.bg-[#FFB300]]="activeSectionIndex() === idx"
+            [class.text-[#121212]]="activeSectionIndex() === idx"
+            [class.font-black]="activeSectionIndex() === idx"
+            [class.shadow-sm]="activeSectionIndex() === idx"
+            [class.bg-white/[0.04]]="activeSectionIndex() !== idx"
+            [class.text-zinc-400]="activeSectionIndex() !== idx"
+            [class.hover:text-white]="activeSectionIndex() !== idx"
+            [class.hover:bg-white/[0.08]]="activeSectionIndex() !== idx"
+          >
+            @if (sec.isComplete) {
+              <span class="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] font-black"
+                    [class]="activeSectionIndex() === idx ? 'bg-[#121212] text-[#FFB300]' : 'bg-emerald-500/20 text-emerald-400'">
+                ✓
+              </span>
+            } @else if (sec.isRequired) {
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+            }
+            <span>{{ sec.title }}</span>
+            @if (sec.count > 0 && sec.type === 'modifier-group') {
+              <span class="text-[10px] opacity-80 tabular-nums">({{ sec.count }})</span>
+            }
+            @if (sec.isRequired && !sec.isComplete) {
+              <span class="text-[11px] text-amber-400 font-bold leading-none">*</span>
+            }
+          </button>
+        }
+      </div>
+    }
+
+    <!-- Contenedor Deslizable Horizontal (CSS Scroll-Snap Nativo) -->
+    <div 
+      #pagesContainer
+      (scroll)="onPagesScroll($event)"
+      class="flex-1 flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scrollbar-none"
+      style="scroll-snap-type: x mandatory; scrollbar-width: none;"
+    >
+      @for (sec of sections(); track sec.id; let idx = $index) {
+        <div 
+          class="w-full shrink-0 snap-start overflow-y-auto p-4 sm:p-5 space-y-3.5 custom-scrollbar flex flex-col justify-between"
+          style="scroll-snap-align: start; scroll-snap-stop: always; min-width: 100%; width: 100%;"
+        >
+          <div class="space-y-3.5">
+            <!-- Encabezado de Sección -->
+            <div class="flex items-center justify-between pb-2 border-b border-white/5">
+              <div>
+                <h4 class="text-xs sm:text-sm font-black text-white uppercase tracking-wider">{{ sec.title }}</h4>
+                <p class="text-[10px] text-zinc-400 mt-0.5">
+                  @if (sec.type === 'variants') {
+                    Selecciona la opción deseada para el producto.
+                  } @else if (sec.type === 'modifier-group') {
+                    @if (sec.data?.category?.tipo_seleccion === 'RADIO') {
+                      Selección única obligatoria (elige 1 opción).
+                    } @else if (sec.data?.category?.tipo_seleccion === 'STEPPER') {
+                      Cantidades por porción (máx. {{ sec.data?.category?.max_selections || 99 }} en total).
+                    } @else {
+                      Elige hasta {{ sec.data?.category?.max_selections || 99 }} opciones@if (sec.data?.category?.min_selections > 0) { (mín. {{ sec.data?.category?.min_selections }}) }.
+                    }
+                  } @else {
+                    Instrucciones especiales para la comanda de cocina.
+                  }
+                </p>
+              </div>
+              @if (sec.isRequired) {
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500/10 text-[#FFB300] border border-amber-500/20">
+                  Requerido
+                </span>
+              } @else {
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/5 text-zinc-400 border border-white/10">
+                  Opcional
+                </span>
+              }
+            </div>
+
+            <!-- Subcomponentes Modulares por Sección -->
+            @if (sec.type === 'variants') {
+              <app-customizer-variants-section
+                [variants]="product()?.variants || []"
+                [selectedVariants]="selectedVariants()"
+                (selectVariant)="selectVariant($event)"
+                (updateQty)="updateVariantQty($event.variantId, $event.delta)"
+              />
+            }
+
+            @if (sec.type === 'modifier-group') {
+              <app-customizer-modifiers-section
+                [group]="sec.data"
+                [selectedModifiers]="selectedModifiers()"
+                (toggleModifier)="toggleModifier($event)"
+                (updateQty)="updateModifierQty($event.modId, $event.delta)"
+              />
+            }
+
+            @if (sec.type === 'instructions') {
+              <app-customizer-instructions-section
+                [note]="productNote()"
+                (toggleQuickNote)="toggleQuickNote($event)"
+                (noteChange)="productNote.set($event)"
+              />
+            }
+
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Footer Modular con Totales y Botón Confirmar -->
+    <app-customizer-footer
+      [canAddToOrder]="canAddToOrder()"
+      [blockingReason]="blockingReason()"
+      [baseTotal]="modalBaseTotal()"
+      [extrasTotal]="modalExtrasTotal()"
+      [liveTotal]="modalLiveTotal()"
+      [editingOrderId]="editingOrderId()"
+      (confirm)="onConfirm()"
+    />
+
+  </div>
+</div>
