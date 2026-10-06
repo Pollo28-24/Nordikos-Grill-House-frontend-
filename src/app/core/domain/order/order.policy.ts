@@ -30,14 +30,12 @@ export class OrderPolicy {
 
   /**
    * Determina si la orden completa puede ser cancelada.
+   * Regla de negocio: Permitido en cualquier estado mientras no esté ya cancelada
+   * (incluyendo órdenes completadas/entregadas y con pago registrado).
    */
-  static canCancelOrder(order: OrderSnapshot, role: UserRole = 'mesero'): boolean {
+  static canCancelOrder(order: OrderSnapshot, _role: UserRole = 'mesero'): boolean {
     if (order.estado_pedido === 'cancelado') {
       return false;
-    }
-
-    if (order.estado_pedido === 'entregado') {
-      return role === 'supervisor' || role === 'administrador';
     }
 
     return true;

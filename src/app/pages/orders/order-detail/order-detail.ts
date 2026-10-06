@@ -279,12 +279,22 @@ export class OrderDetail implements OnInit {
     const id = this.orderId();
     if (!id) return;
 
+    const isPaid = this.order()?.estado_pago === 'pagado';
+    const isDelivered = this.order()?.estado_pedido === 'entregado';
+
+    let msg = 'Ingresa el motivo de la cancelación. Esta acción cambiará el estado de la orden y no se podrá revertir.';
+    if (isPaid && isDelivered) {
+      msg = 'Esta orden ya fue entregada y pagada. Ingresa el motivo de la cancelación para registrar el ajuste.';
+    } else if (isPaid) {
+      msg = 'Esta orden ya fue pagada. Ingresa el motivo de la cancelación para registrar el ajuste.';
+    }
+
     this.feedback.confirmAndExecute({
       title: '¿Cancelar orden?',
-      message: 'Ingresa el motivo de la cancelación. Esta acción cambiará el estado de la orden y no se podrá revertir.',
+      message: msg,
       confirmText: 'Sí, cancelar orden',
       showInput: true,
-      inputPlaceholder: 'Ej. Error de captura, El cliente se retiró...',
+      inputPlaceholder: 'Ej. Error de cobro, Devolución de dinero, Error de captura...',
       isDanger: true,
       action: async (reason?: string) => {
         const result = await this.ordersService.cancelOrder(Number(id), reason?.trim() || '');
