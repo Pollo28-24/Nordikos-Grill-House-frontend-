@@ -3,14 +3,14 @@
  * Subir/bajar la intensidad cambiando las variables --nk-* de :host.
  */
 :host {
-  /* ---- Intensidad (ajustables) ---- */
-  --nk-fire-height: 30%;      /* alto de la zona de fuego */
-  --nk-fire-opacity: 0.4;     /* opacidad base del fuego */
-  --nk-fire-opacity-peak: 0.55; /* opacidad al "respirar" */
-  --nk-glow-alpha: 14%;       /* resplandor bajo el banner */
-  --nk-ember-opacity: 0.8;    /* opacidad máxima de brasas */
-  --nk-ember-rise: 65vh;      /* distancia de subida */
-  --nk-vignette-alpha: 0.5;   /* oscurecimiento de bordes */
+  /* ---- Intensidad (ajustables) — Escritorio ---- */
+  --nk-fire-height: 40%;        /* alto de la zona de fuego */
+  --nk-fire-opacity: 0.5;       /* opacidad base del fuego */
+  --nk-fire-opacity-peak: 0.62; /* opacidad al "respirar" */
+  --nk-glow-alpha: 18%;         /* resplandor bajo el banner */
+  --nk-ember-opacity: 0.8;      /* opacidad máxima de brasas */
+  --nk-ember-rise: 65vh;        /* distancia de subida */
+  --nk-vignette-alpha: 0.55;    /* oscurecimiento de bordes */
 
   /* ---- Paleta ---- */
   --nk-carbon: #14100c;
@@ -86,8 +86,15 @@
 .nk-ember:nth-child(11) { --x: 38%; --s: 2px; --d: 15s;   --delay: -11s;  --dx: 12px; }
 .nk-ember:nth-child(12) { --x: 70%; --s: 2px; --d: 13.5s; --delay: -12s;  --dx: -10px; }
 
-/* Móvil: solo 8 brasas */
+/* Móvil: valores más suaves de fuego y solo 8 brasas para cuidar batería */
 @media (max-width: 767px) {
+  :host {
+    --nk-fire-height: 32%;
+    --nk-fire-opacity: 0.42;
+    --nk-fire-opacity-peak: 0.54;
+    --nk-glow-alpha: 14%;
+  }
+
   .nk-ember:nth-child(n + 9) {
     display: none;
   }

@@ -69,13 +69,17 @@
 
     <div class="mb-12">
       <!-- CATEGORY TITLE -->
-      <div class="flex items-center gap-4 mb-6">
-        <h2 class="text-lg sm:text-xl font-semibold tracking-tight border-l-4 border-orange-500 pl-3"
-          [class]="bgEnabled ? 'text-[#f1e9da] shadow-[-4px_0_14px_-4px_rgba(249,115,22,0.7)]' : 'text-gray-800'">
-          {{ category.nombre }}
-        </h2>
+      <div class="flex items-center gap-3 sm:gap-4 mb-6">
         @if (bgEnabled) {
-        <span aria-hidden="true" class="h-px flex-1 bg-gradient-to-r from-orange-500/50 to-transparent"></span>
+          <span aria-hidden="true" class="w-1.5 h-6 rounded-full bg-orange-500 shadow-[0_0_12px_rgba(249,115,22,0.9)] shrink-0"></span>
+          <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-[#f1e9da]">
+            {{ category.nombre }}
+          </h2>
+          <span aria-hidden="true" class="h-px flex-1 bg-gradient-to-r from-orange-500/50 to-transparent"></span>
+        } @else {
+          <h2 class="text-lg sm:text-xl font-semibold text-gray-800 tracking-tight border-l-4 border-orange-500 pl-3">
+            {{ category.nombre }}
+          </h2>
         }
       </div>
 
