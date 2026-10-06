@@ -1,0 +1,124 @@
+/*
+ * Fondo "Brasa nocturna" — solo CSS, acotado al menú.
+ * Subir/bajar la intensidad cambiando las variables --nk-* de :host.
+ */
+:host {
+  /* ---- Intensidad (ajustables) ---- */
+  --nk-fire-height: 30%;      /* alto de la zona de fuego */
+  --nk-fire-opacity: 0.4;     /* opacidad base del fuego */
+  --nk-fire-opacity-peak: 0.55; /* opacidad al "respirar" */
+  --nk-glow-alpha: 14%;       /* resplandor bajo el banner */
+  --nk-ember-opacity: 0.8;    /* opacidad máxima de brasas */
+  --nk-ember-rise: 65vh;      /* distancia de subida */
+  --nk-vignette-alpha: 0.5;   /* oscurecimiento de bordes */
+
+  /* ---- Paleta ---- */
+  --nk-carbon: #14100c;
+  --nk-carbon-light: #1d1611;
+  --nk-ember-glow: #3a1c0b;
+  --nk-fire: var(--color-nord-fire, #ff6a00);
+  --nk-fire-light: #ffb066;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100lvh;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      70% 38% at 50% 22%,
+      color-mix(in srgb, var(--nk-fire) var(--nk-glow-alpha), transparent),
+      transparent 70%
+    ),
+    linear-gradient(180deg, var(--nk-carbon) 0%, var(--nk-carbon-light) 52%, var(--nk-carbon) 100%);
+}
+
+/* Fuego inferior: degradados radiales, sin imágenes ni blur */
+.nk-bg__fire {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--nk-fire-height);
+  opacity: var(--nk-fire-opacity);
+  background:
+    radial-gradient(45% 70% at 28% 100%, color-mix(in srgb, var(--nk-fire) 70%, transparent), transparent 70%),
+    radial-gradient(40% 85% at 52% 100%, color-mix(in srgb, var(--nk-fire-light) 55%, transparent), transparent 70%),
+    radial-gradient(45% 65% at 76% 100%, color-mix(in srgb, var(--nk-fire) 60%, transparent), transparent 70%),
+    radial-gradient(130% 100% at 50% 100%, var(--nk-ember-glow) 0%, transparent 70%);
+  will-change: opacity;
+  animation: nk-breathe 7s ease-in-out infinite;
+}
+
+.nk-bg__embers {
+  position: absolute;
+  inset: 0;
+}
+
+.nk-ember {
+  position: absolute;
+  bottom: -10px;
+  left: var(--x, 50%);
+  width: var(--s, 3px);
+  height: var(--s, 3px);
+  border-radius: 50%;
+  background: var(--nk-fire-light);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: nk-rise var(--d, 10s) linear var(--delay, 0s) infinite;
+}
+
+/* Brasas: posición, tamaño, duración, desfase y deriva horizontal */
+.nk-ember:nth-child(1)  { --x: 6%;  --s: 3px; --d: 11s;   --delay: -2s;   --dx: 18px; }
+.nk-ember:nth-child(2)  { --x: 14%; --s: 2px; --d: 9s;    --delay: -6s;   --dx: -14px; }
+.nk-ember:nth-child(3)  { --x: 23%; --s: 4px; --d: 13s;   --delay: -4s;   --dx: 22px; }
+.nk-ember:nth-child(4)  { --x: 33%; --s: 2px; --d: 10s;   --delay: -8s;   --dx: -20px; }
+.nk-ember:nth-child(5)  { --x: 44%; --s: 3px; --d: 12s;   --delay: -1s;   --dx: 16px; }
+.nk-ember:nth-child(6)  { --x: 55%; --s: 2px; --d: 9.5s;  --delay: -5s;   --dx: -12px; }
+.nk-ember:nth-child(7)  { --x: 66%; --s: 4px; --d: 14s;   --delay: -9s;   --dx: 24px; }
+.nk-ember:nth-child(8)  { --x: 77%; --s: 3px; --d: 10.5s; --delay: -3s;   --dx: -18px; }
+.nk-ember:nth-child(9)  { --x: 86%; --s: 2px; --d: 11.5s; --delay: -7s;   --dx: 14px; }
+.nk-ember:nth-child(10) { --x: 92%; --s: 3px; --d: 12.5s; --delay: -10s;  --dx: -16px; }
+.nk-ember:nth-child(11) { --x: 38%; --s: 2px; --d: 15s;   --delay: -11s;  --dx: 12px; }
+.nk-ember:nth-child(12) { --x: 70%; --s: 2px; --d: 13.5s; --delay: -12s;  --dx: -10px; }
+
+/* Móvil: solo 8 brasas */
+@media (max-width: 767px) {
+  .nk-ember:nth-child(n + 9) {
+    display: none;
+  }
+}
+
+/* Viñeta de legibilidad */
+.nk-bg__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(0, 0, 0, var(--nk-vignette-alpha)) 100%);
+}
+
+@keyframes nk-breathe {
+  0%, 100% { opacity: var(--nk-fire-opacity); }
+  50%      { opacity: var(--nk-fire-opacity-peak); }
+}
+
+@keyframes nk-rise {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+  12%  { opacity: var(--nk-ember-opacity); }
+  70%  { opacity: calc(var(--nk-ember-opacity) * 0.4); }
+  100% { transform: translate3d(var(--dx, 0px), calc(var(--nk-ember-rise) * -1), 0); opacity: 0; }
+}
+
+/* Movimiento reducido: fondo estático, sin brasas ni pulsos */
+@media (prefers-reduced-motion: reduce) {
+  .nk-bg__fire {
+    animation: none;
+    will-change: auto;
+  }
+  .nk-bg__embers {
+    display: none;
+  }
+}

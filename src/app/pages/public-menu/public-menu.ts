@@ -17,6 +17,7 @@ import { Product, CartCustomization } from '@core/models/product.model';
 import { ActivatedRoute } from '@angular/router';
 import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
 import { ClientOrdersService } from '@core/services/client-orders.service';
+import { MenuBackground, MENU_BACKGROUND_ENABLED } from './components/menu-background/menu-background';
 
 @Component({
   selector: 'app-public-menu',
@@ -33,10 +34,13 @@ import { ClientOrdersService } from '@core/services/client-orders.service';
     PublicCheckout,
     PublicOrdersModal,
     CurrencyMxnPipe,
+    MenuBackground,
   ],
   templateUrl: './public-menu.html'
 })
 export class PublicMenu implements OnInit {
+  /** Interruptor del fondo "Brasa nocturna" (definido en menu-background.ts). */
+  protected readonly bgEnabled = MENU_BACKGROUND_ENABLED;
   public categoriesService = inject(CategoriesService);
   public productsService = inject(ProductsService);
   public cartService = inject(PublicCartService);
