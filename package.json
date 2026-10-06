@@ -5,11 +5,20 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "postbuild": "node -e \"const fs=require('fs'),p=require('path');const b=p.join('dist','Nordikos_Grill_House','browser'),src=p.join(b,'index.csr.html'),dst=p.join(b,'index.html');if(fs.existsSync(src)&&!fs.existsSync(dst))fs.copyFileSync(src,dst);\"",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:Nordikos_Grill_House": "node dist/Nordikos_Grill_House/server/server.mjs"
   },
   "private": true,
+  "allowScripts": {
+    "@parcel/watcher": true,
+    "core-js": true,
+    "esbuild": true,
+    "lmdb": true,
+    "msgpackr-extract": true,
+    "sharp": true
+  },
   "dependencies": {
     "@angular/cdk": "^20.2.14",
     "@angular/common": "^20.3.17",

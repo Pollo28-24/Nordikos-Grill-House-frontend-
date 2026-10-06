@@ -80,13 +80,14 @@ export class OrderDetail implements OnInit {
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     
-    if (id && !isNaN(Number(id))) {
+    if (id && /^\d+$/.test(id)) {
       this.orderId.set(id);
       this.loadOrder(id);
     } else if (id === 'new') {
       this.router.navigate(['/orders/new']);
     } else {
       this.logger.warn('ID de orden no válido', { id }, 'OrderDetail');
+      this.feedback.showError('ID de orden no válido');
       this.router.navigate(['/orders']);
     }
   }

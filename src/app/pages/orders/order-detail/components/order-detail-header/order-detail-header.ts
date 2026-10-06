@@ -22,9 +22,14 @@ import { OrderPolicy } from '@core/domain/order/order.policy';
           </button>
           <div class="flex flex-col min-w-0">
             <span class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-widest leading-none mb-1">Detalle de la Orden</span>
-            <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
-              Orden #{{ order()?.numero_orden || orderId() }}
-            </h1>
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
+                Orden #{{ order()?.numero_orden || orderId() }}
+              </h1>
+              @if (order()?.numero_orden && orderId() && ('' + order()?.numero_orden !== orderId())) {
+                <span class="text-xs font-mono font-medium text-zinc-400 bg-white/[0.04] px-2 py-0.5 rounded border border-white/5">Ref. #{{ orderId() }}</span>
+              }
+            </div>
           </div>
         </div>
 
