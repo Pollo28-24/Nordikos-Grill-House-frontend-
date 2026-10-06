@@ -1,4 +1,4 @@
-<header class="sticky top-0 z-40 bg-[#F8F5EE]/90 backdrop-blur-md border-b border-[#E2D7B7]/50">
+<header class="sticky top-0 z-40 backdrop-blur-md border-b" [class]="headerTheme()">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-col gap-3 sm:gap-4">
     
     <!-- TOP ROW: Logo, Search (Desktop), Cart -->
@@ -6,27 +6,27 @@
       
       <div class="flex items-center gap-2 sm:gap-4 shrink-0">
         <!-- Back to Landing -->
-        <a routerLink="/landing" class="p-2 -ml-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all flex items-center justify-center shrink-0" title="Volver al inicio">
+        <a routerLink="/landing" class="p-2 -ml-2 rounded-full transition-all flex items-center justify-center shrink-0" [class]="iconLinkTheme()" title="Volver al inicio">
           <lucide-icon name="home" class="h-5 w-5"></lucide-icon>
         </a>
 
         <!-- Go to System Home (only for authenticated users) -->
         @if (isAuthenticated) {
-          <a routerLink="/home" class="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all flex items-center justify-center shrink-0" title="Ir al sistema">
+          <a routerLink="/home" class="p-2 rounded-full transition-all flex items-center justify-center shrink-0" [class]="iconLinkTheme()" title="Ir al sistema">
             <lucide-icon name="settings" class="h-5 w-5"></lucide-icon>
           </a>
         }
         
         <!-- Logo -->
         <a routerLink="/landing" class="flex items-center gap-2 shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
-          <img src="assets/logo/logo 2 nordicos.jpg" alt="Nordicos Logo" class="h-9 sm:h-11 w-9 sm:w-11 object-cover rounded-full drop-shadow-sm border border-[#E2D7B7]/80">
-          <h1 class="text-base sm:text-lg font-black tracking-tight text-gray-900 hidden sm:block">Nordicos</h1>
+          <img src="assets/logo/logo 2 nordicos.jpg" alt="Nordicos Logo" class="h-9 sm:h-11 w-9 sm:w-11 object-cover rounded-full drop-shadow-sm border" [class]="logoTheme()">
+          <h1 class="text-base sm:text-lg font-black tracking-tight hidden sm:block" [class]="titleTheme()">Nordicos</h1>
         </a>
       </div>
       
       <!-- SEARCH (Desktop) -->
       <div class="hidden md:block relative flex-1 max-w-xl mx-auto">
-        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400">
+        <span class="absolute inset-y-0 left-0 pl-4 flex items-center" [class]="searchIconTheme()">
           <lucide-icon name="search" class="h-4 w-4"></lucide-icon>
         </span>
         <input 
@@ -34,7 +34,8 @@
           placeholder="¿Qué se te antoja hoy?"
           [value]="searchQuery()"
           (input)="handleSearch($event)"
-          class="w-full pl-11 pr-4 h-11 bg-white border border-[#E2D7B7]/60 rounded-full text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-orange-500 shadow-sm placeholder-gray-400"
+          class="w-full pl-11 pr-4 h-11 border rounded-full text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-orange-500 shadow-sm"
+          [class]="searchTheme()"
         >
       </div>
 
@@ -42,12 +43,13 @@
       <div class="flex items-center gap-2">
         <button 
           (click)="onCartClick.emit()"
-          class="relative p-2.5 bg-white border border-[#E2D7B7]/80 rounded-full shadow-sm hover:shadow-md hover:bg-gray-50 transition-all active:scale-95 shrink-0 text-gray-700"
+          class="relative p-2.5 border rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 shrink-0"
+          [class]="cartTheme()"
           [class.animate-bump]="cartBumping()"
         >
           <lucide-icon name="shopping-cart" class="h-5 w-5"></lucide-icon>
           @if (cartCount() > 0) {
-            <span class="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-black h-5 w-5 flex items-center justify-center rounded-full shadow-sm border-2 border-[#F8F5EE]">
+            <span class="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-black h-5 w-5 flex items-center justify-center rounded-full shadow-sm border-2" [class]="badgeBorderTheme()">
               {{ cartCount() }}
             </span>
           }
@@ -57,7 +59,7 @@
 
     <!-- SEARCH (Mobile) -->
     <div class="relative md:hidden w-full">
-      <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400">
+      <span class="absolute inset-y-0 left-0 pl-4 flex items-center" [class]="searchIconTheme()">
         <lucide-icon name="search" class="h-4 w-4"></lucide-icon>
       </span>
       <input 
@@ -65,7 +67,8 @@
         placeholder="¿Qué se te antoja hoy?"
         [value]="searchQuery()"
         (input)="handleSearch($event)"
-        class="w-full pl-11 pr-4 h-11 bg-white border border-[#E2D7B7]/60 rounded-full text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-orange-500 shadow-sm placeholder-gray-400"
+        class="w-full pl-11 pr-4 h-11 border rounded-full text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-orange-500 shadow-sm"
+        [class]="searchTheme()"
       >
     </div>
   </div>

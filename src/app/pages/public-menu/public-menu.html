@@ -3,7 +3,7 @@
 }
 <div class="min-h-screen text-gray-900 font-sans pb-32" [class]="bgEnabled ? 'relative z-10' : 'bg-[#E2D7B7]'">
 
-  <app-public-header [cartCount]="cartService.totalItems()" [searchQuery]="searchQuery()" [cartBumping]="cartBumping()" (onSearchChange)="searchQuery.set($event)" (onCartClick)="toggleCart()"></app-public-header>
+  <app-public-header [dark]="bgEnabled" [cartCount]="cartService.totalItems()" [searchQuery]="searchQuery()" [cartBumping]="cartBumping()" (onSearchChange)="searchQuery.set($event)" (onCartClick)="toggleCart()"></app-public-header>
 
   <!-- HERO -->
   <div class="max-w-7xl mx-auto px-5 mt-6">
@@ -15,7 +15,7 @@
   </div>
 
   <div class="max-w-7xl mx-auto px-5 mt-6">
-    <app-category-nav [categories]="categories()" [selectedCategoryId]="selectedCategoryId()"
+    <app-category-nav [dark]="bgEnabled" [categories]="categories()" [selectedCategoryId]="selectedCategoryId()"
       (onSelect)="selectCategory($event)"></app-category-nav>
   </div>
 
@@ -69,10 +69,15 @@
 
     <div class="mb-12">
       <!-- CATEGORY TITLE -->
-      <h2 class="text-lg sm:text-xl font-semibold mb-6 tracking-tight border-l-4 border-orange-500 pl-3"
-        [class]="bgEnabled ? 'text-[#f1e9da]' : 'text-gray-800'">
-        {{ category.nombre }}
-      </h2>
+      <div class="flex items-center gap-4 mb-6">
+        <h2 class="text-lg sm:text-xl font-semibold tracking-tight border-l-4 border-orange-500 pl-3"
+          [class]="bgEnabled ? 'text-[#f1e9da] shadow-[-4px_0_14px_-4px_rgba(249,115,22,0.7)]' : 'text-gray-800'">
+          {{ category.nombre }}
+        </h2>
+        @if (bgEnabled) {
+        <span aria-hidden="true" class="h-px flex-1 bg-gradient-to-r from-orange-500/50 to-transparent"></span>
+        }
+      </div>
 
       <!-- GRID RESPONSIVO -->
       <div class="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
