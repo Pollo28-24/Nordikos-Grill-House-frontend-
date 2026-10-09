@@ -27,12 +27,27 @@
     <div class="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       @for (i of [1,2,3,4,5,6,7,8,9,10,11,12]; track i) {
       <div class="bg-[#F8F5EE] rounded-2xl border border-[#E2D7B7]/50 shadow-sm overflow-hidden animate-pulse">
+        @if (bgEnabled) {
+        <div class="relative aspect-square bg-stone-900/40">
+          <!-- Chip skeleton de precio en la esquina -->
+          <div class="absolute bottom-2 right-2 h-6 w-16 bg-stone-800/80 rounded-full border border-orange-500/20"></div>
+        </div>
+        <div class="h-[2.5px] w-full bg-orange-500/20"></div>
+        <div class="p-3 flex flex-col gap-2">
+          <div class="min-h-[4.25rem] flex flex-col gap-1.5">
+            <div class="h-4 bg-stone-800/20 rounded w-3/4"></div>
+            <div class="h-3 bg-stone-800/15 rounded w-full"></div>
+          </div>
+          <div class="h-11 bg-orange-600/15 border border-orange-600/30 rounded-xl w-full mt-auto"></div>
+        </div>
+        } @else {
         <div class="aspect-square bg-gray-100"></div>
         <div class="p-3 space-y-2">
           <div class="h-4 bg-gray-100 rounded w-3/4 mx-auto"></div>
           <div class="h-3 bg-gray-100 rounded w-full"></div>
           <div class="h-3 bg-gray-100 rounded w-1/2 mx-auto"></div>
         </div>
+        }
       </div>
       }
     </div>
@@ -68,14 +83,18 @@
     @if (categoryProducts.length > 0) {
 
     <div class="mb-12">
-      <!-- CATEGORY TITLE -->
-      <div class="flex items-center gap-3 sm:gap-4 mb-6">
+      <!-- CATEGORY TITLE (CENTRADO CON DIVISORES LUMINOSOS RESPONSIVE) -->
+      <div class="flex items-center justify-center gap-3 sm:gap-5 my-8 sm:my-10">
         @if (bgEnabled) {
-          <span aria-hidden="true" class="w-1.5 h-6 rounded-full bg-orange-500 shadow-[0_0_12px_rgba(249,115,22,0.9)] shrink-0"></span>
-          <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-[#f1e9da]">
-            {{ category.nombre }}
-          </h2>
-          <span aria-hidden="true" class="h-px flex-1 bg-gradient-to-r from-orange-500/50 to-transparent"></span>
+          <span aria-hidden="true" class="h-px flex-1 max-w-[80px] sm:max-w-xs md:max-w-md bg-gradient-to-r from-transparent via-orange-500/40 to-orange-500/80"></span>
+          <div class="flex items-center gap-2.5 shrink-0 px-2">
+            <span aria-hidden="true" class="w-1.5 h-5 sm:h-6 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.95)]"></span>
+            <h2 class="text-base sm:text-2xl font-bold tracking-tight text-[#f1e9da] uppercase text-center drop-shadow-sm">
+              {{ category.nombre }}
+            </h2>
+            <span aria-hidden="true" class="w-1.5 h-5 sm:h-6 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.95)]"></span>
+          </div>
+          <span aria-hidden="true" class="h-px flex-1 max-w-[80px] sm:max-w-xs md:max-w-md bg-gradient-to-l from-transparent via-orange-500/40 to-orange-500/80"></span>
         } @else {
           <h2 class="text-lg sm:text-xl font-semibold text-gray-800 tracking-tight border-l-4 border-orange-500 pl-3">
             {{ category.nombre }}
@@ -86,7 +105,7 @@
       <!-- GRID RESPONSIVO -->
       <div class="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         @for (product of categoryProducts; track product.id) {
-        <app-product-card [product]="product" [cartQuantity]="getProductQuantity(product.id)"
+        <app-product-card [dark]="bgEnabled" [product]="product" [cartQuantity]="getProductQuantity(product.id)"
           [isAdded]="addedProducts()[product.id]" (onAdd)="addFromCard($event)"
           (onViewDetails)="openProductDetail($event)"></app-product-card>
         }
@@ -102,7 +121,7 @@
     <!-- 🔥 FILTRO NORMAL -->
     <div class="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       @for (product of filteredProducts(); track product.id) {
-      <app-product-card [product]="product" [cartQuantity]="getProductQuantity(product.id)"
+      <app-product-card [dark]="bgEnabled" [product]="product" [cartQuantity]="getProductQuantity(product.id)"
         [isAdded]="addedProducts()[product.id]" (onAdd)="addFromCard($event)"
         (onViewDetails)="openProductDetail($event)"></app-product-card>
       }

@@ -4,12 +4,12 @@
  */
 :host {
   /* ---- Intensidad (ajustables) — Escritorio ---- */
-  --nk-fire-height: 40%;        /* alto de la zona de fuego */
-  --nk-fire-opacity: 0.5;       /* opacidad base del fuego */
-  --nk-fire-opacity-peak: 0.62; /* opacidad al "respirar" */
-  --nk-glow-alpha: 18%;         /* resplandor bajo el banner */
-  --nk-ember-opacity: 0.8;      /* opacidad máxima de brasas */
-  --nk-ember-rise: 65vh;        /* distancia de subida */
+  --nk-fire-height: 48%;        /* alto de la zona de fuego (sube de 40% a 48%) */
+  --nk-fire-opacity: 0.65;      /* opacidad base del fuego (sube de 0.5 a 0.65) */
+  --nk-fire-opacity-peak: 0.80; /* opacidad al "respirar" (sube de 0.62 a 0.80) */
+  --nk-glow-alpha: 24%;         /* resplandor bajo el banner y entre tarjetas (sube de 18% a 24%) */
+  --nk-ember-opacity: 0.95;     /* brasas más brillantes y notorias */
+  --nk-ember-rise: 72vh;        /* distancia de subida */
   --nk-vignette-alpha: 0.55;    /* oscurecimiento de bordes */
 
   /* ---- Paleta ---- */
@@ -67,6 +67,7 @@
   height: var(--s, 3px);
   border-radius: 50%;
   background: var(--nk-fire-light);
+  box-shadow: 0 0 6px rgba(255, 176, 102, 0.85);
   opacity: 0;
   will-change: transform, opacity;
   animation: nk-rise var(--d, 10s) linear var(--delay, 0s) infinite;
@@ -86,13 +87,13 @@
 .nk-ember:nth-child(11) { --x: 38%; --s: 2px; --d: 15s;   --delay: -11s;  --dx: 12px; }
 .nk-ember:nth-child(12) { --x: 70%; --s: 2px; --d: 13.5s; --delay: -12s;  --dx: -10px; }
 
-/* Móvil: valores más suaves de fuego y solo 8 brasas para cuidar batería */
+/* Móvil: valores moderados pero visibles de fuego y solo 8 brasas */
 @media (max-width: 767px) {
   :host {
-    --nk-fire-height: 32%;
-    --nk-fire-opacity: 0.42;
-    --nk-fire-opacity-peak: 0.54;
-    --nk-glow-alpha: 14%;
+    --nk-fire-height: 38%;        /* sube de 32% a 38% */
+    --nk-fire-opacity: 0.52;      /* sube de 0.42 a 0.52 */
+    --nk-fire-opacity-peak: 0.68; /* sube de 0.54 a 0.68 */
+    --nk-glow-alpha: 18%;         /* sube de 14% a 18% */
   }
 
   .nk-ember:nth-child(n + 9) {

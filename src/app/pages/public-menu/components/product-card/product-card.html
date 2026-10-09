@@ -1,88 +1,176 @@
 <div 
   (click)="handleCardClick()"
-  class="group bg-[#F8F5EE] rounded-2xl border border-[#E2D7B7]/50 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden relative flex flex-col cursor-pointer h-full active:scale-[0.99] select-none"
+  class="@container group rounded-2xl border overflow-hidden relative flex flex-col cursor-pointer h-full select-none"
+  [class]="cardTheme()"
 >
 
-  <!-- DISPONIBILIDAD OVERLAY -->
+  <!-- DISPONIBILIDAD OVERLAY (z-20 para tapar foto y etiqueta z-[5]) -->
   @if (product().disponible === false) {
-    <div class="absolute inset-0 z-10 bg-[#F8F5EE]/60 backdrop-blur-[1px] flex items-center justify-center p-4">
-      <span class="bg-zinc-900/90 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-xl">
+    <div class="absolute inset-0 z-20 bg-[#14100c]/70 backdrop-blur-[1px] flex items-center justify-center p-4">
+      <span class="bg-zinc-950/90 text-amber-200 border border-amber-500/30 text-[11px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-widest shadow-2xl">
         Agotado
       </span>
     </div>
   }
 
-  @if ((product().descuento || 0) > 0) {
-    <div class="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-widest shadow-xl z-20">
-      -{{ product().descuento | currencyMxn }}
+  <!-- INSIGNIA DE DESCUENTO (top-2 right-2, z-10) -->
+  @if (priceInfo().hasDiscount) {
+    <div class="absolute top-2 right-2 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-lg z-10 border border-white/20 tabular-nums">
+      -{{ priceInfo().discount | currencyMxn }}
     </div>
   }
 
-  <!-- IMAGE -->
-  <div class="relative aspect-square bg-gray-100 overflow-hidden" [class.grayscale]="product().disponible === false">
+  <!-- CONTENEDOR DE FOTO / PLACEHOLDER -->
+  <div class="relative aspect-square overflow-hidden bg-stone-900" [class.grayscale]="product().disponible === false">
     @if (product().imagen_url) {
       <img 
         [src]="product().imagen_url" 
-        class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+        [alt]="product().nombre"
+        class="w-full h-full object-cover group-hover:scale-105 transition duration-500 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
       >
+      <!-- Sombra en la base de la foto para transición suave hacia la brasa -->
+      @if (dark()) {
+        <div class="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/50 via-black/20 to-transparent pointer-events-none"></div>
+      }
     } @else {
-      <div class="w-full h-full flex items-center justify-center text-gray-300">
-        <lucide-icon name="image" class="h-10 w-10"></lucide-icon>
+      <!-- PLACEHOLDER DE MARCA (Carbón cálido con destello sutil) -->
+      <div class="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-b from-[#1f1914] to-[#120e0b] overflow-hidden">
+        <!-- Resplandor central tenue -->
+        <div class="absolute w-24 h-24 rounded-full bg-orange-600/10 blur-xl"></div>
+        <div class="relative z-1 flex flex-col items-center gap-1.5 opacity-40 group-hover:opacity-60 transition duration-300">
+          <lucide-icon name="flame" class="h-8 w-8 text-orange-400"></lucide-icon>
+          <span class="text-[9px] uppercase tracking-widest font-bold text-amber-200/80">Nórdikos Grill</span>
+        </div>
       </div>
     }
 
-    <!-- BADGE CANTIDAD -->
+    <!-- BADGE CANTIDAD (top-2 left-2, z-10) -->
     @if (cartQuantity() > 0) {
-      <div class="absolute top-2 left-2 min-w-6.5 h-6.5 px-1.5 bg-orange-600 text-white text-xs font-black flex items-center justify-center rounded-full shadow-md border-2 border-[#F8F5EE] tabular-nums animate-in zoom-in-50 duration-300 z-20 select-none">
+      <div class="absolute top-2 left-2 min-w-6.5 h-6.5 px-1.5 bg-orange-600 text-white text-xs font-black flex items-center justify-center rounded-full shadow-md border-2 border-[#f7efe0] tabular-nums animate-in zoom-in-50 duration-300 z-10 select-none">
         {{ cartQuantity() }}
       </div>
     }
 
-    <div class="absolute bottom-2 right-2 bg-[#F8F5EE]/90 backdrop-blur px-2 py-1 rounded-lg shadow-sm flex items-center gap-1.5">
-      @if ((product().descuento || 0) > 0) {
-        <del class="text-[10px] text-gray-500 font-medium">{{ product().precio | currencyMxn }}</del>
-        <span class="text-xs font-bold text-orange-600">{{ (product().precio || 0) - (product().descuento || 0) | currencyMxn }}</span>
-      } @else {
-        <span class="text-xs font-bold text-orange-600">{{ product().precio | currencyMxn }}</span>
-      }
-    </div>
-  </div>
-
-  <!-- INFO -->
-  <div class="px-3 py-2 flex flex-col gap-1 text-center flex-grow">
-    <h3 class="text-sm font-semibold text-gray-900 line-clamp-1">
-      {{ product().nombre }}
-    </h3>
-
-    <p class="text-[11px] text-gray-500 line-clamp-2 font-light mb-2">
-      {{ product().descripcion || 'Sin descripción' }}
-    </p>
-
-    <!-- ADD TO CART / VIEW DETAILS BUTTONS -->
-    @if (product().disponible !== false) {
-      <div class="mt-auto flex gap-2 pt-2">
-        <button 
-          type="button"
-          (click)="openDetails($event)"
-          class="w-full py-2 text-white text-[11px] font-bold rounded-xl transition active:scale-95 flex items-center justify-center gap-1.5 shadow-sm cursor-pointer select-none touch-manipulation"
-          [class.bg-green-600]="isAdded()"
-          [class.hover:bg-green-700]="isAdded()"
-          [class.bg-orange-500]="!isAdded()"
-          [class.hover:bg-orange-600]="!isAdded()"
-        >
-          @if (isAdded()) {
-            <lucide-icon name="check" class="h-3.5 w-3.5"></lucide-icon>
-            <span>¡Agregado!</span>
-          } @else if (hasCustomizations()) {
-            <span>Personalizar</span>
-            <lucide-icon name="chevron-right" class="h-3.5 w-3.5"></lucide-icon>
-          } @else {
-            <span>Ver Detalle</span>
-            <lucide-icon name="chevron-right" class="h-3.5 w-3.5"></lucide-icon>
+    <!-- ETIQUETA DE PRECIO SOBRE LA FOTO (FASE 3b: z-[5], esquina inferior derecha) -->
+    @if (dark()) {
+      <div class="absolute bottom-2 right-2 z-[5] max-w-[calc(100%-1rem)] pointer-events-none">
+        <div class="inline-flex items-baseline gap-1 px-2.5 py-1 rounded-full bg-[rgba(20,16,12,0.88)] border border-[rgba(255,176,102,0.25)] shadow-[0_2px_8px_rgba(0,0,0,0.5)] whitespace-nowrap">
+          @if (priceInfo().isFrom) {
+            <span class="text-[9px] uppercase tracking-wider font-semibold text-[#b8a898] mr-0.5">Desde</span>
           }
-        </button>
+          @if (priceInfo().hasDiscount) {
+            <del class="text-[10px] text-[#9c8979] font-medium line-through tabular-nums">{{ priceInfo().basePrice | currencyMxn }}</del>
+          }
+          <span class="text-sm sm:text-[15px] font-extrabold text-[#ffb066] tabular-nums tracking-tight">
+            {{ priceInfo().finalPrice | currencyMxn }}
+          </span>
+        </div>
+      </div>
+    } @else {
+      <!-- DISEÑO ORIGINAL -->
+      <div class="absolute bottom-2 right-2 bg-[#F8F5EE]/90 backdrop-blur px-2 py-1 rounded-lg shadow-sm flex items-center gap-1.5 z-1">
+        @if ((product().descuento || 0) > 0) {
+          <del class="text-[10px] text-gray-500 font-medium">{{ product().precio | currencyMxn }}</del>
+          <span class="text-xs font-bold text-orange-600">{{ (product().precio || 0) - (product().descuento || 0) | currencyMxn }}</span>
+        } @else {
+          <span class="text-xs font-bold text-orange-600">{{ product().precio | currencyMxn }}</span>
+        }
       </div>
     }
   </div>
 
+  <!-- LÍNEA DE BRASA ENTRE FOTO Y TEXTO (Paso 1: piel de la tarjeta) -->
+  @if (dark()) {
+    <div class="h-[2.5px] w-full bg-gradient-to-r from-orange-500/10 via-orange-500/60 to-orange-500/10 shrink-0"></div>
+  }
+
+  <!-- CONTENIDO DE LA TARJETA -->
+  @if (dark()) {
+    <div class="p-3 flex flex-col flex-grow text-left">
+      <!-- BLOQUE DE TEXTO CON ALTURA MÍNIMA PARA EVITAR HUECOS -->
+      <div class="min-h-[4.25rem] flex flex-col justify-start">
+        <h3 class="text-[14px] sm:text-[15px] font-black leading-snug text-[#7c2d12] line-clamp-2 tracking-tight">
+          {{ product().nombre }}
+        </h3>
+
+        @if (shortDescription(); as desc) {
+          <p class="text-[11px] sm:text-xs leading-relaxed text-[#5a4a3a] line-clamp-2 mt-1 font-medium">
+            {{ desc }}
+          </p>
+        }
+      </div>
+
+      <!-- PIE: BOTÓN DE ACCIÓN COMPLETO (min-h-11 = 44px táctil accesible) -->
+      @if (product().disponible !== false) {
+        <div class="mt-auto pt-2.5">
+          <button 
+            type="button"
+            (click)="openDetails($event)"
+            [attr.aria-label]="buttonAriaLabel()"
+            class="w-full min-h-11 py-2 px-3 text-xs font-extrabold rounded-xl transition duration-200 active:scale-[0.98] flex items-center justify-center gap-1.5 shadow-xs cursor-pointer select-none touch-manipulation focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
+            [class.bg-green-700]="isAdded()"
+            [class.text-white]="isAdded()"
+            [class.hover:bg-green-800]="isAdded()"
+            [class.border]="!isAdded()"
+            [class.border-transparent]="!isAdded() && buttonVariant() === 'charcoal'"
+            [class.bg-[#1c1713]]="!isAdded() && buttonVariant() === 'charcoal'"
+            [class.text-[#f7efe0]]="!isAdded() && buttonVariant() === 'charcoal'"
+            [class.hover:bg-orange-600]="!isAdded() && buttonVariant() === 'charcoal'"
+            [class.border-orange-600/80]="!isAdded() && (buttonVariant() === 'outline' || buttonVariant() === 'light')"
+            [class.bg-orange-500/10]="!isAdded() && buttonVariant() === 'outline'"
+            [class.bg-transparent]="!isAdded() && buttonVariant() === 'light'"
+            [class.text-[#9a3412]]="!isAdded() && (buttonVariant() === 'outline' || buttonVariant() === 'light')"
+            [class.hover:bg-orange-600]="!isAdded() && (buttonVariant() === 'outline' || buttonVariant() === 'light')"
+            [class.hover:text-[#14100c]]="!isAdded() && (buttonVariant() === 'outline' || buttonVariant() === 'light')"
+          >
+            @if (isAdded()) {
+              <lucide-icon name="check" class="h-4 w-4"></lucide-icon>
+              <span>¡Agregado!</span>
+            } @else {
+              <span>{{ buttonLabel() }}</span>
+              <lucide-icon name="chevron-right" class="h-3.5 w-3.5 opacity-80" [class.text-orange-500]="buttonVariant() === 'charcoal'"></lucide-icon>
+            }
+          </button>
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- DISEÑO ORIGINAL -->
+    <div class="px-3 py-2 flex flex-col gap-1 text-center flex-grow">
+      <h3 class="text-sm font-semibold text-gray-900 line-clamp-1">
+        {{ product().nombre }}
+      </h3>
+
+      <p class="text-[11px] text-gray-500 line-clamp-2 font-light mb-2">
+        {{ product().descripcion || 'Sin descripción' }}
+      </p>
+
+      @if (product().disponible !== false) {
+        <div class="mt-auto flex gap-2 pt-2">
+          <button 
+            type="button"
+            (click)="openDetails($event)"
+            class="w-full py-2 text-white text-[11px] font-bold rounded-xl transition active:scale-95 flex items-center justify-center gap-1.5 shadow-sm cursor-pointer select-none touch-manipulation"
+            [class.bg-green-600]="isAdded()"
+            [class.hover:bg-green-700]="isAdded()"
+            [class.bg-orange-500]="!isAdded()"
+            [class.hover:bg-orange-600]="!isAdded()"
+          >
+            @if (isAdded()) {
+              <lucide-icon name="check" class="h-3.5 w-3.5"></lucide-icon>
+              <span>¡Agregado!</span>
+            } @else if (hasCustomizations()) {
+              <span>Personalizar</span>
+              <lucide-icon name="chevron-right" class="h-3.5 w-3.5"></lucide-icon>
+            } @else {
+              <span>Ver Detalle</span>
+              <lucide-icon name="chevron-right" class="h-3.5 w-3.5"></lucide-icon>
+            }
+          </button>
+        </div>
+      }
+    </div>
+  }
+
 </div>
+

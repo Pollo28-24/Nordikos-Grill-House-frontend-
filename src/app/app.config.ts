@@ -107,7 +107,8 @@ import {
   Truck,
   ExternalLink,
   Banknote,
-  Smartphone
+  Smartphone,
+  Flame
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -223,6 +224,7 @@ providers: [
         ExternalLink,
         Banknote,
         Smartphone,
+        Flame
       }),
     ),
   ],
