@@ -77,7 +77,7 @@ export class ClientOrdersService {
    */
   getWhatsAppShareUrl(order: ClientSubmittedOrder, businessPhone: string = '5219512224034'): string {
     const lines: string[] = [
-      `🍽️ *NÓRDIKOS GRILL HOUSE* 🍽️`,
+      `🍽️ *Nórdicos Grill House* 🍽️`,
       `📋 *Solicitud de Pedido:* #${order.request_code}`,
       `🏷️ *Servicio:* ${order.service_name}${order.cliente.numero_mesa ? ' (Mesa ' + order.cliente.numero_mesa + ')' : ''}`,
     ];

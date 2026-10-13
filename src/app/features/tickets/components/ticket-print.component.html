@@ -92,10 +92,11 @@
   <div class="ticket" [class.kitchen-ticket]="ticketType() === 'kitchen'">
     
     <!-- Encabezado -->
+    <!-- Encabezado -->
     @if (data.order; as order) {
       <div class="header">
         @if (ticketType() === 'account') {
-          <h1 class="brand">NORDICOS</h1>
+          <h1 class="brand">Nórdicos</h1>
           <p class="tagline">Grill House</p>
         }
         
@@ -164,10 +165,10 @@
             </div>
           }
 
-          <!-- Nota del item -->
-          @if (item.nota && ticketType() === 'kitchen') {
+          <!-- Nota del item (visible tanto en cuenta como en cocina para verificación) -->
+          @if (item.nota) {
             <div class="item-note">
-              <p>Instrucción: {{ item.nota }}</p>
+              <p>Nota: {{ item.nota }}</p>
             </div>
           }
         </div>
@@ -176,40 +177,50 @@
 
     <div class="divider"></div>
 
-    <!-- Nota General -->
-    @if (data.order.nota_general && ticketType() === 'kitchen') {
-      <div class="general-note">
-        <p class="note-title">--- NOTA GENERAL ---</p>
-        <p class="note-content">{{ data.order.nota_general }}</p>
-        <div class="divider"></div>
-      </div>
-    }
-
     <!-- Totales (Solo en cuenta) -->
     @if (ticketType() === 'account' && data.order; as order) {
       <div class="totals">
-        <div class="total-line">
-          <span>SUBTOTAL</span>
-          <span>${{ (order.total - (order.propina || 0)) | number:'1.2-2' }}</span>
-        </div>
-        <div class="divider"></div>
+        @if ((order.propina && order.propina > 0) || ((order.total - (order.propina || 0)) !== order.total)) {
+          <div class="total-line">
+            <span>SUBTOTAL:</span>
+            <span>${{ (order.total - (order.propina || 0)) | number:'1.2-2' }}</span>
+          </div>
+          @if (order.propina && order.propina > 0) {
+            <div class="total-line">
+              <span>PROPINA:</span>
+              <span>${{ order.propina | number:'1.2-2' }}</span>
+            </div>
+          }
+          <div class="divider"></div>
+        }
         <div class="total-line grand-total">
-          <span>TOTAL</span>
+          <span>TOTAL:</span>
           <span>${{ order.total | number:'1.2-2' }}</span>
         </div>
       </div>
+      <div class="divider"></div>
+    }
 
+    <!-- Nota General / Especial (visible en todos los tipos de ticket) -->
+    @if (data.order.nota_general) {
+      <div class="general-note">
+        <div class="note-title">*** NOTA ESPECIAL ***</div>
+        <div class="note-content">{{ data.order.nota_general }}</div>
+      </div>
+      <div class="divider"></div>
+    }
+
+    <!-- Pie de Ticket Cuenta -->
+    @if (ticketType() === 'account') {
       <div class="footer">
-        <div class="divider"></div>
-        <p>¡GRACIAS POR SU VISITA!</p>
-        <div class="barcode">||||||||||||||||||||||||||||||</div>
+        <p>¡Gracias por su preferencia!</p>
+        <div class="barcode">||| |||| ||||| |||| |||</div>
       </div>
     }
 
     <!-- Pie de Cocina -->
     @if (ticketType() === 'kitchen') {
       <div class="footer kitchen-footer">
-        <div class="divider"></div>
         <p>--- FIN DE TICKET COCINA ---</p>
       </div>
     }

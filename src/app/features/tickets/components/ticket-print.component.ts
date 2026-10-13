@@ -2,6 +2,7 @@ import { Component, inject, signal, input, effect, output, ViewEncapsulation, PL
 import { DatePipe, DecimalPipe, isPlatformBrowser } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { TicketService } from '../services/ticket.service';
+import { BluetoothDeviceService } from '../services/bluetooth-device.service';
 import { TicketData } from '../models/ticket.model';
 import { ToastService } from '@core/services/toast.service';
 import { Capacitor } from '@capacitor/core';
@@ -16,6 +17,7 @@ import { Capacitor } from '@capacitor/core';
 })
 export class TicketPrintComponent {
   private ticketService = inject(TicketService);
+  private bluetoothService = inject(BluetoothDeviceService);
   private toastService = inject(ToastService);
   private platformId = inject(PLATFORM_ID);
 
@@ -28,14 +30,14 @@ export class TicketPrintComponent {
   readyToPrint = output<void>();
   close = output<void>();
 
-  // Bluetooth signals expuestas
+  // Bluetooth signals expuestas desde el servicio especializado de hardware
   isNative = isPlatformBrowser(this.platformId) && Capacitor.isNativePlatform();
-  bluetoothDevices = this.ticketService.bluetoothDevices;
-  isBluetoothConnected = this.ticketService.isBluetoothConnected;
-  connectionState = this.ticketService.connectionState;
-  errorMessage = this.ticketService.errorMessage;
-  selectedDeviceAddress = this.ticketService.selectedDeviceAddress;
-  selectedDeviceName = this.ticketService.selectedDeviceName;
+  bluetoothDevices = this.bluetoothService.bluetoothDevices;
+  isBluetoothConnected = this.bluetoothService.isBluetoothConnected;
+  connectionState = this.bluetoothService.connectionState;
+  errorMessage = this.bluetoothService.errorMessage;
+  selectedDeviceAddress = this.bluetoothService.selectedDeviceAddress;
+  selectedDeviceName = this.bluetoothService.selectedDeviceName;
 
   constructor() {
     effect(() => {
@@ -82,7 +84,8 @@ export class TicketPrintComponent {
   print() {
     const data = this.ticketData();
     if (data) {
-      this.ticketService.printTicket(data, this.ticketType());
+      const el = document.querySelector('.ticket') as HTMLElement;
+      this.ticketService.printTicket(data, this.ticketType(), el);
     }
   }
 
@@ -100,14 +103,14 @@ export class TicketPrintComponent {
   }
 
   scanBluetooth() {
-    this.ticketService.scanDevices();
+    this.bluetoothService.scanDevices();
   }
 
   connectPrinter(device: any) {
-    this.ticketService.selectAndConnectPrinter(device.address, device.name);
+    this.bluetoothService.selectAndConnectPrinter(device.address, device.name);
   }
 
   disconnectPrinter() {
-    this.ticketService.disconnectPrinter();
+    this.bluetoothService.disconnectPrinter();
   }
 }
