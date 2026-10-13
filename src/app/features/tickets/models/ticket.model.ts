@@ -20,6 +20,7 @@ export interface TicketItem {
 export interface TicketOrder {
   id: number;
   numero_orden?: number; // Nuevo campo
+  numero_mesa?: string;
   fecha_creacion: string;
   estado_pedido: string;
   estado_pago: string;

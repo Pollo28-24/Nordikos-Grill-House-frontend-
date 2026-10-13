@@ -105,14 +105,19 @@
             {{ order.numero_orden ? 'ORDEN #' + order.numero_orden : 'ORDEN #' + order.id }}
           </h2>
           <div class="divider"></div>        
-          <!-- @if (ticketType() === 'kitchen') {
-            <p class="ticket-label">COCINA</p>
-          } -->
+          @if (ticketType() === 'kitchen') {
+            <p class="ticket-label">*** COCINA ***</p>
+          }
         </div>
 
         <div class="header-details">
           <p class="timestamp">{{ order.fecha_creacion | date:'dd/MM/yy, hh:mm a' }}</p>
-          <p class="service-type">{{ order.tipo_servicio }}</p>
+          <p class="service-type">
+            {{ order.tipo_servicio }}
+            @if (order.numero_mesa) {
+              <span> · MESA {{ order.numero_mesa }}</span>
+            }
+          </p>
         </div>
       </div>
     }
@@ -214,6 +219,14 @@
     <div class="loading-state no-print">
       <lucide-icon name="loader-2" class="animate-spin"></lucide-icon>
       <p>Cargando datos del ticket...</p>
+    </div>
+  } @else if (loadErrorMessage()) {
+    <div class="loading-state no-print flex flex-col items-center justify-center p-6 text-center text-red-400">
+      <lucide-icon name="alert-circle" class="w-8 h-8 mb-2"></lucide-icon>
+      <p class="text-sm font-medium">{{ loadErrorMessage() }}</p>
+      <button (click)="retry()" class="mt-4 px-4 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs text-white cursor-pointer">
+        Reintentar
+      </button>
     </div>
   }
 }

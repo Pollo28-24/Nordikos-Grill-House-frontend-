@@ -30,9 +30,9 @@ import { TickService } from '@core/services/tick.service';
 
 import { OrderKpiBar } from './components/order-kpi-bar/order-kpi-bar';
 import { ServiceTabs } from './components/service-tabs/service-tabs';
-import { OrderFilterBar } from './components/order-filter-bar/order-filter-bar';
 import { OrderCard } from './components/order-card/order-card';
-import { OrderStatusFilter, OrderStatusFilterValue, PaymentStatusFilterValue } from './components/order-status-filter/order-status-filter';
+import { OrderStatusFilterValue, PaymentStatusFilterValue } from './components/order-status-filter/order-status-filter';
+import { OrderFilterModal } from './components/order-filter-modal/order-filter-modal';
 
 export interface ActiveFilterBadge {
   id: string;
@@ -49,7 +49,7 @@ interface ServiceType {
 @Component({
   selector: 'app-orders-by-service',
   standalone: true,
-  imports: [LucideAngularModule, Navbar, TicketPrintComponent, OrderKpiBar, ServiceTabs, OrderFilterBar, OrderCard, OrderStatusFilter],
+  imports: [LucideAngularModule, Navbar, TicketPrintComponent, OrderKpiBar, ServiceTabs, OrderCard, OrderFilterModal],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './orders-by-service.html',
   providers: [TickService]

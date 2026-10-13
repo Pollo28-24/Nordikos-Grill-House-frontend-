@@ -26,6 +26,10 @@
   /* El contenedor del modal y sus padres deben ser visibles y sin fondos oscuros */
   div.fixed.inset-0 {
     position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
     display: block !important;
     background: white !important;
     width: 58mm !important;
@@ -34,10 +38,13 @@
     padding: 0 !important;
     margin: 0 !important;
     overflow: visible !important;
+    box-shadow: none !important;
   }
 
   div.relative {
     position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
     display: block !important;
     background: white !important;
     width: 58mm !important;
@@ -54,11 +61,14 @@
 
   .ticket {
     display: block !important;
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 58mm !important;
     height: auto !important;
     min-height: 0 !important;
     margin: 0 !important;
-    padding: 4mm 4mm 2mm 4mm !important;
+    padding: 2mm 3mm !important;
     background: white !important;
     color: black !important;
     border: none !important;
@@ -69,11 +79,11 @@
 
   .ticket * {
     color: black !important;
+    background: transparent !important;
   }
 
   @page {
-    size: 58mm auto;
-    margin: 0;
+    margin: 2mm;
   }
 }
 

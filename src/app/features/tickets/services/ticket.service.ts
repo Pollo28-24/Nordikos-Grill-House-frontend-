@@ -206,6 +206,7 @@ export class TicketService {
           .select(`
             id,
             numero_orden,
+            numero_mesa,
             fecha_creacion,
             estado_pedido,
             estado_pago,
@@ -242,26 +243,44 @@ export class TicketService {
       if (itemsResult.error) throw itemsResult.error;
 
       const orderDataRaw = orderResult.data as any;
-      const itemsDataRaw = itemsResult.data as any[];
+      const itemsDataRaw = (itemsResult.data || []) as any[];
+
+      const clienteRaw = Array.isArray(orderDataRaw.clientes) ? orderDataRaw.clientes[0] : orderDataRaw.clientes;
+      const tipoServicioRaw = Array.isArray(orderDataRaw.tipos_servicio) 
+        ? orderDataRaw.tipos_servicio[0]?.nombre 
+        : orderDataRaw.tipos_servicio?.nombre;
 
       return {
         order: {
           id: orderDataRaw.id,
           numero_orden: orderDataRaw.numero_orden,
+          numero_mesa: orderDataRaw.numero_mesa,
           fecha_creacion: orderDataRaw.fecha_creacion,
           estado_pedido: orderDataRaw.estado_pedido,
           estado_pago: orderDataRaw.estado_pago,
           total: Number(orderDataRaw.total || 0),
           propina: Number(orderDataRaw.propina || 0),
           nota_general: orderDataRaw.nota_general,
-          cliente: orderDataRaw.clientes,
-          tipo_servicio: orderDataRaw.tipos_servicio?.nombre
+          cliente: clienteRaw ? { nombre: clienteRaw.nombre, telefono: clienteRaw.telefono } : undefined,
+          tipo_servicio: tipoServicioRaw
         },
         items: itemsDataRaw
           .filter(item => item.estado !== 'cancelado')
           .map(item => ({
-            ...item,
-            modificadores: item.order_item_modificadores || []
+            id: item.id,
+            order_id: item.order_id,
+            nombre_producto: item.nombre_producto,
+            cantidad: Number(item.cantidad || 1),
+            precio_unitario: Number(item.precio_unitario || 0),
+            total: Number(item.total ?? (Number(item.cantidad || 1) * Number(item.precio_unitario || 0))),
+            nota: item.nota,
+            variante: item.variante,
+            estado: item.estado,
+            modificadores: (item.order_item_modificadores || []).map((m: any) => ({
+              nombre_modificador: m.nombre_modificador,
+              cantidad: Number(m.cantidad || 1),
+              precio_unitario: Number(m.precio_unitario || 0)
+            }))
           }))
       };
     } catch (error) {

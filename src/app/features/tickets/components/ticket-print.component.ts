@@ -1,4 +1,4 @@
-import { Component, inject, signal, input, effect, output, ViewEncapsulation, PLATFORM_ID } from '@angular/core';
+import { Component, inject, signal, input, effect, output, ViewEncapsulation, PLATFORM_ID, untracked } from '@angular/core';
 import { DatePipe, DecimalPipe, isPlatformBrowser } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { TicketService } from '../services/ticket.service';
@@ -21,9 +21,10 @@ export class TicketPrintComponent {
 
   orderId = input.required<string | number>();
   ticketType = input<'account' | 'kitchen'>('account');
-  autoPrint = input<boolean>(true);
+  autoPrint = input<boolean>(false);
   ticketData = signal<TicketData | null>(null);
   loading = signal(false);
+  loadErrorMessage = signal<string>('');
   readyToPrint = output<void>();
   close = output<void>();
 
@@ -40,25 +41,41 @@ export class TicketPrintComponent {
     effect(() => {
       const id = this.orderId();
       if (id) {
-        this.loadTicket(Number(id));
+        untracked(() => {
+          this.loadTicket(Number(id));
+        });
       }
     });
   }
 
   async loadTicket(id: number) {
     this.loading.set(true);
+    this.loadErrorMessage.set('');
     this.ticketData.set(null); // Reset current data
-    const data = await this.ticketService.getTicketData(id);
-    this.ticketData.set(data);
-    this.loading.set(false);
-    
-    if (data && this.autoPrint()) {
-      // Pequeño delay para asegurar que el DOM se renderice antes de avisar que está listo
-      setTimeout(() => {
-        if (!this.loading()) {
-          this.readyToPrint.emit();
-        }
-      }, 500);
+    try {
+      const data = await this.ticketService.getTicketData(id);
+      this.ticketData.set(data);
+      if (!data) {
+        this.loadErrorMessage.set('No se pudieron obtener los datos de la comanda.');
+      } else if (this.autoPrint()) {
+        setTimeout(() => {
+          if (!this.loading()) {
+            this.readyToPrint.emit();
+          }
+        }, 500);
+      }
+    } catch (err) {
+      this.ticketData.set(null);
+      this.loadErrorMessage.set('Error de conexión al cargar el ticket.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  retry() {
+    const id = this.orderId();
+    if (id) {
+      this.loadTicket(Number(id));
     }
   }
 
