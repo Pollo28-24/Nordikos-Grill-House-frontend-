@@ -5,7 +5,7 @@ import { fromEvent } from 'rxjs';
 
 import { LoggerService } from '@core/services/logger.service';
 import { OrderDatabase } from '@core/services/order-db.service';
-import { OrderCreateDto, OrderCreateResponse, OrderCreateItem, OrderListItem, PaymentMethod, ServiceType, Client } from '@core/models/order.model';
+import { OrderCreateDto, OrderCreateResponse, OrderCreateItem, OrderListItem, OrderSummary, PaymentMethod, ServiceType, Client } from '@core/models/order.model';
 
 import { OrdersApi } from '@core/api/orders.api';
 import { CartState } from '@core/state/cart.state';
@@ -75,14 +75,26 @@ export class OrdersService {
   // QUERY METHODS
   // ==========================================
   async loadOrders(dateFilter?: { start: string; end: string }): Promise<void> {
-    try {
+    const hasCached = this.orders().length > 0;
+    if (!hasCached) {
       this.loadingOrders.set(true);
+    }
+    const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    try {
       const query = this.api.getOrdersQuery(dateFilter);
       const { data, error } = await query;
       if (error) throw error;
       
+      const t1 = typeof performance !== 'undefined' ? performance.now() : Date.now();
       const mappedOrders: OrderListItem[] = (data || []).map((o: any) => this.mapOrderListItem(o));
+      const t2 = typeof performance !== 'undefined' ? performance.now() : Date.now();
+
       this.orders.set(mappedOrders);
+      this.logger.info(
+        `Orders loaded: network=${Math.round(t1 - t0)}ms, mapping=${Math.round(t2 - t1)}ms, total=${Math.round(t2 - t0)}ms (${mappedOrders.length} orders)`,
+        undefined,
+        'OrdersService'
+      );
     } catch (e: unknown) {
       const errorMsg = e instanceof Error ? e.message : 'Error cargando órdenes';
       this.logger.error('Error cargando órdenes', e, 'OrdersService');
@@ -92,7 +104,7 @@ export class OrdersService {
     }
   }
 
-  private mapOrderListItem(o: any): OrderListItem {
+  private mapOrderListItem(o: any): OrderSummary {
     return {
       id: o.id,
       numero_orden: o.numero_orden,
@@ -106,21 +118,7 @@ export class OrdersService {
       tipo_servicio_id: o.tipo_servicio_id,
       turno_id: o.turno_id,
       cliente_nombre: o.clientes?.nombre || 'Consumidor Final',
-      tipo_servicio_nombre: o.tipos_servicio?.nombre || 'N/A',
-      order_items: (o.order_items || []).map((item: any) => ({
-        id: item.id,
-        cantidad: item.cantidad,
-        precio_unitario: item.precio_unitario,
-        nombre_producto: item.nombre_producto || 'Producto',
-        nota: item.nota,
-        producto_id: item.producto_id,
-        modificadores: (item.order_item_modificadores || []).map((m: any) => ({
-          id: m.id,
-          nombre: m.nombre_modificador,
-          cantidad: m.cantidad,
-          precio_unitario: m.precio_unitario
-        }))
-      }))
+      tipo_servicio_nombre: o.tipos_servicio?.nombre || 'N/A'
     };
   }
 
@@ -532,8 +530,30 @@ export class OrdersService {
   async updatePaymentStatus(orderId: number, status: string) { return this.api.updatePaymentStatus(orderId, status); }
   async bulkUpdateOrderStatus(ids: number[], status: string, closeDate: string | null) { return this.api.bulkUpdateOrderStatus(ids, status, closeDate); }
   async bulkUpdatePaymentStatus(ids: number[], status: string) { return this.api.bulkUpdatePaymentStatus(ids, status); }
-  async getPaymentMethods() { return this.api.getPaymentMethods(); }
-  async getServiceTypes() { return this.api.getServiceTypes(); }
+  private cachedPaymentMethods: { data: any; error: any } | null = null;
+  private cachedServiceTypes: { data: any; error: any } | null = null;
+
+  async getPaymentMethods() {
+    if (this.cachedPaymentMethods && !this.cachedPaymentMethods.error) {
+      return this.cachedPaymentMethods;
+    }
+    const res = await this.api.getPaymentMethods();
+    if (!res.error) {
+      this.cachedPaymentMethods = res;
+    }
+    return res;
+  }
+
+  async getServiceTypes() {
+    if (this.cachedServiceTypes && !this.cachedServiceTypes.error) {
+      return this.cachedServiceTypes;
+    }
+    const res = await this.api.getServiceTypes();
+    if (!res.error) {
+      this.cachedServiceTypes = res;
+    }
+    return res;
+  }
   async getClients(limit: number = 100) { return this.api.getClients(limit); }
   async getOrderById(id: string | number) { return this.api.getOrderById(id); }
 

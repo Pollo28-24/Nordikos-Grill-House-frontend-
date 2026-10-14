@@ -11,11 +11,7 @@ export class OrdersApi {
       .select(`
         id, numero_orden, nota_general, fecha_creacion, fecha_cierre, total, 
         estado_pedido, estado_pago, metodo_pago_id, tipo_servicio_id, turno_id,
-        clientes (id, nombre, telefono, email, direccion), tipos_servicio (nombre),
-        order_items (
-          id, cantidad, precio_unitario, nombre_producto, nota, producto_id,
-          order_item_modificadores (id, nombre_modificador, cantidad, precio_unitario)
-        )
+        clientes (id, nombre, telefono, email, direccion), tipos_servicio (nombre)
       `)
       .order('fecha_creacion', { ascending: false });
 
