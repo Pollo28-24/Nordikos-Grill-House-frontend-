@@ -460,6 +460,20 @@ export class OrdersByService implements OnInit, OnDestroy {
     this.showQuickPrintModal.set(true);
   }
 
+  async shareOrderTicketPDF(orderId: number | string) {
+    try {
+      const data = await this.ticketService.getTicketData(Number(orderId));
+      if (data) {
+        await this.ticketService.shareTicketPDF(data);
+      } else {
+        this.feedback.showError('No se pudieron obtener los datos de la orden');
+      }
+    } catch (err) {
+      this.logger.error('Error sharing PDF from order card', err, 'OrdersByService');
+      this.feedback.showError('Error al generar o compartir el comprobante');
+    }
+  }
+
   async onTicketReady() {
     const id = this.quickPrintOrderId();
     if (id) {

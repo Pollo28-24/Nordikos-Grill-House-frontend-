@@ -5,6 +5,7 @@ import { RenderContext } from '../../domain/models/render-context.model';
 import { RendererFactory } from '../../infrastructure/renderers/renderer.factory';
 import { WebPrinterAdapter } from '../../infrastructure/printers/web-printer.adapter';
 import { BluetoothPrinterAdapter } from '../../infrastructure/printers/bluetooth-printer.adapter';
+import { RawBtPrinterAdapter } from '../../infrastructure/printers/rawbt-printer.adapter';
 import { HtmlTicketRenderer } from '../../infrastructure/renderers/html-ticket.renderer';
 import { EscPosTicketRenderer } from '../../infrastructure/renderers/escpos-ticket.renderer';
 
@@ -15,6 +16,7 @@ export class PrintDispatcher {
   private rendererFactory = inject(RendererFactory);
   private webPrinter = inject(WebPrinterAdapter);
   private bluetoothPrinter = inject(BluetoothPrinterAdapter);
+  private rawBtPrinter = inject(RawBtPrinterAdapter);
   private logger = inject(LoggerService);
 
   async dispatch(job: PrintJob): Promise<PrintJob> {
@@ -45,6 +47,18 @@ export class PrintDispatcher {
 
           const transportStart = typeof performance !== 'undefined' ? performance.now() : Date.now();
           await this.webPrinter.print(output);
+          transportMs = Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - transportStart);
+          break;
+        }
+
+        case 'rawbt': {
+          const renderStart = typeof performance !== 'undefined' ? performance.now() : Date.now();
+          const escPosRenderer = this.rendererFactory.get('rawbt') as EscPosTicketRenderer;
+          const output = escPosRenderer.render(job.document, context);
+          renderMs = Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - renderStart);
+
+          const transportStart = typeof performance !== 'undefined' ? performance.now() : Date.now();
+          await this.rawBtPrinter.print(output);
           transportMs = Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - transportStart);
           break;
         }

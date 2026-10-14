@@ -15,6 +15,7 @@ export class RendererFactory {
   constructor() {
     this.renderers.set('web', new HtmlTicketRenderer());
     this.renderers.set('bluetooth', new EscPosTicketRenderer());
+    this.renderers.set('rawbt', new EscPosTicketRenderer());
     this.renderers.set('whatsapp', new WhatsappTicketRenderer());
     this.renderers.set('pdf', new PdfTicketRenderer());
   }

@@ -107,6 +107,16 @@
         <lucide-icon name="printer" class="w-4 h-4"></lucide-icon>
       </button>
 
+      <!-- Compartir Cuenta PDF -->
+      <button 
+        (click)="shareTicketPDF.emit()"
+        class="h-10 w-10 rounded-xl bg-white/5 text-emerald-400 hover:bg-white/10 border border-white/10 active:scale-95 transition-all flex items-center justify-center touch-manipulation cursor-pointer"
+        title="Compartir comprobante PDF"
+        aria-label="Compartir comprobante PDF"
+      >
+        <lucide-icon name="share-2" class="w-4 h-4"></lucide-icon>
+      </button>
+
       @if (order().estado_pedido === 'confirmado') {
         <button 
           (click)="updateStatus.emit('entregado')"

@@ -89,6 +89,13 @@ export class TicketPrintComponent {
     }
   }
 
+  printRawBt() {
+    const data = this.ticketData();
+    if (data) {
+      this.ticketService.printTicketRawBt(data, this.ticketType());
+    }
+  }
+
   async shareOrCopy() {
     const data = this.ticketData();
     if (!data) return;

@@ -1,4 +1,4 @@
-export type PrintDestination = 'web' | 'bluetooth' | 'whatsapp' | 'pdf';
+export type PrintDestination = 'web' | 'bluetooth' | 'whatsapp' | 'pdf' | 'rawbt';
 export type PrintProfile = 'pos58' | 'pos80' | 'a4';
 
 export interface RenderBranding {

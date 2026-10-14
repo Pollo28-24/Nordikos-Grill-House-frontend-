@@ -18,7 +18,9 @@ import { RendererFactory } from '../infrastructure/renderers/renderer.factory';
 import { PdfTicketRenderer } from '../infrastructure/renderers/pdf-ticket.renderer';
 import { PdfShareAdapter } from '../infrastructure/printers/pdf-share.adapter';
 import { BluetoothDeviceService } from './bluetooth-device.service';
+import { RawBtPrinterAdapter } from '../infrastructure/printers/rawbt-printer.adapter';
 import { Capacitor } from '@capacitor/core';
+import { PrintDestination } from '../domain/models/render-context.model';
 
 @Injectable({
   providedIn: 'root'
@@ -29,6 +31,7 @@ export class TicketService {
   private rendererFactory = inject(RendererFactory);
   private pdfShareAdapter = inject(PdfShareAdapter);
   private bluetoothDeviceService = inject(BluetoothDeviceService);
+  private rawBtPrinter = inject(RawBtPrinterAdapter);
   private whatsappRenderer = new WhatsappTicketRenderer();
   private htmlRenderer = new HtmlTicketRenderer();
   private escPosRenderer = new EscPosTicketRenderer();
@@ -57,6 +60,21 @@ export class TicketService {
     return this.bluetoothDeviceService.disconnectPrinter();
   }
 
+  // --- Preferencia de Método de Impresión Persistente ---
+
+  getPreferredPrinter(): 'rawbt' | 'bluetooth' | 'web' {
+    if (!isPlatformBrowser(this.platformId)) return 'web';
+    const isNative = Capacitor.isNativePlatform();
+    const saved = localStorage.getItem('nordikos_preferred_printer');
+    if (saved === 'rawbt' || saved === 'bluetooth' || saved === 'web') return saved;
+    return isNative ? 'rawbt' : 'web';
+  }
+
+  setPreferredPrinter(printer: 'rawbt' | 'bluetooth' | 'web'): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    localStorage.setItem('nordikos_preferred_printer', printer);
+  }
+
   // --- Fachada de Aplicación Documental ---
 
   async getTicketData(orderId: number): Promise<TicketData | null> {
@@ -77,13 +95,21 @@ export class TicketService {
   async printOrder(orderId: number, type: TicketDocumentType = 'account'): Promise<PrintJob> {
     const isNative = Capacitor.isNativePlatform();
     const policy = type === 'kitchen' ? KitchenOrderPolicy : CustomerAccountPolicy;
-    return this.printTicketUseCase.execute(orderId, { policy, isNative });
+    const preferred = this.getPreferredPrinter();
+    const destination: PrintDestination = preferred === 'rawbt' ? 'rawbt' : (preferred === 'bluetooth' ? 'bluetooth' : 'web');
+    return this.printTicketUseCase.execute(orderId, { policy, destination, isNative });
   }
 
   async printTicket(data?: TicketData, type: 'account' | 'kitchen' = 'account', element?: HTMLElement | null) {
     if (!isPlatformBrowser(this.platformId)) return;
 
     const isNative = Capacitor.isNativePlatform();
+    const preferred = this.getPreferredPrinter();
+
+    if (isNative && data && preferred === 'rawbt') {
+      await this.printTicketRawBt(data, type);
+      return;
+    }
 
     if (isNative && data) {
       try {
@@ -152,6 +178,19 @@ export class TicketService {
       this.bluetoothDeviceService.isBluetoothConnected.set(false);
       this.bluetoothDeviceService.connectionState.set('error');
       this.bluetoothDeviceService.errorMessage.set('Se perdió la comunicación con la impresora térmica.');
+      throw err;
+    }
+  }
+
+  async printTicketRawBt(data: TicketData, type: 'account' | 'kitchen' = 'account') {
+    try {
+      const printable = LegacyTicketMapper.toPrintableOrder(data);
+      const policy = type === 'kitchen' ? KitchenOrderPolicy : CustomerAccountPolicy;
+      const document = TicketDocumentBuilder.build(printable, { policy });
+      const output = this.escPosRenderer.render(document, { profile: 'pos58', destination: 'bluetooth' });
+      await this.rawBtPrinter.print(output);
+    } catch (err) {
+      this.logger.error('Error sending ticket to RawBT', err, 'TicketService');
       throw err;
     }
   }

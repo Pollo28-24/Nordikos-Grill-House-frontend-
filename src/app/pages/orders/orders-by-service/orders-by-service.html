@@ -252,6 +252,7 @@
           [currentTime]="currentTime()"
           (toggleActive)="toggleActiveOrderMobile(o.id)"
           (printTicket)="printQuickTicket(o.id, $event)"
+          (shareTicketPDF)="shareOrderTicketPDF(o.id)"
           (viewDetail)="navigateToOrderDetail(o)"
           (updateStatus)="updateOrderStatus(o, $event)"
           (updatePaymentStatus)="updatePaymentStatus(o, $event)"
