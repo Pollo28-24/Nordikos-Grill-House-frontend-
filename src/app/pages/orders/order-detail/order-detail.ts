@@ -322,7 +322,7 @@ export class OrderDetail implements OnInit {
     this.router.navigate(['/orders']);
   }
 
-  openTicket(type: 'account' | 'kitchen', autoPrint = true) {
+  openTicket(type: 'account' | 'kitchen', autoPrint = false) {
     this.ticketType.set(type);
     this.autoPrint.set(autoPrint);
     this.showTicket.set(true);

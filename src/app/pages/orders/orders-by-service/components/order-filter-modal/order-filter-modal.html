@@ -1,0 +1,253 @@
+@if (isOpen()) {
+  <!-- Overlay Backdrop con difuminado suave -->
+  <div 
+    class="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center sm:p-4 bg-black/80 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+    (click)="onBackdropClick()"
+    role="presentation">
+
+    <!-- Contenedor del Modal / Dialog / Bottom Sheet (Mobile-First) -->
+    <div 
+      #modalContainer
+      (click)="$event.stopPropagation()"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="order-filter-modal-title"
+      class="w-full sm:max-w-[540px] max-h-[85vh] sm:max-h-[88vh] flex flex-col rounded-t-[24px] sm:rounded-[24px] bg-[#18181A] border-t sm:border border-white/10 shadow-2xl overflow-hidden animate-in slide-in-from-bottom sm:slide-in-from-bottom-2 sm:zoom-in-95 duration-200 outline-none"
+      tabindex="-1">
+
+      <!-- ========================================== -->
+      <!-- 1. HANDLE BAR (Solo en bottom-sheet móvil) -->
+      <!-- ========================================== -->
+      <div class="pt-3 pb-1 shrink-0 sm:hidden flex justify-center">
+        <div class="w-12 h-1.5 rounded-full bg-zinc-700/80"></div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 2. HEADER: Título, Badge, Limpiar y Cerrar -->
+      <!-- ========================================== -->
+      <header class="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/10 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <h2 id="order-filter-modal-title" class="text-lg font-semibold text-white tracking-normal">
+            Filtros
+          </h2>
+          @if (activeFiltersCount() > 0) {
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#FFB300]/15 text-[#FFB300] border border-[#FFB300]/30 animate-in zoom-in-75 duration-150">
+              {{ activeFiltersCount() }}
+            </span>
+          }
+        </div>
+
+        <div class="flex items-center gap-3">
+          @if (hasActiveFilters()) {
+            <button 
+              type="button"
+              (click)="clearAllFilters.emit()"
+              class="text-xs font-medium text-zinc-400 hover:text-amber-400 active:text-amber-300 transition-colors cursor-pointer py-1 px-1.5 rounded-[8px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300]/50">
+              Limpiar
+            </button>
+          }
+          <button 
+            type="button"
+            (click)="close.emit()"
+            aria-label="Cerrar modal de filtros"
+            class="w-8 h-8 rounded-full bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300]">
+            <lucide-icon name="x" class="w-4 h-4" />
+          </button>
+        </div>
+      </header>
+
+      <!-- ========================================== -->
+      <!-- 3. BODY SCROLLEABLE (Escala 4/8 estricta) -->
+      <!-- ========================================== -->
+      <div class="overflow-y-auto px-4 sm:px-6 py-5 sm:py-6 space-y-6 flex-1 overscroll-contain">
+        
+        <!-- SECCIÓN 1: PERIODO -->
+        <section class="space-y-2.5" role="radiogroup" aria-label="Filtro de periodo">
+          <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400 block">
+            Periodo
+          </span>
+
+          <!-- Segmented Control Compacto de una sola fila -->
+          <div class="grid grid-cols-4 p-1 gap-1 rounded-[12px] bg-zinc-900/90 border border-white/10">
+            @for (period of periodOptions; track period.value) {
+              <button 
+                type="button"
+                (click)="setDateFilter.emit(period.value)"
+                role="radio"
+                [attr.aria-checked]="dateFilterType() === period.value"
+                [class.bg-[#FFB300]]="dateFilterType() === period.value"
+                [class.text-zinc-950]="dateFilterType() === period.value"
+                [class.font-semibold]="dateFilterType() === period.value"
+                [class.shadow-sm]="dateFilterType() === period.value"
+                [class.text-zinc-400]="dateFilterType() !== period.value"
+                [class.hover:text-zinc-200]="dateFilterType() !== period.value"
+                [class.hover:bg-white/[0.04]]="dateFilterType() !== period.value"
+                class="h-9 min-h-[36px] sm:min-h-0 rounded-[8px] text-xs sm:text-sm font-medium transition-all duration-150 active:scale-[0.98] cursor-pointer flex items-center justify-center truncate px-1 text-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300]">
+                {{ period.label }}
+              </button>
+            }
+          </div>
+
+          <!-- Selector de Fechas Personalizado (Despliegue suave) -->
+          @if (dateFilterType() === 'custom') {
+            <div class="mt-3 p-3.5 sm:p-4 rounded-[12px] bg-white/[0.02] border border-white/10 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="space-y-1.5">
+                  <label for="filter-date-start" class="text-xs text-zinc-400 font-medium block">
+                    Desde
+                  </label>
+                  <input 
+                    id="filter-date-start"
+                    type="date" 
+                    [value]="customStartDate()" 
+                    (change)="customStartChange.emit($any($event.target).value)"
+                    class="block w-full h-10 bg-zinc-900 border border-white/10 rounded-[12px] px-3 text-sm text-white outline-none focus:border-[#FFB300]/60 focus:ring-1 focus:ring-[#FFB300]/40 transition scheme-dark">
+                </div>
+                <div class="space-y-1.5">
+                  <label for="filter-date-end" class="text-xs text-zinc-400 font-medium block">
+                    Hasta
+                  </label>
+                  <input 
+                    id="filter-date-end"
+                    type="date" 
+                    [value]="customEndDate()" 
+                    (change)="customEndChange.emit($any($event.target).value)"
+                    class="block w-full h-10 bg-zinc-900 border border-white/10 rounded-[12px] px-3 text-sm text-white outline-none focus:border-[#FFB300]/60 focus:ring-1 focus:ring-[#FFB300]/40 transition scheme-dark">
+                </div>
+              </div>
+
+              <button 
+                (click)="applyCustomDate.emit()"
+                type="button"
+                class="w-full sm:w-auto sm:ml-auto h-9 px-4 rounded-[12px] bg-white/[0.08] hover:bg-white/[0.14] active:scale-[0.98] text-xs font-semibold text-white border border-white/15 transition cursor-pointer flex items-center justify-center gap-1.5 ml-auto">
+                <lucide-icon name="calendar" class="w-3.5 h-3.5 text-[#FFB300]" />
+                <span>Aplicar fechas</span>
+              </button>
+            </div>
+          }
+        </section>
+
+        <!-- SECCIÓN 2: ESTADO DEL PEDIDO -->
+        <section class="space-y-2.5" role="group" aria-label="Filtro de estado de pedido">
+          <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400 block">
+            Estado del pedido
+          </span>
+
+          <!-- Cuadrícula simétrica: 'Todas' destacado + 4 estados equilibrados -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <!-- Chip 'Todas' (Ocupa ancho completo en móvil y escritorio para jerarquía y balance) -->
+            <button 
+              type="button"
+              (click)="toggleStatus('all')"
+              [attr.aria-pressed]="isStatusActive('all')"
+              [class.bg-[#FFB300]/15]="isStatusActive('all')"
+              [class.text-[#FFB300]]="isStatusActive('all')"
+              [class.border-[#FFB300]/50]="isStatusActive('all')"
+              [class.font-semibold]="isStatusActive('all')"
+              [class.shadow-[0_0_12px_rgba(255,179,0,0.1)]]="isStatusActive('all')"
+              [class.bg-white/[0.03]]="!isStatusActive('all')"
+              [class.text-zinc-300]="!isStatusActive('all')"
+              [class.border-white/10]="!isStatusActive('all')"
+              [class.hover:border-white/20]="!isStatusActive('all')"
+              [class.hover:bg-white/[0.06]]="!isStatusActive('all')"
+              class="col-span-2 sm:col-span-4 h-10 min-h-[44px] sm:min-h-0 px-3.5 rounded-[12px] text-sm tracking-normal transition-all duration-150 active:scale-[0.98] cursor-pointer flex items-center justify-between border select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300]">
+              <div class="flex items-center gap-2">
+                <lucide-icon name="layers" class="w-4 h-4 shrink-0" [class.text-[#FFB300]]="isStatusActive('all')" [class.text-zinc-400]="!isStatusActive('all')"></lucide-icon>
+                <span>Todas las órdenes</span>
+              </div>
+              @if (isStatusActive('all')) {
+                <lucide-icon name="check" class="w-4 h-4 text-[#FFB300] shrink-0" />
+              }
+            </button>
+
+            <!-- 4 estados en cuadrícula perfecta 2x2 en móvil y 1x4 en tablet/desktop -->
+            @for (chip of orderStatusChips; track chip.value) {
+              <button 
+                type="button"
+                (click)="toggleStatus(chip.value)"
+                [attr.aria-pressed]="isStatusActive(chip.value)"
+                [class.bg-[#FFB300]/15]="isStatusActive(chip.value)"
+                [class.text-[#FFB300]]="isStatusActive(chip.value)"
+                [class.border-[#FFB300]/50]="isStatusActive(chip.value)"
+                [class.font-semibold]="isStatusActive(chip.value)"
+                [class.shadow-[0_0_12px_rgba(255,179,0,0.1)]]="isStatusActive(chip.value)"
+                [class.bg-white/[0.03]]="!isStatusActive(chip.value)"
+                [class.text-zinc-300]="!isStatusActive(chip.value)"
+                [class.border-white/10]="!isStatusActive(chip.value)"
+                [class.hover:border-white/20]="!isStatusActive(chip.value)"
+                [class.hover:bg-white/[0.06]]="!isStatusActive(chip.value)"
+                class="h-10 min-h-[44px] sm:min-h-0 px-3 rounded-[12px] text-sm tracking-normal transition-all duration-150 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border select-none truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300]">
+                <lucide-icon 
+                  [name]="chip.icon" 
+                  class="w-4 h-4 shrink-0 transition-colors"
+                  [class.text-[#FFB300]]="isStatusActive(chip.value)"
+                  [class.text-zinc-400]="!isStatusActive(chip.value)">
+                </lucide-icon>
+                <span class="truncate">{{ chip.label }}</span>
+              </button>
+            }
+          </div>
+        </section>
+
+        <!-- SECCIÓN 3: ESTADO DEL PAGO -->
+        <section class="space-y-2.5" role="group" aria-label="Filtro de estado de pago">
+          <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400 block">
+            Estado del pago
+          </span>
+
+          <!-- 3 columnas uniformes en todos los tamaños -->
+          <div class="grid grid-cols-3 gap-2">
+            @for (chip of paymentStatusChips; track chip.value) {
+              <button 
+                type="button"
+                (click)="togglePayment(chip.value)"
+                [attr.aria-pressed]="isPaymentActive(chip.value)"
+                [class.bg-[#FFB300]/15]="isPaymentActive(chip.value)"
+                [class.text-[#FFB300]]="isPaymentActive(chip.value)"
+                [class.border-[#FFB300]/50]="isPaymentActive(chip.value)"
+                [class.font-semibold]="isPaymentActive(chip.value)"
+                [class.shadow-[0_0_12px_rgba(255,179,0,0.1)]]="isPaymentActive(chip.value)"
+                [class.bg-white/[0.03]]="!isPaymentActive(chip.value)"
+                [class.text-zinc-300]="!isPaymentActive(chip.value)"
+                [class.border-white/10]="!isPaymentActive(chip.value)"
+                [class.hover:border-white/20]="!isPaymentActive(chip.value)"
+                [class.hover:bg-white/[0.06]]="!isPaymentActive(chip.value)"
+                class="h-10 min-h-[44px] sm:min-h-0 px-2 sm:px-3 rounded-[12px] text-sm tracking-normal transition-all duration-150 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 border select-none truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB300]">
+                <lucide-icon 
+                  [name]="chip.icon" 
+                  class="w-4 h-4 shrink-0 transition-colors"
+                  [class.text-[#FFB300]]="isPaymentActive(chip.value)"
+                  [class.text-zinc-400]="!isPaymentActive(chip.value)">
+                </lucide-icon>
+                <span class="truncate">{{ chip.label }}</span>
+              </button>
+            }
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 4. FOOTER FIJO (Sticky) con CTA Dinámico    -->
+      <!-- ========================================== -->
+      <footer class="p-4 sm:p-5 border-t border-white/10 shrink-0 bg-[#18181A] pb-[max(1rem,env(safe-area-inset-bottom))]">
+        @if (filteredCount() > 0) {
+          <button 
+            type="button"
+            (click)="close.emit()"
+            class="w-full h-[52px] sm:h-11 rounded-[12px] bg-[#FFB300] text-zinc-950 font-semibold text-[15px] sm:text-sm tracking-normal hover:brightness-105 active:scale-[0.98] transition shadow-lg shadow-amber-500/15 cursor-pointer flex items-center justify-center gap-2 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+            <span>Ver {{ filteredCount() }} {{ filteredCount() === 1 ? 'orden' : 'órdenes' }}</span>
+          </button>
+        } @else {
+          <button 
+            type="button"
+            disabled
+            class="w-full h-[52px] sm:h-11 rounded-[12px] bg-white/[0.04] text-zinc-500 border border-white/5 font-medium text-[15px] sm:text-sm tracking-normal cursor-not-allowed flex items-center justify-center select-none">
+            <span>Sin órdenes coincidentes</span>
+          </button>
+        }
+      </footer>
+
+    </div>
+  </div>
+}

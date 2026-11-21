@@ -18,6 +18,7 @@ export class OrderCard {
 
   toggleActive = output<void>();
   printTicket = output<'kitchen' | 'account'>();
+  shareTicketPDF = output<void>();
   viewDetail = output<void>();
   updateStatus = output<OrderStatus>();
   updatePaymentStatus = output<PaymentStatus>();

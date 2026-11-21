@@ -26,6 +26,10 @@
   /* El contenedor del modal y sus padres deben ser visibles y sin fondos oscuros */
   div.fixed.inset-0 {
     position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
     display: block !important;
     background: white !important;
     width: 58mm !important;
@@ -34,10 +38,13 @@
     padding: 0 !important;
     margin: 0 !important;
     overflow: visible !important;
+    box-shadow: none !important;
   }
 
   div.relative {
     position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
     display: block !important;
     background: white !important;
     width: 58mm !important;
@@ -54,11 +61,14 @@
 
   .ticket {
     display: block !important;
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 58mm !important;
     height: auto !important;
     min-height: 0 !important;
     margin: 0 !important;
-    padding: 4mm 4mm 2mm 4mm !important;
+    padding: 2mm 3mm !important;
     background: white !important;
     color: black !important;
     border: none !important;
@@ -69,11 +79,11 @@
 
   .ticket * {
     color: black !important;
+    background: transparent !important;
   }
 
   @page {
-    size: 58mm auto;
-    margin: 0;
+    margin: 2mm;
   }
 }
 
@@ -406,84 +416,6 @@
   margin: 0;
 }
 
-/* Print Specific Styles */
-@media print {
-  @page {
-    size: 58mm auto;
-    margin: 0;
-  }
-
-  /* 1. RESET DE PÁGINA PARA NITIDEZ MÁXIMA */
-  html, body {
-    width: 58mm !important;
-    height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: white !important;
-    overflow: visible !important;
-    zoom: 100% !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    
-    /* 🔥 ELIMINAR SUAVIZADO DE FUENTE (Antialiasing) */
-    -webkit-font-smoothing: none !important;
-    -moz-osx-font-smoothing: grayscale !important;
-    text-rendering: crispEdges !important;
-  }
-
-  /* 2. ESTRATEGIA DE OCULTACIÓN LIMPIA */
-  app-navbar, 
-  .navbar, 
-  .no-print, 
-  .print-actions, 
-  button, 
-  header, 
-  nav,
-  .min-h-screen, 
-  .fixed:not([class*="print:bg-white"]), 
-  .absolute:not(.ticket) {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    overflow: hidden !important;
-  }
-
-  /* 3. EL TICKET */
-  .ticket {
-    display: block !important;
-    position: relative !important;
-    width: 58mm !important;
-    max-width: 58mm !important;
-    margin: 0 !important;
-    padding: 1mm !important;
-    box-sizing: border-box !important;
-    background: white !important;
-    color: #000 !important;
-    font-family: monospace !important;
-    
-    page-break-after: avoid !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  .ticket * {
-    visibility: visible !important;
-    color: #000 !important;
-  }
-
-  .kitchen-ticket {
-    font-family: Arial, sans-serif !important;
-  }
-
-  app-root, main, .relative {
-    display: block !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 58mm !important;
-    position: static !important;
-  }
-}
-
 .print-actions {
   margin-top: 20px;
   text-align: center;
@@ -508,12 +440,6 @@
   text-align: center;
   padding: 20px;
   color: #888;
-}
-
-@media print {
-  .loading {
-    display: none !important;
-  }
 }
 
 /* Estilos para el panel de Bluetooth en previsualización */

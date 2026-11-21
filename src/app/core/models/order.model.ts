@@ -75,7 +75,11 @@ export interface OrderItemSimple {
   modificadores: OrderItemModifier[];
 }
 
-export interface OrderListItem {
+/**
+ * DTO liviano optimizado para listados, tableros y tarjetas de alto rendimiento.
+ * No incluye ítems ni modificadores para minimizar la transferencia de red.
+ */
+export interface OrderSummary {
   id: number;
   numero_orden?: number;
   nota_general?: string;
@@ -89,6 +93,17 @@ export interface OrderListItem {
   turno_id: number | null;
   cliente_nombre: string;
   tipo_servicio_nombre: string;
+}
+
+/**
+ * Alias retrocompatible para el listado de órdenes.
+ */
+export type OrderListItem = OrderSummary;
+
+/**
+ * DTO completo con árbol documental de ítems y modificadores para vista de detalle e impresión.
+ */
+export interface OrderDetailDto extends OrderSummary {
   order_items: OrderItemSimple[];
 }
 

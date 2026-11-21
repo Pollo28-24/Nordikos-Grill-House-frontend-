@@ -48,7 +48,7 @@
 
 <!-- Barra de Acción Contextual Fija para Móviles / Tablets (POS Sticky Action Bar) -->
 @if (order() && order()?.estado_pedido !== 'cancelado') {
-  <div class="fixed bottom-0 left-0 right-0 z-40 bg-[#1A1A1A]/95 backdrop-blur-md border-t border-white/10 px-4 py-3 shadow-[0_-8px_25px_rgba(0,0,0,0.6)] animate-in slide-in-from-bottom-3 duration-300">
+  <div class="fixed bottom-0 left-0 right-0 z-40 bg-[#1A1A1A]/95 backdrop-blur-md border-t border-white/10 px-4 py-3 shadow-[0_-8px_25px_rgba(0,0,0,0.6)] animate-in slide-in-from-bottom-3 duration-300 no-print">
     <div class="max-w-4xl mx-auto flex items-center justify-between gap-4">
       
       <!-- Total a Pagar Resumido -->
