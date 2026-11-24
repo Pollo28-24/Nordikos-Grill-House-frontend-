@@ -1,8 +1,77 @@
-import { Injectable, signal, computed, effect } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject, signal, computed, effect } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Product, ProductVariant, CartCustomization } from '../models/product.model';
 import { CartItem, normalizeCartItem, OrderCreateModifier } from '../models/order.model';
 
 export type { CartItem };
+
+export const PUBLIC_CART_STORAGE_KEY = 'nordikos_public_cart';
+export const PUBLIC_CART_SCHEMA_VERSION = 2 as const;
+
+export interface PersistedPublicCartV2 {
+  readonly version: typeof PUBLIC_CART_SCHEMA_VERSION;
+  readonly items: CartItem[];
+}
+
+function isFiniteNonNegative(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+function isValidCartItemV2(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return false;
+  }
+  const item = raw as Record<string, unknown>;
+  const hasId = typeof item['cart_item_id'] === 'string' && item['cart_item_id'].length > 0;
+  const hasProdId =
+    (typeof item['producto_id'] === 'string' && item['producto_id'].length > 0) ||
+    (typeof item['producto_id'] === 'number' && Number.isFinite(item['producto_id']));
+  const hasName = typeof item['nombre_producto'] === 'string' && item['nombre_producto'].length > 0;
+  const hasValidQty =
+    typeof item['cantidad'] === 'number' && Number.isFinite(item['cantidad']) && item['cantidad'] >= 1;
+  const hasValidMods = item['modificadores'] === undefined || Array.isArray(item['modificadores']);
+
+  return (
+    hasId &&
+    hasProdId &&
+    hasName &&
+    hasValidQty &&
+    hasValidMods &&
+    isFiniteNonNegative(item['precio_base']) &&
+    isFiniteNonNegative(item['precio_modificadores']) &&
+    isFiniteNonNegative(item['precio_total_unitario'])
+  );
+}
+
+/**
+ * Parsea y valida el carrito guardado en localStorage.
+ * Solo acepta el sobre versionado v2 ({ version: 2, items }) y descarta
+ * carritos sin versión, con versión desconocida, JSON corrupto o ítems inválidos
+ * en lugar de intentar reconstruir precios heredados.
+ */
+export function parsePersistedPublicCart(raw: string | null): CartItem[] {
+  if (!raw) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown> | null;
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      Array.isArray(parsed) ||
+      parsed['version'] !== PUBLIC_CART_SCHEMA_VERSION ||
+      !Array.isArray(parsed['items'])
+    ) {
+      return [];
+    }
+
+    return parsed['items']
+      .filter(isValidCartItemV2)
+      .map(item => normalizeCartItem(item));
+  } catch {
+    return [];
+  }
+}
 
 function areModifiersEqual(a: OrderCreateModifier[], b: OrderCreateModifier[]): boolean {
   if (a.length !== b.length) return false;
@@ -19,7 +88,8 @@ function areModifiersEqual(a: OrderCreateModifier[], b: OrderCreateModifier[]): 
   providedIn: 'root'
 })
 export class PublicCartService {
-  private readonly STORAGE_KEY = 'nordikos_public_cart';
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly STORAGE_KEY = PUBLIC_CART_STORAGE_KEY;
 
   // Signals for state management
   private _items = signal<CartItem[]>([]);
@@ -36,23 +106,19 @@ export class PublicCartService {
   );
 
   constructor() {
-    // Load from local storage if available with backward-compatible normalization
-    if (typeof window !== 'undefined') {
+    if (isPlatformBrowser(this.platformId)) {
       const saved = localStorage.getItem(this.STORAGE_KEY);
       if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            this._items.set(parsed.map(i => normalizeCartItem(i)));
-          }
-        } catch (e) {
-          console.error('Error parsing cart from storage', e);
-        }
+        this._items.set(parsePersistedPublicCart(saved));
       }
 
-      // Save to local storage whenever items change
+      // Save versioned schema to local storage whenever items change
       effect(() => {
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this._items()));
+        const envelope: PersistedPublicCartV2 = {
+          version: PUBLIC_CART_SCHEMA_VERSION,
+          items: this._items(),
+        };
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(envelope));
       });
     }
   }
