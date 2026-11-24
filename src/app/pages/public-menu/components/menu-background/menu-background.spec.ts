@@ -1,7 +1,15 @@
+import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MenuBackground } from './menu-background';
 
 describe('MenuBackground', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MenuBackground],
+      providers: [provideZonelessChangeDetection()],
+    }).compileComponents();
+  });
+
   it('es decorativo (aria-hidden) y renderiza 12 brasas', () => {
     const fixture = TestBed.createComponent(MenuBackground);
     fixture.detectChanges();
