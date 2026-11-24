@@ -5,7 +5,7 @@
 >
 
   <!-- DISPONIBILIDAD OVERLAY (z-20 para tapar foto y etiqueta z-[5]) -->
-  @if (product().disponible === false) {
+  @if (isUnavailable()) {
     <div class="absolute inset-0 z-20 bg-[#14100c]/70 backdrop-blur-[1px] flex items-center justify-center p-4">
       <span class="bg-zinc-950/90 text-amber-200 border border-amber-500/30 text-[11px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-widest shadow-2xl">
         Agotado
@@ -14,14 +14,14 @@
   }
 
   <!-- INSIGNIA DE DESCUENTO (top-2 right-2, z-10) -->
-  @if (priceInfo().hasDiscount) {
+  @if (!isUnavailable() && priceInfo().hasDiscount) {
     <div class="absolute top-2 right-2 bg-gradient-to-r from-red-600 to-amber-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-lg z-10 border border-white/20 tabular-nums">
       -{{ priceInfo().discount | currencyMxn }}
     </div>
   }
 
   <!-- CONTENEDOR DE FOTO / PLACEHOLDER -->
-  <div class="relative aspect-square overflow-hidden bg-stone-900" [class.grayscale]="product().disponible === false">
+  <div class="relative aspect-square overflow-hidden bg-stone-900" [class.grayscale]="isUnavailable()">
     @if (product().imagen_url) {
       <img 
         [src]="product().imagen_url" 
@@ -53,29 +53,36 @@
 
     <!-- ETIQUETA DE PRECIO SOBRE LA FOTO (FASE 3b: z-[5], esquina inferior derecha) -->
     @if (dark()) {
-      <div class="absolute bottom-2 right-2 z-[5] max-w-[calc(100%-1rem)] pointer-events-none">
-        <div class="inline-flex items-baseline gap-1 px-2.5 py-1 rounded-full bg-[rgba(20,16,12,0.88)] border border-[rgba(255,176,102,0.25)] shadow-[0_2px_8px_rgba(0,0,0,0.5)] whitespace-nowrap">
-          @if (priceInfo().isFrom) {
-            <span class="text-[9px] uppercase tracking-wider font-semibold text-[#b8a898] mr-0.5">Desde</span>
-          }
-          @if (priceInfo().hasDiscount) {
-            <del class="text-[10px] text-[#9c8979] font-medium line-through tabular-nums">{{ priceInfo().basePrice | currencyMxn }}</del>
-          }
-          <span class="text-sm sm:text-[15px] font-extrabold text-[#ffb066] tabular-nums tracking-tight">
-            {{ priceInfo().finalPrice | currencyMxn }}
-          </span>
+      @if (priceInfo().finalPrice !== null) {
+        <div class="absolute bottom-2 right-2 z-[5] max-w-[calc(100%-1rem)] pointer-events-none">
+          <div class="inline-flex items-baseline gap-1 px-2.5 py-1 rounded-full bg-[rgba(20,16,12,0.88)] border border-[rgba(255,176,102,0.25)] shadow-[0_2px_8px_rgba(0,0,0,0.5)] whitespace-nowrap">
+            @if (priceInfo().isFrom) {
+              <span class="text-[9px] uppercase tracking-wider font-semibold text-[#b8a898] mr-0.5">Desde</span>
+            }
+            @if (priceInfo().hasDiscount) {
+              <del class="text-[10px] text-[#9c8979] font-medium line-through tabular-nums">{{ priceInfo().basePrice | currencyMxn }}</del>
+            }
+            <span class="text-sm sm:text-[15px] font-extrabold text-[#ffb066] tabular-nums tracking-tight">
+              {{ priceInfo().finalPrice | currencyMxn }}
+            </span>
+          </div>
         </div>
-      </div>
+      }
     } @else {
       <!-- DISEÑO ORIGINAL -->
-      <div class="absolute bottom-2 right-2 bg-[#F8F5EE]/90 backdrop-blur px-2 py-1 rounded-lg shadow-sm flex items-center gap-1.5 z-1">
-        @if ((product().descuento || 0) > 0) {
-          <del class="text-[10px] text-gray-500 font-medium">{{ product().precio | currencyMxn }}</del>
-          <span class="text-xs font-bold text-orange-600">{{ (product().precio || 0) - (product().descuento || 0) | currencyMxn }}</span>
-        } @else {
-          <span class="text-xs font-bold text-orange-600">{{ product().precio | currencyMxn }}</span>
-        }
-      </div>
+      @if (priceInfo().finalPrice !== null) {
+        <div class="absolute bottom-2 right-2 bg-[#F8F5EE]/90 backdrop-blur px-2 py-1 rounded-lg shadow-sm flex items-center gap-1.5 z-1">
+          @if (priceInfo().isFrom) {
+            <span class="text-[9px] uppercase tracking-wider font-semibold text-gray-500">Desde</span>
+          }
+          @if (priceInfo().hasDiscount) {
+            <del class="text-[10px] text-gray-500 font-medium">{{ priceInfo().basePrice | currencyMxn }}</del>
+            <span class="text-xs font-bold text-orange-600">{{ priceInfo().finalPrice | currencyMxn }}</span>
+          } @else {
+            <span class="text-xs font-bold text-orange-600">{{ priceInfo().finalPrice | currencyMxn }}</span>
+          }
+        </div>
+      }
     }
   </div>
 
@@ -101,7 +108,7 @@
       </div>
 
       <!-- PIE: BOTÓN DE ACCIÓN COMPLETO (min-h-11 = 44px táctil accesible) -->
-      @if (product().disponible !== false) {
+      @if (!isUnavailable()) {
         <div class="mt-auto pt-2.5">
           <button 
             type="button"
@@ -145,7 +152,7 @@
         {{ product().descripcion || 'Sin descripción' }}
       </p>
 
-      @if (product().disponible !== false) {
+      @if (!isUnavailable()) {
         <div class="mt-auto flex gap-2 pt-2">
           <button 
             type="button"
