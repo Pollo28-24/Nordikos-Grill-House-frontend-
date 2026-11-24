@@ -44,7 +44,7 @@ export class ProductCard {
   protected buttonLabel = computed(() => {
     if (this.isAdded()) return '¡Agregado!';
     if (this.hasCustomizations()) return 'Personalizar';
-    return 'Ver Detalle';
+    return 'Agregar';
   });
 
   /** Cumple estrictamente la regla de Label in Name para accesibilidad WCAG: "Personalizar Alitas, desde $80.00" */
@@ -77,8 +77,8 @@ export class ProductCard {
 
   hasCustomizations(): boolean {
     const p = this.product();
-    const hasVariants = p.price_type === 'variants' || (p.variants && p.variants.length > 0);
-    const hasModifiers = Boolean(p.modifiers && p.modifiers.length > 0);
+    const hasVariants = p.price_type === 'variants' || Boolean(p.variants && p.variants.length > 0);
+    const hasModifiers = Boolean(p.modifiers && p.modifiers.some(m => m.visible !== false));
     return Boolean(hasVariants || hasModifiers);
   }
 
@@ -86,19 +86,18 @@ export class ProductCard {
     if (this.isUnavailable()) {
       return;
     }
-    this.onAdd.emit(this.product());
-  }
-
-  openDetails(event: MouseEvent): void {
-    event.stopPropagation();
     this.onViewDetails.emit(this.product());
   }
 
-  quickAdd(event: MouseEvent): void {
+  handlePrimaryAction(event: MouseEvent): void {
     event.stopPropagation();
     if (this.isUnavailable()) {
       return;
     }
-    this.onAdd.emit(this.product());
+    if (this.hasCustomizations()) {
+      this.onViewDetails.emit(this.product());
+    } else {
+      this.onAdd.emit(this.product());
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { importProvidersFrom, provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Check, ChevronRight, Flame, LucideAngularModule } from 'lucide-angular';
+import { Check, ChevronRight, Flame, LucideAngularModule, Plus } from 'lucide-angular';
 import { Product } from '@core/models/product.model';
 import { ProductCard } from './product-card';
 
@@ -24,7 +24,7 @@ describe('ProductCard (Hallazgo c: precio desde PricingEngine)', () => {
       imports: [ProductCard],
       providers: [
         provideZonelessChangeDetection(),
-        importProvidersFrom(LucideAngularModule.pick({ Flame, Check, ChevronRight })),
+        importProvidersFrom(LucideAngularModule.pick({ Flame, Check, ChevronRight, Plus })),
       ],
     }).compileComponents();
 
@@ -147,55 +147,138 @@ describe('ProductCard (Hallazgo c: precio desde PricingEngine)', () => {
     expect(addSpy).not.toHaveBeenCalled();
   });
 
-  // Prueba de CARACTERIZACIÓN: fija el comportamiento actual (bug de (d));
-  // a invertir/reemplazar cuando se implemente la decisión de (d).
-  it('CARACTERIZACIÓN (comportamiento actual, a invertir cuando se implemente (d)): clic en tarjeta y quickAdd emiten onAdd; botón inferior emite onViewDetails', () => {
-    const availableProduct: Product = {
-      ...baseProduct,
-      disponible: true,
-      variants: [
-        {
-          id: 'v1',
-          producto_id: 'p-1',
-          nombre: 'Normal',
-          precio: 120,
-          descuento: 0,
-          disponible: true,
-          created_at: '',
-          updated_at: '',
-        },
-      ],
-    };
+  describe('Hallazgo (d): interacción tarjeta vs botón (Sub-regla 1)', () => {
+    it('producto 100% simple: clic en tarjeta abre modal (onViewDetails); botón dice "Agregar" y agrega directo (onAdd)', () => {
+      const simpleProduct: Product = {
+        ...baseProduct,
+        precio: 45,
+        price_type: 'simple',
+        variants: [],
+        modifiers: [],
+        disponible: true,
+      };
 
-    const addSpy = jasmine.createSpy('onAdd');
-    const detailsSpy = jasmine.createSpy('onViewDetails');
-    fixture.componentInstance.onAdd.subscribe(addSpy);
-    fixture.componentInstance.onViewDetails.subscribe(detailsSpy);
+      const addSpy = jasmine.createSpy('onAdd');
+      const detailsSpy = jasmine.createSpy('onViewDetails');
+      fixture.componentInstance.onAdd.subscribe(addSpy);
+      fixture.componentInstance.onViewDetails.subscribe(detailsSpy);
 
-    fixture.componentRef.setInput('product', availableProduct);
-    fixture.componentRef.setInput('dark', true);
-    fixture.detectChanges();
+      fixture.componentRef.setInput('product', simpleProduct);
+      fixture.componentRef.setInput('dark', true);
+      fixture.detectChanges();
 
-    const el = fixture.nativeElement as HTMLElement;
-    const cardRoot = el.firstElementChild as HTMLElement;
-    const actionButton = el.querySelector('button') as HTMLButtonElement;
+      const el = fixture.nativeElement as HTMLElement;
+      const cardRoot = el.firstElementChild as HTMLElement;
+      const actionButton = el.querySelector('button') as HTMLButtonElement;
 
-    // 1. Clic en la tarjeta dispara onAdd (sin abrir detalle)
-    cardRoot.click();
-    expect(addSpy).toHaveBeenCalledTimes(1);
-    expect(addSpy).toHaveBeenCalledWith(availableProduct);
-    expect(detailsSpy).not.toHaveBeenCalled();
+      expect(actionButton.textContent).toContain('Agregar');
 
-    // 2. Clic en el botón inferior dispara onViewDetails (sin propagar a onAdd)
-    actionButton.click();
-    expect(detailsSpy).toHaveBeenCalledTimes(1);
-    expect(detailsSpy).toHaveBeenCalledWith(availableProduct);
-    expect(addSpy).toHaveBeenCalledTimes(1);
+      // 1. Clic en la tarjeta abre el modal (no agrega directo)
+      cardRoot.click();
+      expect(detailsSpy).toHaveBeenCalledTimes(1);
+      expect(detailsSpy).toHaveBeenCalledWith(simpleProduct);
+      expect(addSpy).not.toHaveBeenCalled();
 
-    // 3. quickAdd dispara onAdd (sin abrir detalle)
-    const mockEvent = new MouseEvent('click');
-    fixture.componentInstance.quickAdd(mockEvent);
-    expect(addSpy).toHaveBeenCalledTimes(2);
-    expect(detailsSpy).toHaveBeenCalledTimes(1);
+      // 2. Clic en el botón "Agregar" agrega directo sin abrir el modal
+      actionButton.click();
+      expect(addSpy).toHaveBeenCalledTimes(1);
+      expect(addSpy).toHaveBeenCalledWith(simpleProduct);
+      expect(detailsSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('producto con variantes: tanto tarjeta como botón ("Personalizar") abren el modal (onViewDetails) y nunca emiten onAdd', () => {
+      const variantProduct: Product = {
+        ...baseProduct,
+        disponible: true,
+        variants: [
+          {
+            id: 'v1',
+            producto_id: 'p-1',
+            nombre: 'Normal',
+            precio: 120,
+            descuento: 0,
+            disponible: true,
+            created_at: '',
+            updated_at: '',
+          },
+        ],
+      };
+
+      const addSpy = jasmine.createSpy('onAdd');
+      const detailsSpy = jasmine.createSpy('onViewDetails');
+      fixture.componentInstance.onAdd.subscribe(addSpy);
+      fixture.componentInstance.onViewDetails.subscribe(detailsSpy);
+
+      fixture.componentRef.setInput('product', variantProduct);
+      fixture.componentRef.setInput('dark', true);
+      fixture.detectChanges();
+
+      const el = fixture.nativeElement as HTMLElement;
+      const cardRoot = el.firstElementChild as HTMLElement;
+      const actionButton = el.querySelector('button') as HTMLButtonElement;
+
+      expect(actionButton.textContent).toContain('Personalizar');
+
+      cardRoot.click();
+      expect(detailsSpy).toHaveBeenCalledTimes(1);
+      expect(addSpy).not.toHaveBeenCalled();
+
+      actionButton.click();
+      expect(detailsSpy).toHaveBeenCalledTimes(2);
+      expect(addSpy).not.toHaveBeenCalled();
+    });
+
+    it('Sub-regla 1: producto sin variantes pero con modificador opcional visible abre modal tanto en tarjeta como en botón ("Personalizar")', () => {
+      const optionalModProduct: Product = {
+        ...baseProduct,
+        precio: 65,
+        price_type: 'simple',
+        variants: [],
+        modifiers: [
+          {
+            id: 'm-opt',
+            nombre: 'Queso líquido',
+            precio: 15,
+            visible: true,
+            disponible: true,
+            cantidad_maxima: 3,
+            modificador_categorias: {
+              id: 'cat-opt',
+              nombre: 'Extras opcionales',
+              visible: true,
+              tipo_seleccion: 'CHECKBOX',
+              min_selections: 0,
+              max_selections: 3,
+              obligatorio: false,
+              orden_visual: 1,
+            },
+          },
+        ],
+        disponible: true,
+      };
+
+      const addSpy = jasmine.createSpy('onAdd');
+      const detailsSpy = jasmine.createSpy('onViewDetails');
+      fixture.componentInstance.onAdd.subscribe(addSpy);
+      fixture.componentInstance.onViewDetails.subscribe(detailsSpy);
+
+      fixture.componentRef.setInput('product', optionalModProduct);
+      fixture.componentRef.setInput('dark', true);
+      fixture.detectChanges();
+
+      const el = fixture.nativeElement as HTMLElement;
+      const cardRoot = el.firstElementChild as HTMLElement;
+      const actionButton = el.querySelector('button') as HTMLButtonElement;
+
+      expect(actionButton.textContent).toContain('Personalizar');
+
+      cardRoot.click();
+      expect(detailsSpy).toHaveBeenCalledTimes(1);
+      expect(addSpy).not.toHaveBeenCalled();
+
+      actionButton.click();
+      expect(detailsSpy).toHaveBeenCalledTimes(2);
+      expect(addSpy).not.toHaveBeenCalled();
+    });
   });
 });

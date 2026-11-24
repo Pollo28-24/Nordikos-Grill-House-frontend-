@@ -112,7 +112,7 @@
         <div class="mt-auto pt-2.5">
           <button 
             type="button"
-            (click)="openDetails($event)"
+            (click)="handlePrimaryAction($event)"
             [attr.aria-label]="buttonAriaLabel()"
             class="w-full min-h-11 py-2 px-3 text-xs font-extrabold rounded-xl transition duration-200 active:scale-[0.98] flex items-center justify-center gap-1.5 shadow-xs cursor-pointer select-none touch-manipulation focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
             [class.bg-green-700]="isAdded()"
@@ -133,9 +133,12 @@
             @if (isAdded()) {
               <lucide-icon name="check" class="h-4 w-4"></lucide-icon>
               <span>¡Agregado!</span>
-            } @else {
+            } @else if (hasCustomizations()) {
               <span>{{ buttonLabel() }}</span>
               <lucide-icon name="chevron-right" class="h-3.5 w-3.5 opacity-80" [class.text-orange-500]="buttonVariant() === 'charcoal'"></lucide-icon>
+            } @else {
+              <lucide-icon name="plus" class="h-3.5 w-3.5 opacity-90" [class.text-orange-500]="buttonVariant() === 'charcoal'"></lucide-icon>
+              <span>{{ buttonLabel() }}</span>
             }
           </button>
         </div>
@@ -156,7 +159,7 @@
         <div class="mt-auto flex gap-2 pt-2">
           <button 
             type="button"
-            (click)="openDetails($event)"
+            (click)="handlePrimaryAction($event)"
             class="w-full py-2 text-white text-[11px] font-bold rounded-xl transition active:scale-95 flex items-center justify-center gap-1.5 shadow-sm cursor-pointer select-none touch-manipulation"
             [class.bg-green-600]="isAdded()"
             [class.hover:bg-green-700]="isAdded()"
@@ -170,8 +173,8 @@
               <span>Personalizar</span>
               <lucide-icon name="chevron-right" class="h-3.5 w-3.5"></lucide-icon>
             } @else {
-              <span>Ver Detalle</span>
-              <lucide-icon name="chevron-right" class="h-3.5 w-3.5"></lucide-icon>
+              <lucide-icon name="plus" class="h-3.5 w-3.5"></lucide-icon>
+              <span>Agregar</span>
             }
           </button>
         </div>

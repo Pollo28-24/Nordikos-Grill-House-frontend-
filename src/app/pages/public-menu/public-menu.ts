@@ -153,15 +153,25 @@ export class PublicMenu implements OnInit {
       this.toastService.show(`"${product.nombre}" está agotado por el momento`, 'warning');
       return;
     }
-    const hasVariants = Boolean(product.variants && product.variants.length > 0);
-    const defaultVariant = hasVariants
-      ? product.variants!.find(v => v.disponible !== false)
-      : undefined;
-    if (hasVariants && !defaultVariant) {
-      this.toastService.show(`"${product.nombre}" no tiene presentaciones disponibles`, 'warning');
+    const hasVariants =
+      product.price_type === 'variants' || Boolean(product.variants && product.variants.length > 0);
+    if (hasVariants) {
+      const hasAvailableVariant = Boolean(product.variants?.some(v => v.disponible !== false));
+      if (!hasAvailableVariant) {
+        this.toastService.show(`"${product.nombre}" no tiene presentaciones disponibles`, 'warning');
+        return;
+      }
+      this.openProductDetail(product);
       return;
     }
-    this.cartService.addToCart(product, defaultVariant);
+    const hasVisibleModifiers = Boolean(
+      product.modifiers && product.modifiers.some(m => m.visible !== false)
+    );
+    if (hasVisibleModifiers) {
+      this.openProductDetail(product);
+      return;
+    }
+    this.cartService.addToCart(product);
     this.triggerCartAnimation(product.id);
   }
 
