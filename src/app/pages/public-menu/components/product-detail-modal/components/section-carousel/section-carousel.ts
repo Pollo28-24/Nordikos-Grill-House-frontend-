@@ -79,22 +79,24 @@ import { CustomizationStore } from '../../store/customization.store';
               <div class="grid gap-2.5">
                 @for (v of store.product()?.variants; track v.id) {
                   <div 
-                    (click)="store.selectVariant(v)"
-                    class="w-full p-3.5 sm:p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 shadow-xs cursor-pointer touch-manipulation select-none"
-                    [class.border-orange-500]="store.selectedVariant()?.id === v.id"
-                    [class.bg-orange-50/40]="store.selectedVariant()?.id === v.id"
-                    [class.border-[#E2D7B7]]="store.selectedVariant()?.id !== v.id"
-                    [class.bg-white]="store.selectedVariant()?.id !== v.id"
+                    (click)="v.disponible !== false && store.selectVariant(v)"
+                    class="w-full p-3.5 sm:p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 shadow-xs touch-manipulation select-none"
+                    [class.cursor-pointer]="v.disponible !== false"
+                    [class.cursor-not-allowed]="v.disponible === false"
+                    [class.border-orange-500]="v.disponible !== false && store.selectedVariant()?.id === v.id"
+                    [class.bg-orange-50/40]="v.disponible !== false && store.selectedVariant()?.id === v.id"
+                    [class.border-[#E2D7B7]]="v.disponible === false || store.selectedVariant()?.id !== v.id"
+                    [class.bg-white]="v.disponible !== false && store.selectedVariant()?.id !== v.id"
                     [class.opacity-40]="v.disponible === false"
                   >
                     <div class="flex items-center gap-3 min-w-0">
                       <div 
                         class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors shrink-0"
-                        [class.border-orange-500]="store.selectedVariant()?.id === v.id"
-                        [class.bg-orange-500]="store.selectedVariant()?.id === v.id"
-                        [class.border-gray-300]="store.selectedVariant()?.id !== v.id"
+                        [class.border-orange-500]="v.disponible !== false && store.selectedVariant()?.id === v.id"
+                        [class.bg-orange-500]="v.disponible !== false && store.selectedVariant()?.id === v.id"
+                        [class.border-gray-300]="v.disponible === false || store.selectedVariant()?.id !== v.id"
                       >
-                        @if (store.selectedVariant()?.id === v.id) {
+                        @if (v.disponible !== false && store.selectedVariant()?.id === v.id) {
                           <div class="w-2 h-2 rounded-full bg-white"></div>
                         }
                       </div>
@@ -107,7 +109,11 @@ import { CustomizationStore } from '../../store/customization.store';
                     </div>
 
                     <div class="flex items-center gap-1.5 shrink-0">
-                      @if (v.descuento && v.descuento > 0) {
+                      @if (v.disponible === false) {
+                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                          Agotado
+                        </span>
+                      } @else if (v.descuento && v.descuento > 0) {
                         <span class="font-black text-xs sm:text-sm text-orange-600 tabular-nums">
                           {{ (v.precio - v.descuento) | currencyMxn }}
                         </span>

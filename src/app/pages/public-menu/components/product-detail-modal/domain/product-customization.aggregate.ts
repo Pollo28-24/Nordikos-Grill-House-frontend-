@@ -21,12 +21,12 @@ export class ProductCustomization {
     this.productId = product.id;
     this._product = product;
 
-    // Inicializar primera variante si existe
+    // Inicializar primera variante disponible si existe
     if (product.variants && product.variants.length > 0) {
-      this._selectedVariant = product.variants[0];
+      this._selectedVariant = product.variants.find(v => v.disponible !== false) ?? null;
     }
 
-    // Preseleccionar opciones RADIO obligatorias que contengan exactamente 1 opción
+    // Preseleccionar la primera opción visible y disponible en categorías RADIO obligatorias
     if (product.modifiers && product.modifiers.length > 0) {
       const preselected = new Map<string | number, Map<string | number, SelectedModifierItem>>();
       
@@ -41,7 +41,8 @@ export class ProductCustomization {
 
       groups.forEach(({ cat, items }) => {
         if (cat.tipo_seleccion === 'RADIO' && cat.obligatorio && items.length > 0) {
-          const first = items[0];
+          const first = items.find(m => m.visible !== false && m.disponible !== false);
+          if (!first) return;
           const catMap = new Map<string | number, SelectedModifierItem>();
           catMap.set(first.id, {
             modifierId: first.id,
@@ -84,10 +85,16 @@ export class ProductCustomization {
   // Operaciones de Dominio (Mutaciones seguras con nuevas referencias para reactividad)
 
   selectVariant(variant: ProductVariant | null): void {
+    if (variant && variant.disponible === false) {
+      return;
+    }
     this._selectedVariant = variant;
   }
 
   selectRadioModifier(cat: ModifierCategory, mod: Modifier): void {
+    if (mod.disponible === false || mod.visible === false) {
+      return;
+    }
     const nextModifiers = new Map(this._selectedModifiers);
     const catMap = new Map<string | number, SelectedModifierItem>();
 
@@ -117,6 +124,9 @@ export class ProductCustomization {
     if (catMap.has(mod.id)) {
       catMap.delete(mod.id);
     } else {
+      if (mod.disponible === false || mod.visible === false) {
+        return;
+      }
       // Invariante: no exceder max_selections
       if (catMap.size >= cat.max_selections) {
         return;
@@ -142,6 +152,9 @@ export class ProductCustomization {
   }
 
   updateStepperModifier(cat: ModifierCategory, mod: Modifier, delta: number): void {
+    if (delta > 0 && (mod.disponible === false || mod.visible === false)) {
+      return;
+    }
     const nextModifiers = new Map(this._selectedModifiers);
     const catMap = new Map(nextModifiers.get(cat.id) || new Map());
     const currentItem = catMap.get(mod.id);

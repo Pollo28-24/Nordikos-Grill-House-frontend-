@@ -107,7 +107,7 @@ export class CustomizationStore {
     // Sección A: Presentación / Variantes
     if (p.variants && p.variants.length > 0) {
       const variant = this.selectedVariant();
-      const isComplete = Boolean(variant);
+      const isComplete = Boolean(variant && variant.disponible !== false);
       list.push({
         id: 'variants',
         title: 'Presentación',
@@ -182,13 +182,13 @@ export class CustomizationStore {
   // Comandos que delegan en el Aggregate Root y sincronizan las Signals
 
   selectVariant(variant: ProductVariant): void {
-    if (!this.aggregate) return;
+    if (!this.aggregate || variant.disponible === false) return;
     this.aggregate.selectVariant(variant);
     this.selectedVariant.set(this.aggregate.selectedVariant);
   }
 
   selectRadioModifier(cat: ModifierCategory, mod: Modifier): void {
-    if (!this.aggregate) return;
+    if (!this.aggregate || mod.disponible === false || mod.visible === false) return;
     this.aggregate.selectRadioModifier(cat, mod);
     this.selectedModifiers.set(new Map(this.aggregate.selectedModifiers));
   }
@@ -197,6 +197,10 @@ export class CustomizationStore {
     if (!this.aggregate) return;
     const catMap = this.aggregate.selectedModifiers.get(cat.id);
     const isAlreadySelected = Boolean(catMap?.has(mod.id));
+
+    if (!isAlreadySelected && (mod.disponible === false || mod.visible === false)) {
+      return;
+    }
 
     if (!isAlreadySelected && catMap && catMap.size >= cat.max_selections) {
       this.toastService.show(
@@ -212,6 +216,9 @@ export class CustomizationStore {
 
   updateStepperModifier(cat: ModifierCategory, mod: Modifier, delta: number): void {
     if (!this.aggregate) return;
+    if (delta > 0 && (mod.disponible === false || mod.visible === false)) {
+      return;
+    }
     const catMap = this.aggregate.selectedModifiers.get(cat.id);
     const currentQty = catMap?.get(mod.id)?.cantidad || 0;
     const itemMax = Number(mod.cantidad_maxima || 1);

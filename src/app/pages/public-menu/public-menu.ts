@@ -17,6 +17,7 @@ import { Product, CartCustomization } from '@core/models/product.model';
 import { ActivatedRoute } from '@angular/router';
 import { CurrencyMxnPipe } from '@shared/pipes/currency-mxn.pipe';
 import { ClientOrdersService } from '@core/services/client-orders.service';
+import { ToastService } from '@core/services/toast.service';
 import { MenuBackground, MENU_BACKGROUND_ENABLED } from './components/menu-background/menu-background';
 
 @Component({
@@ -45,6 +46,7 @@ export class PublicMenu implements OnInit {
   public productsService = inject(ProductsService);
   public cartService = inject(PublicCartService);
   public clientOrdersService = inject(ClientOrdersService);
+  private toastService = inject(ToastService);
   private meta = inject(Meta);
   private title = inject(Title);
   private route = inject(ActivatedRoute);
@@ -147,7 +149,18 @@ export class PublicMenu implements OnInit {
   }
 
   addFromCard(product: Product) {
-    const defaultVariant = product.variants && product.variants.length > 0 ? product.variants[0] : undefined;
+    if (product.disponible === false) {
+      this.toastService.show(`"${product.nombre}" está agotado por el momento`, 'warning');
+      return;
+    }
+    const hasVariants = Boolean(product.variants && product.variants.length > 0);
+    const defaultVariant = hasVariants
+      ? product.variants!.find(v => v.disponible !== false)
+      : undefined;
+    if (hasVariants && !defaultVariant) {
+      this.toastService.show(`"${product.nombre}" no tiene presentaciones disponibles`, 'warning');
+      return;
+    }
     this.cartService.addToCart(product, defaultVariant);
     this.triggerCartAnimation(product.id);
   }

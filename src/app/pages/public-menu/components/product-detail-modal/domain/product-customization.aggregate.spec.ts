@@ -93,4 +93,181 @@ describe('ProductCustomization Aggregate Root', () => {
     expect(snapshot.modifiers.length).toBe(1);
     expect(snapshot.pricing.finalTotal).toBe(100);
   });
+
+  describe('Hallazgo (a): variantes y modificadores agotados u ocultos', () => {
+    it('debe preseleccionar la primera variante disponible cuando variants[0] está agotada', () => {
+      const productWithFirstUnavailable: Product = {
+        ...dummyProduct,
+        variants: [
+          { id: 'v1', producto_id: '1', nombre: 'Chica', precio: 100, disponible: false, created_at: '', updated_at: '' },
+          { id: 'v2', producto_id: '1', nombre: 'Grande', precio: 150, disponible: true, created_at: '', updated_at: '' }
+        ]
+      };
+
+      const aggregate = new ProductCustomization(productWithFirstUnavailable);
+      expect(aggregate.selectedVariant?.id).toBe('v2');
+    });
+
+    it('debe dejar selectedVariant en null cuando todas las variantes están agotadas', () => {
+      const productAllUnavailable: Product = {
+        ...dummyProduct,
+        variants: [
+          { id: 'v1', producto_id: '1', nombre: 'Chica', precio: 100, disponible: false, created_at: '', updated_at: '' },
+          { id: 'v2', producto_id: '1', nombre: 'Grande', precio: 150, disponible: false, created_at: '', updated_at: '' }
+        ]
+      };
+
+      const aggregate = new ProductCustomization(productAllUnavailable);
+      expect(aggregate.selectedVariant).toBeNull();
+    });
+
+    it('selectVariant debe rechazar una variante con disponible: false', () => {
+      const aggregate = new ProductCustomization(dummyProduct);
+      const unavailableVariant = {
+        id: 'v-off',
+        producto_id: '1',
+        nombre: 'Agotada',
+        precio: 180,
+        disponible: false,
+        created_at: '',
+        updated_at: ''
+      };
+
+      aggregate.selectVariant(unavailableVariant);
+      expect(aggregate.selectedVariant?.id).toBe('v1');
+    });
+
+    it('constructor no debe preseleccionar un modificador RADIO obligatorio agotado u oculto', () => {
+      const modAgotado: Modifier = {
+        id: 't-off',
+        nombre: 'Azul',
+        precio: 0,
+        visible: true,
+        disponible: false,
+        cantidad_maxima: 1,
+        modificador_categorias: radioCategory
+      };
+      const modOculto: Modifier = {
+        id: 't-hidden',
+        nombre: 'Interno',
+        precio: 0,
+        visible: false,
+        disponible: true,
+        cantidad_maxima: 1,
+        modificador_categorias: radioCategory
+      };
+      const modDisponible: Modifier = {
+        id: 't-ok',
+        nombre: 'Término Medio',
+        precio: 0,
+        visible: true,
+        disponible: true,
+        cantidad_maxima: 1,
+        modificador_categorias: radioCategory
+      };
+
+      const productWithMods: Product = {
+        ...dummyProduct,
+        modifiers: [modAgotado, modOculto, modDisponible]
+      };
+
+      const aggregate = new ProductCustomization(productWithMods);
+      expect(aggregate.isModifierSelected('cat-termino', 't-off')).toBeFalse();
+      expect(aggregate.isModifierSelected('cat-termino', 't-hidden')).toBeFalse();
+      expect(aggregate.isModifierSelected('cat-termino', 't-ok')).toBeTrue();
+
+      const productAllModsUnavailable: Product = {
+        ...dummyProduct,
+        modifiers: [modAgotado, modOculto]
+      };
+      const aggregateNone = new ProductCustomization(productAllModsUnavailable);
+      expect(aggregateNone.getCategorySelectedCount('cat-termino')).toBe(0);
+    });
+
+    it('selectRadioModifier debe rechazar modificadores agotados u ocultos', () => {
+      const unavailableMod: Modifier = {
+        id: 'm-off',
+        nombre: 'Agotado',
+        precio: 20,
+        visible: true,
+        disponible: false,
+        cantidad_maxima: 3
+      };
+      const hiddenMod: Modifier = {
+        id: 'm-hidden',
+        nombre: 'Oculto',
+        precio: 15,
+        visible: false,
+        disponible: true,
+        cantidad_maxima: 3
+      };
+
+      const aggregate = new ProductCustomization(dummyProduct);
+
+      aggregate.selectRadioModifier(radioCategory, unavailableMod);
+      aggregate.selectRadioModifier(radioCategory, hiddenMod);
+      expect(aggregate.getCategorySelectedCount('cat-termino')).toBe(0);
+    });
+
+    it('toggleCheckboxModifier debe rechazar modificadores agotados u ocultos', () => {
+      const unavailableMod: Modifier = {
+        id: 'm-off',
+        nombre: 'Agotado',
+        precio: 20,
+        visible: true,
+        disponible: false,
+        cantidad_maxima: 3
+      };
+      const hiddenMod: Modifier = {
+        id: 'm-hidden',
+        nombre: 'Oculto',
+        precio: 15,
+        visible: false,
+        disponible: true,
+        cantidad_maxima: 3
+      };
+
+      const aggregate = new ProductCustomization(dummyProduct);
+
+      aggregate.toggleCheckboxModifier(checkCategory, unavailableMod);
+      aggregate.toggleCheckboxModifier(checkCategory, hiddenMod);
+      expect(aggregate.getCategorySelectedCount('cat-extras')).toBe(0);
+    });
+
+    it('updateStepperModifier debe rechazar modificadores agotados u ocultos', () => {
+      const stepperCategory: ModifierCategory = {
+        id: 'cat-stepper',
+        nombre: 'Porciones',
+        visible: true,
+        tipo_seleccion: 'STEPPER',
+        min_selections: 0,
+        max_selections: 5,
+        obligatorio: false,
+        orden_visual: 3
+      };
+      const unavailableMod: Modifier = {
+        id: 'm-off',
+        nombre: 'Agotado',
+        precio: 20,
+        visible: true,
+        disponible: false,
+        cantidad_maxima: 3
+      };
+      const hiddenMod: Modifier = {
+        id: 'm-hidden',
+        nombre: 'Oculto',
+        precio: 15,
+        visible: false,
+        disponible: true,
+        cantidad_maxima: 3
+      };
+
+      const aggregate = new ProductCustomization(dummyProduct);
+
+      aggregate.updateStepperModifier(stepperCategory, unavailableMod, 1);
+      aggregate.updateStepperModifier(stepperCategory, hiddenMod, 1);
+      expect(aggregate.getModifierQuantity('cat-stepper', 'm-off')).toBe(0);
+      expect(aggregate.getModifierQuantity('cat-stepper', 'm-hidden')).toBe(0);
+    });
+  });
 });
