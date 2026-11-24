@@ -138,9 +138,17 @@ import { OrderRequestLocation } from '@core/models/order.model';
                 type="text" 
                 formControlName="referencias" 
                 placeholder="Referencias (Ej: portón blanco, junto a la tienda...)" 
-                class="w-full pl-11 pr-3.5 py-2.5 bg-white rounded-xl border text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition outline-none border-[#E2D7B7]"
+                class="w-full pl-11 pr-3.5 py-2.5 bg-white rounded-xl border text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition outline-none"
+                [class.border-red-400]="form().get('referencias')?.invalid && form().get('referencias')?.touched"
+                [class.border-[#E2D7B7]]="!form().get('referencias')?.invalid || !form().get('referencias')?.touched"
               />
             </div>
+            @if (form().get('referencias')?.invalid && form().get('referencias')?.touched) {
+              <p class="text-[11px] text-red-600 font-medium flex items-center gap-1.5 animate-in fade-in">
+                <lucide-icon name="alert-circle" class="w-3.5 h-3.5 shrink-0"></lucide-icon>
+                <span>Si usas solo GPS sin dirección escrita, agrega referencias (ej. color de casa o portón).</span>
+              </p>
+            }
           </div>
         </div>
       }

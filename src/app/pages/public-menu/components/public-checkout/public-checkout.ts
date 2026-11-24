@@ -21,6 +21,10 @@ export function mexicanPhoneValidator(control: AbstractControl): ValidationError
   return null;
 }
 
+export function nonEmptyTrimValidator(control: AbstractControl): ValidationErrors | null {
+  return String(control.value ?? '').trim().length > 0 ? null : { required: true };
+}
+
 import { CheckoutHeaderComponent } from './components/checkout-header/checkout-header';
 import { CheckoutSummaryAccordionComponent } from './components/checkout-summary-accordion/checkout-summary-accordion';
 import { CheckoutServiceStepComponent } from './components/checkout-service-step/checkout-service-step';
@@ -281,23 +285,34 @@ export class PublicCheckout implements OnInit {
     f.nombre.clearValidators();
     f.telefono.clearValidators();
     f.direccion.clearValidators();
+    f.referencias.clearValidators();
 
     if (code === 'mesa') {
-      f.numero_mesa.setValidators([Validators.required]);
+      f.numero_mesa.setValidators([nonEmptyTrimValidator]);
       // Nombre y notas son opcionales en mesa
     } else if (code === 'llevar') {
-      f.nombre.setValidators([Validators.required]);
+      f.nombre.setValidators([nonEmptyTrimValidator]);
       f.telefono.setValidators([Validators.required, mexicanPhoneValidator]);
     } else if (code === 'delivery') {
-      f.nombre.setValidators([Validators.required]);
+      f.nombre.setValidators([nonEmptyTrimValidator]);
       f.telefono.setValidators([Validators.required, mexicanPhoneValidator]);
-      f.direccion.setValidators([Validators.required]);
+
+      // Regla B3: dirección escrita O (GPS + referencias obligatorias)
+      const hasGps = this.geoStatus() === 'success' && Boolean(this.capturedLocation());
+      const hasAddress = Boolean(f.direccion.value?.trim());
+
+      if (hasGps && !hasAddress) {
+        f.referencias.setValidators([nonEmptyTrimValidator]);
+      } else if (!hasGps) {
+        f.direccion.setValidators([nonEmptyTrimValidator]);
+      }
     }
 
-    f.numero_mesa.updateValueAndValidity();
-    f.nombre.updateValueAndValidity();
-    f.telefono.updateValueAndValidity();
-    f.direccion.updateValueAndValidity();
+    f.numero_mesa.updateValueAndValidity({ emitEvent: false });
+    f.nombre.updateValueAndValidity({ emitEvent: false });
+    f.telefono.updateValueAndValidity({ emitEvent: false });
+    f.direccion.updateValueAndValidity({ emitEvent: false });
+    f.referencias.updateValueAndValidity({ emitEvent: false });
   }
 
   // --- Geolocalización Nativa Resiliente ---
@@ -320,6 +335,7 @@ export class PublicCheckout implements OnInit {
         };
         this.capturedLocation.set(loc);
         this.geoStatus.set('success');
+        this.applyValidators(this.serviceCode());
         this.saveDraft();
         this.toastService.show('Ubicación capturada con éxito', 'success');
       },
@@ -392,11 +408,14 @@ export class PublicCheckout implements OnInit {
     }
 
     if (code === 'delivery') {
-      const hasGps = this.geoStatus() === 'success' && !!this.capturedLocation();
-      const hasAddress = !!f.direccion.value?.trim();
-      if (!hasGps && !hasAddress) {
+      if (f.direccion.invalid) {
         f.direccion.markAsTouched();
         this.toastService.show('Para entrega a domicilio, ingresa tu dirección o usa tu GPS.', 'error');
+        return;
+      }
+      if (f.referencias.invalid) {
+        f.referencias.markAsTouched();
+        this.toastService.show('Con GPS sin dirección escrita, agrega referencias para el repartidor (ej. color de casa o portón).', 'error');
         return;
       }
     }
@@ -426,7 +445,11 @@ export class PublicCheckout implements OnInit {
         return;
       }
       if (code === 'delivery' && this.checkoutForm.controls.direccion.invalid) {
-        this.toastService.show('Por favor ingresa la dirección de entrega.', 'error');
+        this.toastService.show('Por favor ingresa la dirección de entrega o usa tu GPS.', 'error');
+        return;
+      }
+      if (code === 'delivery' && this.checkoutForm.controls.referencias.invalid) {
+        this.toastService.show('Con GPS sin dirección escrita, agrega referencias para el repartidor.', 'error');
         return;
       }
       this.toastService.show('Por favor revisa los campos requeridos.', 'error');
@@ -449,12 +472,12 @@ export class PublicCheckout implements OnInit {
           nombre: val.nombre.trim() || (code === 'mesa' ? 'Mesa ' + val.numero_mesa.trim() : 'Cliente'),
           telefono: val.telefono.trim(),
           email: val.email?.trim() || undefined,
-          direccion: code === 'delivery' ? val.direccion.trim() : undefined,
+          direccion: code === 'delivery' ? (val.direccion.trim() || undefined) : undefined,
         },
         tipo_servicio_id: serviceId,
         numero_mesa: code === 'mesa' ? val.numero_mesa.trim() : null,
-        direccion_entrega: code === 'delivery' ? val.direccion.trim() : null,
-        referencias: code === 'delivery' ? val.referencias.trim() : null,
+        direccion_entrega: code === 'delivery' ? (val.direccion.trim() || null) : null,
+        referencias: code === 'delivery' ? (val.referencias.trim() || null) : null,
         nota_general: val.nota_general.trim() || null,
         metodo_pago: val.metodo_pago || 'efectivo',
         location: code === 'delivery' ? this.capturedLocation() : null,
