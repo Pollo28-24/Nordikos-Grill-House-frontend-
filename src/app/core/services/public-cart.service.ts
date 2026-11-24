@@ -66,9 +66,12 @@ export class PublicCartService {
       precio_unitario: m.precioUnitario
     }));
 
-    const basePrice = variant 
-      ? (variant.precio - (variant.descuento || 0)) 
-      : ((product.precio || 0) - (product.descuento || 0));
+    const basePrice = Math.max(
+      0,
+      variant
+        ? (variant.precio - (variant.descuento || 0))
+        : ((product.precio || 0) - (product.descuento || 0))
+    );
     
     const modsPrice = mods.reduce((sum, m) => sum + (Number(m.precio_unitario || 0) * Number(m.cantidad || 1)), 0);
     const unitPrice = basePrice + modsPrice;
@@ -142,7 +145,12 @@ export class PublicCartService {
         nota: nota || items[existingIndex].nota
       };
     } else {
-      const basePrice = variant ? (variant.precio - (variant.descuento || 0)) : ((product.precio || 0) - (product.descuento || 0));
+      const basePrice = Math.max(
+        0,
+        variant
+          ? (variant.precio - (variant.descuento || 0))
+          : ((product.precio || 0) - (product.descuento || 0))
+      );
       const modsPrice = mods.reduce((sum, m) => sum + (Number(m.precio_unitario || 0) * Number(m.cantidad || 1)), 0);
       const unitPrice = basePrice + modsPrice;
 

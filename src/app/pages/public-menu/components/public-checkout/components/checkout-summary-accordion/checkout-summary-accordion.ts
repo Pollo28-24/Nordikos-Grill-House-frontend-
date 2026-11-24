@@ -35,7 +35,7 @@ import { CartItem } from '@core/services/public-cart.service';
                 <span class="font-medium truncate">{{ item.cantidad }}x {{ item.nombre }}{{ item.variante ? ' (' + item.variante.nombre + ')' : '' }}</span>
                 @if (item.modificadores && item.modificadores.length > 0) {
                   <div class="flex flex-wrap gap-1 mt-0.5">
-                    @for (m of item.modificadores; track m.nombre_modificador) {
+                    @for (m of item.modificadores; track (m.modificador_id ?? '') + '-' + m.nombre_modificador + '-' + $index) {
                       <span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 rounded">
                         +{{ m.nombre_modificador }}@if (m.cantidad > 1) { x{{ m.cantidad }} }
                       </span>
