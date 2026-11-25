@@ -173,7 +173,7 @@ export class OrdersRequestsService {
     }
   }
 
-  // Submit a new request from the public menu
+  // Submit a new request from the public menu via atomic RPC create_public_order_request_v1
   async submitRequest(payload: {
     clientInfo?: { nombre?: string; telefono?: string; email?: string; direccion?: string };
     tipo_servicio_id: number;
@@ -184,60 +184,12 @@ export class OrdersRequestsService {
     metodo_pago?: string | null;
     location?: { latitude: number; longitude: number; accuracy?: number } | null;
     items: any[];
-  }) {
+  }): Promise<{ success: boolean; request_code?: string; request_id?: number; total?: number; error?: string; error_code?: string }> {
     try {
       this.loading.set(true);
       this.error.set(null);
 
-      // 1. Search or create client only if phone is provided
-      let clienteId: number | null = null;
-      const phone = payload.clientInfo?.telefono?.trim();
-
-      if (phone) {
-        const { data: existingClient, error: clientFindError } = await this.api.findClientByPhone(phone);
-        if (clientFindError) throw clientFindError;
-
-        if (existingClient) {
-          clienteId = existingClient.id;
-          const updates: any = {};
-          if (payload.clientInfo?.nombre && payload.clientInfo.nombre !== existingClient.nombre) {
-            updates.nombre = payload.clientInfo.nombre;
-          }
-          if (payload.clientInfo?.email && payload.clientInfo.email !== existingClient.email) {
-            updates.email = payload.clientInfo.email;
-          }
-          if (payload.clientInfo?.direccion && payload.clientInfo.direccion !== existingClient.direccion) {
-            updates.direccion = payload.clientInfo.direccion;
-          }
-          if (Object.keys(updates).length > 0) {
-            await this.api.updateClient(existingClient.id, updates);
-          }
-        } else {
-          const { data: newClient, error: clientCreateError } = await this.api.createClient({
-            nombre: payload.clientInfo?.nombre || 'Cliente',
-            telefono: phone,
-            email: payload.clientInfo?.email,
-            direccion: payload.clientInfo?.direccion
-          });
-          if (clientCreateError) throw clientCreateError;
-          clienteId = newClient.id;
-        }
-      }
-
-      // Calculate total amount from items
-      const totalAmount = payload.items.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
-
-      // Prepare clean physical delivery address and dedicated delivery references (NO string mixing, NO GPS strings)
-      const finalAddress = payload.direccion_entrega?.trim() || null;
-      const finalReferencias = payload.referencias?.trim() || null;
-
-      // Prepare 100% human-readable kitchen note (NO stringified metadata JSON)
-      let finalNote = payload.nota_general?.trim() || '';
-      if (payload.clientInfo?.nombre && !phone) {
-        finalNote = `Cliente: ${payload.clientInfo.nombre}${finalNote ? ' | ' + finalNote : ''}`;
-      }
-
-      // Resolve native metodo_pago_id directly from catalog
+      // 1. Resolve native metodo_pago_id directly from catalog
       let resolvedPaymentMethodId: number | null = null;
       if (payload.metodo_pago) {
         try {
@@ -260,72 +212,139 @@ export class OrdersRequestsService {
         }
       }
 
-      // 2. Create order request
-      const { data: request, error: requestCreateError } = await this.api.createOrderRequest({
-        cliente_id: clienteId,
-        total: totalAmount,
-        nota_general: finalNote || null,
-        tipo_servicio_id: payload.tipo_servicio_id,
-        numero_mesa: payload.numero_mesa || null,
-        direccion_entrega: finalAddress,
-        referencias: finalReferencias,
-        metodo_pago_id: resolvedPaymentMethodId,
-        latitude: payload.location?.latitude ?? null,
-        longitude: payload.location?.longitude ?? null,
-        accuracy: payload.location?.accuracy ?? null,
-        estado: 'pending'
-      });
-      if (requestCreateError) throw requestCreateError;
+      // 2. Normalize items & modifiers from PublicCartService / CustomizationStore / PublicCheckout
+      const normalizedItems = (payload.items || []).map(item => {
+        const rawProdId = item?.producto_id ?? item?.product_id ?? item?.product?.id ?? null;
+        const parsedProdId = rawProdId !== null && rawProdId !== '' && Number.isFinite(Number(rawProdId))
+          ? Number(rawProdId)
+          : null;
 
-      // 3. Insert items
-      const itemsToInsert = payload.items.map(item => {
-        const unitPrice = item.precio_unitario ?? item.precio ?? 0;
+        const rawVarId = item?.variante_id ?? item?.variante?.id ?? item?.variant?.id ?? null;
+        const parsedVarId = rawVarId !== null && rawVarId !== '' && Number.isFinite(Number(rawVarId))
+          ? Number(rawVarId)
+          : null;
+
+        const rawMods = Array.isArray(item?.modificadores)
+          ? item.modificadores
+          : (Array.isArray(item?.modifiers) ? item.modifiers : []);
+
+        const normalizedMods = rawMods
+          .map((m: any) => {
+            const rawModId = m?.modificador_id ?? m?.modifierId ?? m?.id ?? null;
+            const parsedModId = rawModId !== null && rawModId !== '' && Number.isFinite(Number(rawModId)) && Number(rawModId) > 0
+              ? Number(rawModId)
+              : null;
+            const nombreMod = String(m?.nombre_modificador ?? m?.nombre ?? '').trim();
+            return {
+              modificador_id: parsedModId,
+              nombre_modificador: nombreMod,
+              cantidad: Number(m?.cantidad ?? m?.qty ?? 1),
+              precio_unitario: Number(m?.precio_unitario ?? m?.precioUnitario ?? m?.precio ?? 0)
+            };
+          })
+          .filter((m: any) => m.modificador_id !== null || m.nombre_modificador.length > 0);
+
         return {
-          request_id: request.id,
-          producto_id: item.producto_id ?? item.product_id ?? null,
-          variante_id: item.variante_id ?? item.variante?.id ?? null,
-          nombre_producto: item.nombre_producto ?? item.nombre,
-          cantidad: item.cantidad,
-          precio_unitario: unitPrice,
-          total: unitPrice * item.cantidad,
-          nota: item.nota || null
+          producto_id: parsedProdId,
+          variante_id: parsedVarId,
+          nombre_producto: String(item?.nombre_producto ?? item?.nombre ?? item?.product?.nombre ?? '').trim(),
+          cantidad: Number(item?.cantidad ?? item?.quantity ?? 1),
+          nota: item?.nota?.trim() || item?.note?.trim() || null,
+          modificadores: normalizedMods
         };
       });
 
-      const { data: insertedItems, error: itemsInsertError } = await this.api.insertRequestItems(itemsToInsert);
-      if (itemsInsertError) throw itemsInsertError;
+      // 3. Single atomic RPC call to create_public_order_request_v1
+      const { data: rpcRes, error: rpcError } = await this.api.createPublicOrderRequest({
+        p_client_info: {
+          nombre: payload.clientInfo?.nombre?.trim() || null,
+          telefono: payload.clientInfo?.telefono?.trim() || null,
+          email: payload.clientInfo?.email?.trim() || null,
+          direccion: payload.clientInfo?.direccion?.trim() || null
+        },
+        p_tipo_servicio_id: Number(payload.tipo_servicio_id),
+        p_numero_mesa: payload.numero_mesa?.trim() || null,
+        p_direccion_entrega: payload.direccion_entrega?.trim() || null,
+        p_referencias: payload.referencias?.trim() || null,
+        p_nota_general: payload.nota_general?.trim() || null,
+        p_metodo_pago_id: resolvedPaymentMethodId,
+        p_location: payload.location
+          ? {
+              latitude: Number(payload.location.latitude),
+              longitude: Number(payload.location.longitude),
+              ...(payload.location.accuracy !== undefined && payload.location.accuracy !== null
+                ? { accuracy: Number(payload.location.accuracy) }
+                : {})
+            }
+          : null,
+        p_items: normalizedItems
+      });
 
-      // 4. Relational insert for item modifiers into order_request_item_modificadores
-      if (insertedItems && insertedItems.length > 0) {
-        const modifiersToInsert: any[] = [];
-        insertedItems.forEach((dbItem: any, index: number) => {
-          const originalItem = payload.items[index];
-          if (originalItem?.modificadores && Array.isArray(originalItem.modificadores) && originalItem.modificadores.length > 0) {
-            originalItem.modificadores.forEach((m: any) => {
-              if (!m.nombre_modificador) return;
-              modifiersToInsert.push({
-                request_item_id: dbItem.id,
-                modificador_id: m.modificador_id ? Number(m.modificador_id) : null,
-                nombre_modificador: m.nombre_modificador,
-                cantidad: Number(m.cantidad || 1),
-                precio_unitario: Number(m.precio_unitario || 0)
-              });
-            });
-          }
-        });
-
-        if (modifiersToInsert.length > 0) {
-          await this.api.insertRequestItemModifiers(modifiersToInsert);
-        }
+      if (rpcError) {
+        const friendlyMsg = this.mapPublicOrderRpcError(rpcError.code, rpcError.message);
+        this.error.set(friendlyMsg);
+        return { success: false, error: friendlyMsg, error_code: rpcError.code };
       }
 
-      return { success: true, request_code: request.request_code };
+      if (!rpcRes || rpcRes.status !== 'success' || !rpcRes.request_code) {
+        const friendlyMsg = this.mapPublicOrderRpcError(rpcRes?.error_code, rpcRes?.message);
+        this.error.set(friendlyMsg);
+        return {
+          success: false,
+          error: friendlyMsg,
+          error_code: rpcRes?.error_code
+        };
+      }
+
+      return {
+        success: true,
+        request_code: rpcRes.request_code,
+        request_id: rpcRes.request_id,
+        total: Number(rpcRes.total ?? 0)
+      };
     } catch (err: any) {
       this.logger.error('Error submitting order request', err, 'OrdersRequestsService');
-      this.error.set(err.message || 'Error al procesar el pedido');
-      return { success: false, error: err.message };
+      const friendlyMsg = this.mapPublicOrderRpcError(err?.error_code || err?.code, err?.message);
+      this.error.set(friendlyMsg);
+      return { success: false, error: friendlyMsg };
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  private mapPublicOrderRpcError(errorCode?: string, fallbackMessage?: string): string {
+    switch (errorCode) {
+      case 'EMPTY_ORDER':
+      case 'INVALID_ITEMS':
+      case 'INVALID_ITEM_FORMAT':
+        return 'Tu carrito está vacío o contiene productos con formato inválido.';
+      case 'MAX_ITEMS_EXCEEDED':
+        return 'Tu pedido supera el límite máximo permitido de 30 productos distintos por solicitud.';
+      case 'INVALID_QUANTITY':
+        return 'La cantidad por producto debe estar entre 1 y 25 unidades.';
+      case 'MAX_MODIFIERS_EXCEEDED':
+      case 'MODIFIER_MAX_EXCEEDED':
+      case 'INVALID_MODIFIER_QUANTITY':
+      case 'INVALID_MODIFIERS_FORMAT':
+        return 'Una de las opciones adicionales seleccionadas excede la cantidad máxima permitida.';
+      case 'INVALID_PHONE':
+        return 'El formato del número de teléfono no es válido. Ingresa entre 7 y 15 dígitos.';
+      case 'INVALID_INPUT_LENGTH':
+        return 'Uno de los campos de texto o notas es demasiado largo. Por favor acórtalo e intenta de nuevo.';
+      case 'INVALID_SERVICE_TYPE':
+        return 'El tipo de servicio seleccionado no es válido.';
+      case 'INVALID_PAYMENT_METHOD':
+        return 'El método de pago seleccionado no es válido.';
+      case 'INVALID_LOCATION':
+        return 'Las coordenadas GPS de entrega no son válidas. Intenta actualizar tu ubicación.';
+      case 'VARIANT_REQUIRED':
+        return 'Selecciona una presentación o tamaño válido para el producto.';
+      case 'PRODUCT_NOT_AVAILABLE':
+        return 'Uno o más productos de tu carrito se acaban de agotar o ya no están disponibles.';
+      case 'MODIFIER_NOT_AVAILABLE':
+        return 'Una o más opciones adicionales seleccionadas ya no están disponibles para ese producto.';
+      default:
+        return fallbackMessage || 'No se pudo procesar tu pedido en este momento. Intenta nuevamente.';
     }
   }
 

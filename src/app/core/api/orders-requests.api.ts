@@ -1,86 +1,50 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '@shared/data-access/supabase.service';
 
+export interface CreatePublicOrderRequestRpcParams {
+  p_client_info: {
+    nombre?: string | null;
+    telefono?: string | null;
+    email?: string | null;
+    direccion?: string | null;
+  };
+  p_tipo_servicio_id: number;
+  p_numero_mesa: string | null;
+  p_direccion_entrega: string | null;
+  p_referencias: string | null;
+  p_nota_general: string | null;
+  p_metodo_pago_id: number | null;
+  p_location: { latitude: number; longitude: number; accuracy?: number } | null;
+  p_items: Array<{
+    producto_id: number | null;
+    variante_id: number | null;
+    nombre_producto: string;
+    cantidad: number;
+    nota: string | null;
+    modificadores: Array<{
+      modificador_id: number | null;
+      nombre_modificador: string;
+      cantidad: number;
+      precio_unitario: number;
+    }>;
+  }>;
+}
+
+export interface CreatePublicOrderRequestRpcResponse {
+  status: 'success' | 'error';
+  request_id?: number;
+  request_code?: string;
+  total?: number;
+  error_code?: string;
+  message?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class OrdersRequestsApi {
   private readonly supabase = inject(SupabaseService).client;
 
-  async findClientByPhone(phone: string) {
-    return this.supabase
-      .from('clientes')
-      .select('*')
-      .eq('telefono', phone)
-      .maybeSingle();
-  }
-
-  async createClient(client: { nombre: string; telefono: string; email?: string; direccion?: string }) {
-    return this.supabase
-      .from('clientes')
-      .insert(client)
-      .select()
-      .single();
-  }
-
-  async updateClient(id: number | string, client: { nombre?: string; email?: string; direccion?: string }) {
-    return this.supabase
-      .from('clientes')
-      .update(client)
-      .eq('id', id)
-      .select()
-      .single();
-  }
-
-  async createOrderRequest(request: {
-    cliente_id?: number | string | null;
-    total: number;
-    nota_general: string | null;
-    tipo_servicio_id: number | string;
-    numero_mesa?: string | null;
-    direccion_entrega?: string | null;
-    referencias?: string | null;
-    metodo_pago_id?: number | string | null;
-    latitude?: number | null;
-    longitude?: number | null;
-    accuracy?: number | null;
-    estado?: string;
-  }) {
-    const insertData: any = { ...request };
-    // Si referencias no está definido o es vacío, no enviarlo para evitar errores en tablas sin migrar
-    if (!insertData.referencias) {
-      delete insertData.referencias;
-    }
-
-    const res = await this.supabase
-      .from('order_requests')
-      .insert(insertData)
-      .select()
-      .single();
-
-    // Fallback defensivo si la columna aún no existe en el schema cache de Supabase
-    if (res.error && res.error.message?.includes('referencias')) {
-      delete insertData.referencias;
-      return this.supabase
-        .from('order_requests')
-        .insert(insertData)
-        .select()
-        .single();
-    }
-
-    return res;
-  }
-
-  async insertRequestItems(items: any[]) {
-    return this.supabase
-      .from('order_request_items')
-      .insert(items)
-      .select();
-  }
-
-  async insertRequestItemModifiers(mods: any[]) {
-    return this.supabase
-      .from('order_request_item_modificadores')
-      .insert(mods)
-      .then();
+  async createPublicOrderRequest(params: CreatePublicOrderRequestRpcParams) {
+    return this.supabase.rpc('create_public_order_request_v1', params);
   }
 
   getRequestsQuery(status?: string, withReferencias = true) {
