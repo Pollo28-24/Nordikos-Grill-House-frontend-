@@ -8,6 +8,7 @@ import { ProductsService } from '../../../../core/services/products.service';
 import { OrderCreateDto, PaymentMethod, ServiceType, Client } from '../../../../core/models/order.model';
 import { ToastService } from '../../../../core/services/toast.service';
 import { LoggerService } from '../../../../core/services/logger.service';
+import { translateOrderCreateError } from '../../../../core/utils/order-error.utils';
 
 @Component({
   selector: 'app-new-order-cart',
@@ -34,6 +35,7 @@ export class NewOrderCart {
   isEditingOrder = computed(() => this.ordersService.editingOrderId() !== null);
 
   propina = signal(0);
+  submitFeedback = signal<{ type: 'error' | 'warning'; message: string } | null>(null);
 
   cartTotalUnits = computed(() =>
     this.cart().reduce((acc: number, item: any) => acc + (Number(item.cantidad) || 0), 0)
@@ -100,7 +102,12 @@ export class NewOrderCart {
   }
 
   clearCart() {
+    this.submitFeedback.set(null);
     this.ordersService.clearCart();
+  }
+
+  dismissFeedback() {
+    this.submitFeedback.set(null);
   }
 
   async loadCatalogs() {
@@ -221,6 +228,8 @@ export class NewOrderCart {
   }
 
   async submit() {
+    this.submitFeedback.set(null);
+
     if (this.form.invalid || this.cart().length === 0) {
       this.toastService.show('Formulario inválido o carrito vacío', 'error');
       return;
@@ -247,14 +256,35 @@ export class NewOrderCart {
 
     const res = await this.ordersService.createOrder(dto);
     if (res.status === 'success' || res.status === 'conflict') {
+      this.submitFeedback.set(null);
       this.toastService.show(
         res.status === 'conflict' ? `Orden #${res.order_id} ya existe` : `Orden #${res.order_id} creada`,
         'success'
       );
       this.finalizeSubmit(`/orders/${res.order_id}`);
-    } else {
-      this.toastService.show('Error al crear la orden', 'error');
+      return;
     }
+
+    if (res.status === 'queued') {
+      const queuedMsg = 'Orden guardada sin conexión, pendiente de envío. Se sincronizará automáticamente al recuperar la conexión.';
+      this.toastService.show(queuedMsg, 'warning', 6000);
+      this.ordersService.clearCart();
+      this.ordersService.editingOrderId.set(null);
+      this.propina.set(0);
+      this.submitFeedback.set({ type: 'warning', message: queuedMsg });
+      return;
+    }
+
+    if (res.status === 'validation_error') {
+      const errorMsg = translateOrderCreateError(res.error_code, res.message);
+      this.submitFeedback.set({ type: 'error', message: errorMsg });
+      this.toastService.show(errorMsg, 'error', 6000);
+      return;
+    }
+
+    const fallbackMsg = 'No se pudo crear la orden. Intenta nuevamente.';
+    this.submitFeedback.set({ type: 'error', message: fallbackMsg });
+    this.toastService.show(fallbackMsg, 'error');
   }
 
   async updateExistingOrder() {
