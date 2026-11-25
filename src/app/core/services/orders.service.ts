@@ -4,8 +4,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { fromEvent } from 'rxjs';
 
 import { LoggerService } from '@core/services/logger.service';
-import { OrderDatabase } from '@core/services/order-db.service';
+import { ToastService } from '@core/services/toast.service';
+import { LocalOrder, OrderDatabase } from '@core/services/order-db.service';
 import { OrderCreateDto, OrderCreateResponse, OrderCreateItem, OrderListItem, OrderSummary, PaymentMethod, ServiceType, Client } from '@core/models/order.model';
+import { translateOrderCreateError } from '@core/utils/order-error.utils';
 
 import { OrdersApi } from '@core/api/orders.api';
 import { CartState } from '@core/state/cart.state';
@@ -31,6 +33,7 @@ export class OrdersService {
   private readonly db = inject(OrderDatabase);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly logger = inject(LoggerService);
+  private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
   creating = signal(false);
@@ -151,12 +154,19 @@ export class OrdersService {
             
             return res; 
           } 
+
+          if (res?.status === 'validation_error') {
+            await this.db.deleteOrder(dto.client_request_id);
+            this.error.set(translateOrderCreateError(res.error_code, res.message));
+            return res;
+          }
+
           return res; 
         } catch (e: unknown) { 
           this.error.set('Se guardó offline. Se sincronizará automáticamente.'); 
         } 
       } 
-      return { status: 'success', order_id: 0, total: 0 } as OrderCreateResponse;
+      return { status: 'queued', client_request_id: dto.client_request_id };
     } finally {
       this.creating.set(false);
     }
@@ -217,7 +227,14 @@ export class OrdersService {
           const res = await this.sendToServer(order.payload); 
           if (res?.status === 'success' || res?.status === 'conflict') { 
             await this.db.markSynced(order.id); 
-          } 
+          } else if (res?.status === 'validation_error') {
+            const reason = translateOrderCreateError(res.error_code, res.message);
+            const message = `No se pudo enviar ${this.formatOfflineOrderLabel(order)}: ${reason}`;
+            await this.db.markFailed(order.id, reason);
+            this.error.set(message);
+            this.logger.error('Orden offline rechazada al sincronizar', { orderId: order.id, error_code: res.error_code }, 'OrdersService');
+            this.toastService.show(message, 'error', 8000);
+          }
         } catch (e: any) { 
           await this.db.markFailed(order.id, e.message); 
         } 
@@ -225,6 +242,19 @@ export class OrdersService {
     } finally {
       this.syncing.set(false);
     }
+  }
+
+  private formatOfflineOrderLabel(order: LocalOrder): string {
+    const items = order.payload?.items ?? [];
+    const summary = items
+      .slice(0, 2)
+      .map((item) => `${item.cantidad ?? 1}x ${item.nombre_producto || `Producto #${item.producto_id ?? ''}`}`)
+      .join(', ');
+    const extraCount = items.length > 2 ? ` (+${items.length - 2} más)` : '';
+    const shortRef = (order.id || '').slice(0, 8);
+    return summary
+      ? `la orden sin conexión (${summary}${extraCount}, ref. ${shortRef})`
+      : `la orden sin conexión (ref. ${shortRef})`;
   }
 
   async cancelItemFromOrder(orderId: number, itemId: number, propina: number) {
