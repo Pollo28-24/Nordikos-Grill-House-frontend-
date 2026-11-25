@@ -253,9 +253,7 @@ export class ProductsService { // ACTÚA COMO STATE / FACADE
       const insertTasks: PromiseLike<any>[] = [];
       const updateTasks: PromiseLike<any>[] = [];
 
-      // Lógica de Imágenes...
-      let newImagenUrl: string | null | undefined = undefined;
-
+      // Lógica de Imágenes (persistidas exclusivamente en public.producto_fotos)
       if (dto.images !== undefined) {
         const currentImages = existingProduct.producto_fotos || [];
         const currentUrls = currentImages.map((img: any) => img.url);
@@ -274,11 +272,6 @@ export class ProductsService { // ACTÚA COMO STATE / FACADE
         if (uploadedUrls.length > 0) {
           const newImagesForDb = uploadedUrls.map(url => ({ producto_id: existingProduct.id, url }));
           insertTasks.push(this.api.insertFotos(newImagesForDb));
-          newImagenUrl = uploadedUrls[0];
-        } else if (imagesToKeep.length === 0) {
-          newImagenUrl = null; // Si no hay imágenes, forzamos null en la columna legacy
-        } else {
-          newImagenUrl = (imagesToKeep[0] as any).url;
         }
       }
 
@@ -337,13 +330,9 @@ export class ProductsService { // ACTÚA COMO STATE / FACADE
         }
       }
 
-      // Update base product
-      const productToUpdate = { ...dto, updated_at: new Date().toISOString() };
-      ['stock', 'images', 'variants', 'productImage', 'imagen_url'].forEach(key => delete (productToUpdate as any)[key]);
-
-      if (newImagenUrl !== undefined) {
-        (productToUpdate as any).imagen_url = newImagenUrl;
-      }
+      // Update base product (destructuración inmutable sin columnas inexistentes)
+      const { stock: _s, images: _i, variants: _v, productImage: _pi, imagen_url: _iu, ...cleanDto } = dto as any;
+      const productToUpdate = { ...cleanDto, updated_at: new Date().toISOString() };
 
       updateTasks.push(this.api.update(existingProduct.id, productToUpdate));
 
