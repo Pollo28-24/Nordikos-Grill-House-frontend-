@@ -30,9 +30,16 @@ export interface OrderCreateDto {
   client_request_id: string;
 }
 
+export type OrderCreateErrorCode =
+  | 'PRODUCT_NOT_AVAILABLE'
+  | 'PAYMENT_METHOD_INVALID'
+  | 'SERVICE_TYPE_INVALID'
+  | 'SHIFT_INVALID';
+
 export type OrderCreateResponse =
   | { status: 'success'; order_id: number; total: number }
-  | { status: 'validation_error'; error_code: 'PRODUCT_NOT_AVAILABLE' | 'PAYMENT_METHOD_INVALID' | 'SERVICE_TYPE_INVALID' | 'SHIFT_INVALID' }
+  | { status: 'queued'; client_request_id: string }
+  | { status: 'validation_error'; error_code: OrderCreateErrorCode | string; message?: string }
   | { status: 'conflict'; order_id: number; total: number; error_code: 'IDEMPOTENCY_CONFLICT' };
 
 export interface Order {

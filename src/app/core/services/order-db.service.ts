@@ -65,7 +65,7 @@ export class OrderDatabase {
     const db = await this.dbPromise;
     if (db) {
       const orders = await db.getAll('orders');
-      return orders.filter((o: LocalOrder) => o.status !== 'synced');
+      return orders.filter((o: LocalOrder) => o.status === 'pending');
     }
     return [];
   }

@@ -229,6 +229,34 @@
       </div>
     </div>
 
+    @if (submitFeedback(); as feedback) {
+      <div
+        role="alert"
+        aria-live="assertive"
+        class="rounded-xl px-3 py-2.5 border text-xs flex items-start justify-between gap-2"
+        [class]="feedback.type === 'error'
+          ? 'bg-red-500/10 border-red-500/30 text-red-200'
+          : 'bg-amber-500/10 border-amber-500/30 text-amber-200'"
+      >
+        <div class="flex items-start gap-2 min-w-0">
+          <lucide-icon
+            [name]="feedback.type === 'error' ? 'x-circle' : 'alert-triangle'"
+            class="w-4 h-4 shrink-0 mt-0.5"
+            [class]="feedback.type === 'error' ? 'text-red-400' : 'text-amber-400'"
+          />
+          <p class="leading-snug font-medium">{{ feedback.message }}</p>
+        </div>
+        <button
+          type="button"
+          (click)="dismissFeedback()"
+          class="text-zinc-400 hover:text-white shrink-0 cursor-pointer"
+          title="Cerrar aviso"
+        >
+          <lucide-icon name="x" class="w-3.5 h-3.5" />
+        </button>
+      </div>
+    }
+
     <!-- Botón Confirmar / Actualizar con Altura 52px y acento Nordikos -->
     <button
       class="w-full h-13 rounded-xl bg-[#FFB300] text-zinc-950 font-black text-xs sm:text-sm uppercase tracking-widest shadow-lg shadow-[#FFB300]/10 hover:brightness-110 active:scale-[0.98] disabled:bg-zinc-800 disabled:text-zinc-600 disabled:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer select-none"
