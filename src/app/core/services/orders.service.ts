@@ -181,9 +181,16 @@ export class OrdersService {
     for (const { dbId, modificadores } of insertedItems) {
       if (modificadores.length > 0) {
         modificadores.forEach((m: any) => {
+          const rawModId = m?.modificador_id ?? m?.id ?? null;
+          const parsedModId = rawModId !== null && rawModId !== '' && Number.isFinite(Number(rawModId))
+            ? Number(rawModId)
+            : null;
           modsToInsert.push({
-            order_item_id: dbId, nombre_modificador: m.nombre_modificador,
-            cantidad: m.cantidad, precio_unitario: m.precio_unitario || 0
+            order_item_id: dbId,
+            modificador_id: parsedModId,
+            nombre_modificador: m.nombre_modificador,
+            cantidad: m.cantidad,
+            precio_unitario: m.precio_unitario || 0
           });
         });
       }
